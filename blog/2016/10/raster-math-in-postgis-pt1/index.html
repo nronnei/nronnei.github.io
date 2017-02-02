@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!--Description-->
+    
+        <meta name="description" content="Thoughts, experiments, and advice for FOSS GIScience">
+    
+
+    <!--Author-->
+    
+        <meta name="author" content="Nick Ronnei">
+    
+
+    <!--Open Graph Title-->
+    
+        <meta property="og:title" content="Raster Math in PostGIS, Part 1"/>
+    
+
+    <!--Open Graph Description-->
+    
+        <meta property="og:description" content="Thoughts, experiments, and advice for FOSS GIScience" />
+    
+
+    <!--Open Graph Site Name-->
+    <meta property="og:site_name" content="Nick&#39;s GeoJournal"/>
+
+    <!--Type page-->
+    
+        <meta property="og:type" content="article" />
+    
+
+    <!--Page Cover-->
+    
+
+        <meta name="twitter:card" content="summary" />
+    
+        <meta name="twitter:site" content="nronnei>" />
+    
+
+    <!-- Title -->
+    
+    <title>Raster Math in PostGIS, Part 1 - Nick&#39;s GeoJournal</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+
+    <!-- Custom Fonts -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="//oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Gallery -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.css" type="text/css" rel="stylesheet" />
+
+    <!-- Google Analytics -->
+    
+
+
+    <!-- favicon -->
+    
+
+    <!-- canonical link -->
+    <link rel="canonical" href="https:/nronnei.github.io/blog/2016/10/raster-math-in-postgis-pt1/"/>
+
+</head>
+
+
+<body>
+
+    <!-- Menu -->
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">GeoJournal</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                
+                    <li>
+                        <a href="/">
+                            
+                                Home
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/about">
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/apps">
+                            
+                                Apps
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog">
+                            
+                                Blog
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog/archives">
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://github.com/nronnei/">
+                            
+                                <i class="fa fa-github fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://twitter.com/nronnei/">
+                            
+                                <i class="fa fa-twitter fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+    <!-- Main Content -->
+    <!-- Page Header -->
+<!-- Set your background image for this header in your post front-matter: cover -->
+
+<header class="intro-header" style="background-image: url('/img/home-bg.jpg')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Raster Math in PostGIS, Part 1</h1>
+                    
+                    
+                      <span class="meta">
+                          <!-- Date and Author -->
+                          
+                          2016-10-26
+                      </span>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Tags and categories -->
+           
+                <div class="col-lg-4 col-lg-offset-2 col-md-5 col-md-offset-1 post-tags">
+                    
+                        
+
+
+<a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/geostats/">#geostats</a> <a href="/blog/tags/raster-math-series/">#raster math series</a>
+
+
+                    
+                </div>
+                <div class="col-lg-4 col-md-5 post-categories">
+                    
+                        
+
+<a href="/blog/categories/database/">database</a>
+
+                    
+                </div>
+            
+
+            <!-- Gallery -->
+            
+
+            <!-- Post Main Content -->
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal:"></a>Goal:</h2><p>We want to perform some simple math with two rasters of varying resolution. The input raster resolutions should be 3 arcseconds (to mimick SRTM) and either 7.5 or 15 arcseconds (to mimick MODIS).</p>
+<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose:"></a>Purpose:</h2><p>We use the raster’s we generated to mimck the actual data we’ll be working with on to create our Mean Trend raster. Without going too far into the spatial stats of the project, we are isolating the second order structure of the data from the overall trend. This allows us to later separate the “elevation trend” from the interesting variations we’re actually attempting to study. Since we assume there is one global trend, we can store a Mean Trend raster in the database rather than having to recalculate it every time we want to generate a new realization.</p>
+<h2 id="Solution"><a href="#Solution" class="headerlink" title="Solution:"></a>Solution:</h2><p>Before doing anything, we need to <a href="/entry_0.html">create some test rasters.</a> The link explains both the how and the why of that. Afterwards, we can jump to the task at hand: <strong>RASTER MATH!!!</strong></p>
+<div class="img-responsive center-block"><br>here is some centered text<br><img src="http://www.geography.hunter.cuny.edu/~jochen/GTECH361/lectures/lecture11/concepts/Map%20algebra_files/image001.gif" alt="" title="Here is some alternate text."><br></div>
+
+<p>First, we should create a table to hold the output of our operation:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Create table to hold the output of ST_MapAlgebra</span></div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> public.add_90_90big_tiled(</div><div class="line">  rid <span class="built_in">SERIAL</span> primary <span class="keyword">key</span>, rast raster</div><div class="line">);</div></pre></td></tr></table></figure></p>
+<p>Following <a href="postgis.net/docs/RT_ST_MapAlgebra_expr.h">the example from the documentation</a> for ST_MapAlgebra(), I created a <a href="http://www.craigkerstiens.com/2013/11/18/best-postgres-feature-youre-not-using/" target="_blank" rel="external">CTE</a> to make the way we interact with the rasters more readable. CTE’s are created by using the <a href="https://www.postgresql.org/docs/9.5/static/queries-with.html" target="_blank" rel="external">WITH statement</a>, which effectively aliases a temporary table. It looks like this:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">WITH input AS (</div><div class="line">  <span class="keyword">SELECT</span> rid, rast</div><div class="line">    <span class="keyword">FROM</span> public.test_90_tiled</div><div class="line">    <span class="keyword">WHERE</span> test_90_tiled.rid &lt; <span class="number">10</span></div><div class="line">    <span class="keyword">UNION</span> ALL</div><div class="line">  <span class="keyword">SELECT</span> rid, rast</div><div class="line">    <span class="keyword">FROM</span> public.test_highval_90_tiled</div><div class="line">)</div></pre></td></tr></table></figure>
+<p>I must admit, I do not fully understand what is going on here. Despite <a href="https://www.youtube.com/watch?v=prKzF93N7z0" target="_blank" rel="external">this great video</a> on the subject, it sounds like it will probably always be way over my head. That said, here is what I think we are doing:</p>
+<ol>
+<li>Create a temporary table called <code>input</code></li>
+<li><code>input</code> is made up of two selections: &nbsp;<strong>A.)</strong> our 90m table, and <strong>B.)</strong> our 250m table.</li>
+<li>These two are effectively joined by the <a href="https://www.techonthenet.com/postgresql/union_all.php" target="_blank" rel="external">UNION ALL statement</a></li>
+</ol>
+<p>Now this explanation would probably make a SQL Expert cringe, but it’s all I’ve got. What it does will become more apparent in the body of the query:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span></div><div class="line">  ST_MapAlgebra (</div><div class="line">    r1.rast, <span class="number">1</span>,  <span class="comment">-- Input Raster 1, the band to use from Input Raster 1</span></div><div class="line">    r2.rast, <span class="number">1</span>,  <span class="comment">-- Input Raster 2, the band to use from Input Raster 2</span></div><div class="line">    <span class="string">'([rast1] + [rast2])'</span>::<span class="built_in">text</span>,  <span class="comment">-- Map Algebra Expression</span></div><div class="line">    <span class="string">'8BUI'</span>::<span class="built_in">text</span>,  <span class="comment">-- Pixel Type for the output raster</span></div><div class="line">    <span class="string">'FIRST'</span>::<span class="built_in">text</span>,  <span class="comment">-- Extent Type for the output raster</span></div><div class="line">                    <span class="comment">-- FIRST means it will have the extent of the first raster.</span></div><div class="line">    <span class="string">'[rast2]'</span>::<span class="built_in">text</span>,  <span class="comment">-- Expression to use if Raster 1 has nodata for a cell</span></div><div class="line">    <span class="string">'[rast1]'</span>::<span class="built_in">text</span>,  <span class="comment">-- Expression to use if Raster 2 has nodata for a cell</span></div><div class="line">    <span class="number">0</span>  <span class="comment">-- No data value if both rasters have nodata for a cell</span></div><div class="line">  ) <span class="keyword">AS</span> rast</div><div class="line"><span class="keyword">FROM</span> <span class="keyword">input</span> <span class="keyword">AS</span> r1</div><div class="line"><span class="keyword">CROSS</span> <span class="keyword">JOIN</span> <span class="keyword">input</span> <span class="keyword">AS</span> r2</div><div class="line"><span class="keyword">LIMIT</span> <span class="number">10</span>;</div></pre></td></tr></table></figure></p>
+<ol>
+<li>We <code>SELECT</code> the output of <code>ST_MapAlgebra</code> as rast</li>
+<li><code>FROM</code> our table called <code>input</code> that we created <code>AS r1</code></li>
+<li>Next we use a <a href="http://www.postgresqlforbeginners.com/2010/11/sql-inner-cross-and-self-joins.html" target="_blank" rel="external">CROSS JOIN</a> to combine <code>input</code> with <code>r1</code> again.</li>
+</ol>
+<p>Why do we do it this way? No clue. effectively what this does it take two 10,000 row tables and combine them into one 20,000 row table. Next, we perform a <code>CROSS JOIN</code>, creating a table of m*n rows, in our case 40,000,000 rows. Why we need to do this to access the geometries of the two rasters we had at the start? There has to be a better way and that’s what I’ve been searching for.<br><br><br></p>
+<h2 id="Findings"><a href="#Findings" class="headerlink" title="Findings:"></a>Findings:</h2><p>Despite this setback I did discover that it is not possible to perform raster math on rasters with different spatial resolutions. One needs to use <a href="http://postgis.net/docs/manual-2.1/RT_ST_Resample.html" target="_blank" rel="external">ST_Resample() function</a> first. We can see that this is the case by using the <a href="http://postgis.net/docs/manual-2.3/RT_ST_NotSameAlignmentReason.html" target="_blank" rel="external">ST_NotSameAlignmentReason() function</a> as suggested in this <a href="https://gis.stackexchange.com/questions/212176/postgiss-st-mapalgebra-rasters-do-not-have-the-same-alignment" target="_blank" rel="external">StackExchange post</a> about the problem. By running the following command, we can see that the 90m and 250m rasters do not have the same “alignment” because <code>The rasters have different scales on the X axis</code>.<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Working</span></div><div class="line">WITH r1 AS (</div><div class="line">  <span class="keyword">SELECT</span> rid, rast</div><div class="line">  <span class="keyword">FROM</span> public.test_90_tiled</div><div class="line">  <span class="keyword">WHERE</span> rid &lt; <span class="number">5</span></div><div class="line">),</div><div class="line">r2 <span class="keyword">AS</span> (</div><div class="line">  <span class="keyword">SELECT</span> rid, rast</div><div class="line">  <span class="keyword">FROM</span> public.test_250_tiled</div><div class="line">  <span class="keyword">WHERE</span> rid &lt; <span class="number">5</span></div><div class="line">)</div><div class="line"><span class="keyword">SELECT</span> ST_NotSameAlignmentReason(r1.rast, r2.rast) <span class="keyword">as</span> reason</div><div class="line"><span class="keyword">FROM</span> r1, r2;</div><div class="line"><span class="comment">-- Note that this double FROM clause does the exact same thing as a CROSS JOIN.</span></div></pre></td></tr></table></figure></p>
+<p>On the other hand, if we run the same code using our second 90m raster, we get <code>The rasters are aligned</code>:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Working</span></div><div class="line">WITH r1 AS (</div><div class="line">  <span class="keyword">SELECT</span> rid, rast</div><div class="line">  <span class="keyword">FROM</span> public.test_90_tiled</div><div class="line">  <span class="keyword">WHERE</span> rid &lt; <span class="number">5</span></div><div class="line">),</div><div class="line">r2 <span class="keyword">AS</span> (</div><div class="line">  <span class="keyword">SELECT</span> rid, rast</div><div class="line">  <span class="keyword">FROM</span> public.test_highval_90_tiled</div><div class="line">  <span class="keyword">WHERE</span> rid &lt; <span class="number">5</span></div><div class="line">)</div><div class="line"><span class="keyword">SELECT</span> ST_NotSameAlignmentReason(r1.rast, r2.rast) <span class="keyword">as</span> reason</div><div class="line"><span class="keyword">FROM</span> r1, r2;</div><div class="line"><span class="comment">-- Note that this double FROM clause does the exact same thing as a CROSS JOIN.</span></div></pre></td></tr></table></figure></p>
+<p>In addition to the alignment issues, we still have our massive cross join problem. I’ve been trying to structure the CTE in  different ways so that we don’t have to do that, but I keep running into trouble (probably becase I don’t really understand what I’m doing). When I set my query like this:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Experimental</span></div><div class="line">WITH RECURSIVE r1 AS (</div><div class="line">  <span class="keyword">SELECT</span> rid, rast</div><div class="line">  <span class="keyword">FROM</span> public.test_90_tiled</div><div class="line">  <span class="keyword">WHERE</span> rid &lt; <span class="number">100</span></div><div class="line">),</div><div class="line">r2 <span class="keyword">AS</span> (</div><div class="line">  <span class="keyword">SELECT</span> rid, rast</div><div class="line">  <span class="keyword">FROM</span> public.test_highval_90_tiled</div><div class="line">)</div><div class="line"><span class="keyword">SELECT</span> rast <span class="keyword">AS</span> rast1, <span class="keyword">count</span>(*) <span class="keyword">AS</span> count1</div><div class="line"><span class="keyword">FROM</span> r1</div><div class="line"><span class="keyword">UNION</span> ALL</div><div class="line"><span class="keyword">SELECT</span> rast <span class="keyword">AS</span> rast2, <span class="keyword">count</span>(*) <span class="keyword">AS</span> count2</div><div class="line"><span class="keyword">FROM</span> r2</div><div class="line"><span class="keyword">WHERE</span> ST_Intersects(rast2, ST_Envelope(rast1));</div></pre></td></tr></table></figure></p>
+<p>I recieve this error: <code>ERROR:  column &quot;r1.rast&quot; must appear in the GROUP BY clause or be used in an aggregate function</code>. According to <a href="http://postgis.net/docs/manual-2.1/PostGIS_Special_Functions_Index.html" target="_blank" rel="external">the documentation</a>, aggregation functions are simple things that are fairly familiar. However, all of the listed aggregate functions are primarily useful for vector data rather than raster data.  I have to read more about these functions and fid out what the heck they do.</p>
+<p>In addition to the discovery of these problems, I also learned some interesting and potentially helpful things. The foremost of those things is that to do any real math with our <code>ST_MapAlgebra()</code> query, <a href="http://postgis.net/docs/manual-2.1/RT_ST_MapAlgebra.html" target="_blank" rel="external">we’re going to need a callback function</a>. There are several <a href="http://postgis.net/docs/manual-2.1/RT_reference.html#Raster_Processing_MapAlgebra_Callbacks" target="_blank" rel="external">predefined MapAlgebra callbacks</a>, but they won’t be of much use to us. RYO examples of such a function are very difficult to find, but my digging has unearthed <a href="http://www.bostongis.com/blog/index.php?/archives/234-PostGIS-Day-Game-of-Life-celebration.html#extended" target="_blank" rel="external">one good example</a> at the time of writing. Though the callback function supplied is written in PL/PGSQL, the author of this post mentions that the calculations for Map Algebra may be faser using PL/V8. Since we know other languages much better than we know SQL, it makes a lot of sense for us to use other languages here since we’ll have the option by default.</p>
+<h2 id="Closing-Thoughts"><a href="#Closing-Thoughts" class="headerlink" title="Closing Thoughts:"></a>Closing Thoughts:</h2><p>We need to figure out a better way to select the raster values/geometries than doing a <strong>freaking gigantic</strong> cross join. There is a better way, we just need to find it. Also, we need to get a better understanding of exactly what an “aggregation function” is supposed to do i.e. is an “aggregation function” equivalent to the callback function required by <code>ST_MapAlgebra()</code>, and I think it is to some extent.  We also need to figure out how to do all of this just 10 (100?) tiles at a time, but still loop through the whole table.</p>
+
+
+                
+            </div>
+
+            <!-- Comments -->
+            
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
+    <hr />
+    <h3>Comments:</h3>
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+
+
+                </div>
+            
+        </div>
+    </div>
+</article>
+
+
+    <!-- Footer -->
+    <hr />
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                        <li>
+                            <a href="https://twitter.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="https://github.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="mailto:nronnei@gmail.com" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-envelope-o fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+                </ul>
+                <p class="copyright text-muted">&copy; 2017 Nick Ronnei<br></p>
+                <p class="copyright text-muted">Original Theme <a target="_blank" href="http://startbootstrap.com/template-overviews/clean-blog/">Clean Blog</a> from <a href="http://startbootstrap.com/" target="_blank">Start Bootstrap</a></p>
+                <p class="copyright text-muted">Adapted for <a target="_blank" href="https://hexo.io/">Hexo</a> by <a href="http://www.codeblocq.com/" target="_blank">Jonathan Klughertz</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+    <!-- After footer scripts -->
+    
+<!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<!-- Bootstrap -->
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+<!-- Gallery -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+
+<!-- Disqus Comments -->
+
+<script type="text/javascript">
+    var disqus_shortname = 'geojournal';
+
+    (function(){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+
+</html>

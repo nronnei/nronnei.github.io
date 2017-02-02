@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!--Description-->
+    
+        <meta name="description" content="Thoughts, experiments, and advice for FOSS GIScience">
+    
+
+    <!--Author-->
+    
+        <meta name="author" content="Nick Ronnei">
+    
+
+    <!--Open Graph Title-->
+    
+        <meta property="og:title" content="Installing PL/V8 in PostgreSQL 9.6"/>
+    
+
+    <!--Open Graph Description-->
+    
+        <meta property="og:description" content="Thoughts, experiments, and advice for FOSS GIScience" />
+    
+
+    <!--Open Graph Site Name-->
+    <meta property="og:site_name" content="Nick&#39;s GeoJournal"/>
+
+    <!--Type page-->
+    
+        <meta property="og:type" content="article" />
+    
+
+    <!--Page Cover-->
+    
+
+        <meta name="twitter:card" content="summary" />
+    
+        <meta name="twitter:site" content="nronnei>" />
+    
+
+    <!-- Title -->
+    
+    <title>Installing PL/V8 in PostgreSQL 9.6 - Nick&#39;s GeoJournal</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+
+    <!-- Custom Fonts -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="//oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Gallery -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.css" type="text/css" rel="stylesheet" />
+
+    <!-- Google Analytics -->
+    
+
+
+    <!-- favicon -->
+    
+
+    <!-- canonical link -->
+    <link rel="canonical" href="https:/nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/"/>
+
+</head>
+
+
+<body>
+
+    <!-- Menu -->
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">GeoJournal</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                
+                    <li>
+                        <a href="/">
+                            
+                                Home
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/about">
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/apps">
+                            
+                                Apps
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog">
+                            
+                                Blog
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog/archives">
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://github.com/nronnei/">
+                            
+                                <i class="fa fa-github fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://twitter.com/nronnei/">
+                            
+                                <i class="fa fa-twitter fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+    <!-- Main Content -->
+    <!-- Page Header -->
+<!-- Set your background image for this header in your post front-matter: cover -->
+
+<header class="intro-header" style="background-image: url('/img/home-bg.jpg')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Installing PL/V8 in PostgreSQL 9.6</h1>
+                    
+                    
+                      <span class="meta">
+                          <!-- Date and Author -->
+                          
+                          2016-10-31
+                      </span>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Tags and categories -->
+           
+                <div class="col-lg-4 col-lg-offset-2 col-md-5 col-md-offset-1 post-tags">
+                    
+                        
+
+
+<a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/postgresql/">#postgresql</a> <a href="/blog/tags/pl-v8/">#pl/v8</a>
+
+
+                    
+                </div>
+                <div class="col-lg-4 col-md-5 post-categories">
+                    
+                        
+
+<a href="/blog/categories/database/">database</a>
+
+                    
+                </div>
+            
+
+            <!-- Gallery -->
+            
+
+            <!-- Post Main Content -->
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal:"></a>Goal:</h2><p>This is a very straightforward entry. Our only goal in this post is to make sure we have installed PostgreSQL’s <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a>.</p>
+<p><strong>Full Disclosure:</strong> Most of this is straight off the <a href="https://github.com/plv8/plv8" target="_blank" rel="external">GitHub page</a>.</p>
+<img src="/blog/2016/10/install-postgres-9-5-plv8/v8.png" alt="V8 - Google's lightning fast JavaScript engine." title="V8 - Google's lightning fast JavaScript engine.">
+<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose:"></a>Purpose:</h2><p>Install <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a> so that we can use JavaScript to write functions for Postgres and PostGIS. This entry assumes you have a working PostgreSQL v9.2+ installation. If you don’t, check out <a href="http://tecadmin.net/install-postgresql-server-on-ubuntu/#" target="_blank" rel="external">this tutorial</a>.</p>
+<h2 id="Solution"><a href="#Solution" class="headerlink" title="Solution:"></a>Solution:</h2><h4 id="System-Info"><a href="#System-Info" class="headerlink" title="System Info"></a>System Info</h4><p>I’m using…</p>
+<ul>
+<li>OS: Ubuntu 16.04</li>
+<li>PostgreSQL Server 9.5</li>
+<li>PSQL Client 9.6</li>
+<li>PostGIS 2.1 (Not relevant for this process)</li>
+</ul>
+<h4 id="Process"><a href="#Process" class="headerlink" title="Process"></a>Process</h4><p>Thanks to <code>apt</code> this installation is very easy! Just run:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install postgresql-9.5-plv8</div></pre></td></tr></table></figure></p>
+<p><a href="https://github.com/plv8/plv8#requirement" target="_blank" rel="external">Check GitHub</a> to see if your PostgreSQL version works with PL/V8. I was able to successfully install PL/V8 for PostgreSQL 9.6 by simply tweaking the version number:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install postgresql-9.6-plv8</div></pre></td></tr></table></figure></p>
+<p>After a successful installation, we’ll need to add the language to your database:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">psql <span class="_">-d</span> &lt;database name&gt; -c <span class="string">'CREATE EXTENSION plv8'</span></div></pre></td></tr></table></figure></p>
+<p>If you use <a href="https://github.com/jashkenas/coffeescript" target="_blank" rel="external">CoffeeScript</a> and <a href="http://livescript.net/" target="_blank" rel="external">LiveScript</a>, you can use <code>plcoffee</code> and <code>plls</code> respectively in place of <code>plv8</code>.</p>
+<p>Okay. PL/V8 installed? Check! Language added to the database? Check. Let’s move on to making sure it works.</p>
+<p>GitHub says you can use <code>psql -c &#39;SELECT plv8_version()&#39;</code> to check your version with PL/V8 as of 2.0.0. This did not work for me because at the time of writing the the version in the apt repo is <code>1:1.4.6.ds-1</code>.</p>
+<p>Another method, and perhaps a more direct one, is to 1.) define a simple function and 2.) pass it some dummy data.</p>
+<p><strong>First</strong> we define a test function:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">CREATE OR REPLACE FUNCTION plv8_test(keys text[], vals text[])</div><div class="line">RETURNS text AS $$</div><div class="line">  var o = &#123;&#125;;</div><div class="line">  for(var i=0; i&lt;keys.length; i++)&#123;</div><div class="line">    o[keys[i]] = vals[i];</div><div class="line">  &#125;</div><div class="line">  return JSON.stringify(o);</div><div class="line">$$ LANGUAGE plv8 IMMUTABLE STRICT;</div></pre></td></tr></table></figure></p>
+<p><strong>Second</strong> we pass it some dummy data:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> plv8_test(<span class="built_in">ARRAY</span>[<span class="string">'name'</span>, <span class="string">'age'</span>], <span class="built_in">ARRAY</span>[<span class="string">'Tom'</span>, <span class="string">'29'</span>]);</div></pre></td></tr></table></figure></p>
+<p><strong>If successful,</strong> you should see this response:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">         plv8_test</div><div class="line">---------------------------</div><div class="line"> &#123;"name":"Tom","age":"29"&#125;</div><div class="line">(1 row)</div></pre></td></tr></table></figure></p>
+<h2 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions:"></a>Conclusions:</h2><p>According to <a href="http://www.postgresonline.com/journal/archives/326-Writing-PostGIS-raster-Map-Algebra-Callback-Functions-in-PLV8.html" target="_blank" rel="external">this post from Regina Obe</a>, PL/V8 is great for Map Algebra. Unfortunately, as with most posts I’ve found about the PostGIS Raster Module, fails to use a geographically relevant example of raster analysis. I attempt to remedy that with <a href="/geojournal/tags/raster-math-series/">this series of posts on writing ST_MapAlgebra callback functions with PL/V8.</a></p>
+
+
+                
+            </div>
+
+            <!-- Comments -->
+            
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
+    <hr />
+    <h3>Comments:</h3>
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+
+
+                </div>
+            
+        </div>
+    </div>
+</article>
+
+
+    <!-- Footer -->
+    <hr />
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                        <li>
+                            <a href="https://twitter.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="https://github.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="mailto:nronnei@gmail.com" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-envelope-o fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+                </ul>
+                <p class="copyright text-muted">&copy; 2017 Nick Ronnei<br></p>
+                <p class="copyright text-muted">Original Theme <a target="_blank" href="http://startbootstrap.com/template-overviews/clean-blog/">Clean Blog</a> from <a href="http://startbootstrap.com/" target="_blank">Start Bootstrap</a></p>
+                <p class="copyright text-muted">Adapted for <a target="_blank" href="https://hexo.io/">Hexo</a> by <a href="http://www.codeblocq.com/" target="_blank">Jonathan Klughertz</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+    <!-- After footer scripts -->
+    
+<!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<!-- Bootstrap -->
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+<!-- Gallery -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+
+<!-- Disqus Comments -->
+
+<script type="text/javascript">
+    var disqus_shortname = 'geojournal';
+
+    (function(){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,111 @@
+body {
+  margin:0;
+  padding:0;
+  height: 100%;
+  position: fixed;
+}
+a {
+  color:#00B7FF;
+}
+button > i {
+  margin-top: -4px;
+  width: 3em;
+}
+button > a {
+  color: #fff;
+  text-decoration: none;
+}
+.panel-content-wrapper {
+  height: calc(100vh - 4em);
+  overflow-y: auto;
+  width: 100%;
+}
+.mdl-tabs__tab-bar {
+  padding-top: 10px;
+  width: 100%;
+}
+.hidden {
+  display: none;
+}
+.mdl-grid .center-items {
+  justify-content: center;
+}
+.loading {
+  margin-top: 35vh;
+}
+.tile-font {
+  text-align: center;
+  font-size: 1em;
+  color: #7a7a88;
+  line-height: 20px;
+}
+.tile-icon {
+  font-size: 36px;
+}
+.yes {
+  color: #1ece11;
+}
+.no {
+  color: #a50e0e;
+}
+.title {
+  font-weight: bold;
+  font-family: 'Lato', sans-serif;
+}
+.station-subheading {
+  text-align: center;
+  font-family: 'Lato', sans-serif;
+}
+.sub-title {
+  line-height: 0.25em;
+}
+.center-map {
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+#map {
+  top: 0;
+  right: 0;
+  height: 100%;
+  position: absolute;
+  margin:0;
+  padding:0;
+}
+#panel-container {
+  margin-left: 1em;
+}
+#welcome-to-bse {
+  padding-top: 1em;
+}
+#bss-drop-down {
+  margin-bottom: 1em;
+}
+#pricing-content {
+  padding-bottom: 2em;
+}
+#station-instructions {
+  margin-top: 1em;
+  text-align: center;
+}
+#station-id {
+  margin-bottom: -20px;
+}
+#station-gauge {
+  margin-top: -20px;
+  width: 200px;
+  height: 160px;
+  display: inline;
+  position: relative;
+}
+#apple-pay-svg {
+  width: 36px;
+  height: 36px;
+  display: block;
+  margin: auto;
+}
+#android-pay-svg {
+  width: 42px;
+  height: 42px;
+  display: block;
+  margin: auto;
+}
