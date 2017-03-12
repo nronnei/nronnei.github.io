@@ -7,6 +7,14 @@
     </url>
 
     <url>
+        <loc>https://nronnei.github.io/blog/2017/03/what-happened-to-uncertweb/</loc>
+        <lastmod>2017-03-12T15:53:22.327Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
         <loc>https://nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/</loc>
         <lastmod>2017-01-29T21:06:29.488Z</lastmod>
         <changefreq>weekly</changefreq>
