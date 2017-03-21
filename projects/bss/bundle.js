@@ -106549,58 +106549,61 @@ const ulConfig = {
   "maxRadius": 16
 }
 
-// SVG Gauge
-const bikeGauge = new JustGage({
-      id: "station-gauge",
-      value: 2,
-      min: 0,
-      max: 25,
-      relativeGaugeSize: true,
-      width: 240,
-      height: 160,
-      title: "",
-      label: "Bikes",
-      levelColors: [
-        "#2807ff",
-        "#ff0000"
-      ]
-    });
 
-
-// Center Map control
-for (btn of centerMapButtons) {
-  btn.addEventListener('click', () => {
-    map.fitBounds(bssBounds);
-  });
-}
-
-
-// Make welcomePanelLinks work
-for (link of welcomePanelLinks) {
-  link.addEventListener("click", () => {
-    welcomeTab.click();
-  });
-}
-
-
-// Log the last active tab (other than menu) so we can return to it
-// after sidebar is expanded
-for (tab of sidebarTabs) {
-  tab.addEventListener("click", () => {
-    logActiveTab();
-  })
-}
-
-
-// Make sidebarToggles work
-for (btn of sidebarToggles) {
-  btn.addEventListener("click", () => {
-    toggleSidebar();
-    map.resize();
-  });
-}
 
 if (mgl.supported()) {
+
+  // SVG Gauge
+  const bikeGauge = new JustGage({
+        id: "station-gauge",
+        value: 2,
+        min: 0,
+        max: 25,
+        relativeGaugeSize: true,
+        width: 240,
+        height: 160,
+        title: "",
+        label: "Bikes",
+        levelColors: [
+          "#2807ff",
+          "#ff0000"
+        ]
+      });
+
+
+  // Center Map control
+  for (btn of centerMapButtons) {
+    btn.addEventListener('click', () => {
+      map.fitBounds(bssBounds);
+    });
+  }
+
+
+  // Make welcomePanelLinks work
+  for (link of welcomePanelLinks) {
+    link.addEventListener("click", () => {
+      welcomeTab.click();
+    });
+  }
+
+
+  // Log the last active tab (other than menu) so we can return to it
+  // after sidebar is expanded
+  for (tab of sidebarTabs) {
+    tab.addEventListener("click", () => {
+      logActiveTab();
+    })
+  }
+
+
+  // Make sidebarToggles work
+  for (btn of sidebarToggles) {
+    btn.addEventListener("click", () => {
+      toggleSidebar();
+      map.resize();
+    });
+  }
+
   // Initialize our map object
   const map = new mgl.Map({
     container: "map",
@@ -106721,622 +106724,625 @@ if (mgl.supported()) {
     // END map("load") callback
   });
 
-
-
-
-  ////////////////////////////////////////////////////////////////////////////////
-  ///////////////                 Custom Functions                 ///////////////
-  ////////////////////////////////////////////////////////////////////////////////
-
-
-  const mdStationPanel = (e) => {
-
-    // Hide Station Instructions, if necessary
-    stationInstructions.classList.add("hidden");
-
-    let features = map.queryRenderedFeatures(e.point, {layers: ["stations"]});
-
-    if (features.length) {
-
-      // Make clear which station is selected
-      map.setFilter("station-selected", ["==", "station_id", features[0].properties.station_id]);
-
-      // Get coordinates from the symbol and center the map on those coordinates
-      map.flyTo({center: features[0].geometry.coordinates});
-
-      // Get index of clicked station
-      currentStationIndex = undefined;
-      setCurrentStation(features[0].properties.station_id, (selectedStation) => {
-        setStationInfo(selectedStation, true);
-      });
-
-      // Switch to Station Info Panel
-      stationTab.click();
-
-      // Show sidebar if hidden
-      if (panelContainer.classList.contains("hidden")) {
-        lastActiveTab = 'panel-station-a';
-        toggleSidebar();
-      }
-    }
-  }
-
-
-  const mmChangeCursor = (e) => {
-    // Change the cursor to a pointer on top of Symbols
-    let features = map.queryRenderedFeatures(e.point, {layers: ["stations"]});
-    map.getCanvas().style.cursor = (features.length) ? 'pointer' : '';
-  }
-
-
-  const getBSSBounds = (fc, bufferDistance) => {
-    // Buffer the stations to make our bounds more reasonable
-    // Use a half-mile buffer from all stations - this is relatively arbitrary
-    let bufferedFeatureCollection = buffer(fc, bufferDistance, 'miles');
-
-    let bufferedEnvelope = envelope(bufferedFeatureCollection);
-
-    let bounds = getExtent(bufferedEnvelope);
-
-    return bounds;
-  }
-
-
-  const setNewBSS = (url, callback) => {
-    // Note that this function depends on `bss` and `map` already being declared
-
-    // Show loading spinner
-    spinnerOn();
-
-    // Remove geolocation layers, if they exist
-    if (map.getSource("ul")) {
-      // Clear animation
-      clearTimeout(animation);
-      map.removeSource("ul");
-      map.removeLayer("ul-flash");
-      map.removeLayer("ul-core");
-    }
-
-    // Convert Welcome Panel from Welcome mode to Data mode
-    if (welcomeDiv.classList.contains("data-mode") == false) {
-      convertWelcomePanel();
-    }
-
-    // Use gbfs2gjfc to get the new GBFS data from the GBFS Auto-discovery JSON
-    g2g.setGBFS(url, () => {
-      g2g.buildFeatureCollection((fc) => {
-
-        // Set bss equal to our FeatureCollection so we can pull data from it later
-        bss = fc;
-        ttlInterval = (bss.status_ttl * 1000);
-
-        // If source already exists, update it
-        if(map.getSource("bikeshare")) {
-
-          map.getSource("bikeshare").setData(bss);
-          map.setFilter("station-selected", ["==", "station_id", ""]);
-
-        // Otherwise, add the source
-        } else {
-
-          // Add geojson source
-          map.addSource("bikeshare", {
-            "type": "geojson",
-            "data": bss,
-            "tolerance": 0.2
-          });
-
-          // Add and style layer - Color
-          map.addLayer({
-            "id": "stations",
-            "source": "bikeshare",
-            "type": "circle",
-            "paint": {
-              "circle-radius": {
-                type: "exponential",
-                property: "style_size",
-                stops: [
-                  [{zoom: 10, value: .25}, 4],
-                  [{zoom: 10, value: 5}, 12],
-                  [{zoom: 15, value: .25}, 6],
-                  [{zoom: 15, value: 5}, 18],
-                  [{zoom: 20, value: .25}, 8],
-                  [{zoom: 20, value: 5}, 24]
-                ]
-              },
-              "circle-opacity": 0.7,
-              "circle-blur": 0.3,
-              "circle-color": {
-                property: 'pct_available',
-                type: 'exponential',
-                stops: [
-                  [0, "#2807ff"], // All docks, then blue
-                  [1, "#ff0000"] // All bikes, then red
-                ]
-              },
-            }
-          });
-
-          // Add and style layer - Halo
-          map.addLayer({
-            "id": "station-halo",
-            "source": "bikeshare",
-            "type": "circle",
-            "paint": {
-              "circle-radius": {
-                type: "exponential",
-                property: "style_size",
-                stops: [
-                  [{zoom: 10, value: .25}, 4],
-                  [{zoom: 10, value: 5}, 12],
-                  [{zoom: 15, value: .25}, 6],
-                  [{zoom: 15, value: 5}, 18],
-                  [{zoom: 20, value: .25}, 8],
-                  [{zoom: 20, value: 5}, 24]
-                ]
-              },
-
-              "circle-opacity": 0.4,
-              "circle-color": "#fff"
-            }
-          }, 'stations');
-
-          // Add and style layer - Selected
-          map.addLayer({
-            "id": "station-selected",
-            "source": "bikeshare",
-            "type": "circle",
-            "paint": {
-              "circle-radius": {
-                type: "exponential",
-                property: "style_size",
-                stops: [
-                  [{zoom: 10, value: .25}, 6],
-                  [{zoom: 10, value: 5}, 14],
-                  [{zoom: 15, value: .25}, 8],
-                  [{zoom: 15, value: 5}, 20],
-                  [{zoom: 20, value: .25}, 10],
-                  [{zoom: 20, value: 5}, 26]
-                ]
-              },
-
-              "circle-opacity": 0.8,
-              "circle-color": "#fff"
-            },
-            "filter": ["==", "station_id", ""],
-          }, 'station-halo');
-
-        }
-
-        // Notice that all of this is done inside the callback, so we
-        // don't do any of it until we have the data in hand.
-        callback();
-
-      // END setGBFS callback
-      });
-
-    // Handle GBFS failure
-    }, () => {
-      badGBFS();
-    });
-
-  }
-
-
-  const listPricingOptions = (fc) => {
-
-    // Create an empty string so we can keep concatenating it.
-    let newHTML = "";
-
-    for (let plan of fc.system_pricing_plans.plans) {
-
-      let divHTML =
-      '<br>'+
-      '<div class="mdl-grid mdl-grid--no-spacing">'+
-        '<div class="pricing-plan mdl-cell--12-col">'+
-          '<h5 class="mdl-typography--text-center sub-heading">'+
-            plan.name+
-          '</h5>';
-
-      newHTML = newHTML.concat(divHTML);
-
-      // Add plan description as p if available
-      if (plan.description) {
-        let descHTML =
-        '<p class="mdl-typography--text-center"> ' +
-          plan.description +
-        '</p>';
-        newHTML = newHTML.concat(descHTML);
-      }
-
-      // Add price and currency as p
-      let priceHTML =
-      '<p class="mdl-typography--text-center">'+
-        '<strong>Price: </strong>' + plan.price + ' ' + plan.currency+
-      '</p>';
-      newHTML = newHTML.concat(priceHTML);
-
-      // Add URL to buy online, if available.
-      if (plan.url) {
-        let buttonHTML =
-        '<div class="mdl-grid mdl-grid--no-spacing center-items">'+
-          '<button class="mdl-button '+
-            'panel-content' +
-            'mdl-js-button '+
-            'mdl-button--raised '+
-            'mdl-js-ripple-effect '+
-            'mdl-button--colored '+
-            'mdl-cell '+
-            'mdl-cell--8-col">'+
-              '<a href="' + plan.url + '" target="_blank">'+
-                'View Official Pricing'+
-              '</a>'+
-          '</button>'+
-        '</div>'+ // close button's mdl-grid div
-        '</div>'+ // close pricing-plan div
-        '</div>'; // close top mdl-grid
-        newHTML = newHTML.concat(buttonHTML);
-
-      } else {
-
-        // if URL not available, close the containing div
-        newHTML = newHTML.concat("</div>");
-
-      }
-    }
-
-
-    // Fill pricing content div with your HTML
-    pricingContentDiv.innerHTML = newHTML;
-
-  }
-
-
-  const setSystemInfo = (fc, callback) => {
-
-    // Set system name
-    if (fc.system_information.short_name) {
-      systemName.innerHTML = fc.system_information.short_name;
-    } else {
-      systemName.innerHTML = fc.system_information.name;
-    }
-
-    // Set operator name
-    if (fc.system_information.operator) {
-      systemOperator.innerHTML = fc.system_information.operator;
-    } else {
-      systemOperator.innerHTML = fc.system_information.name;
-    }
-
-    // Set Website
-    if (fc.system_information.url) {
-      systemWebsite.setAttribute("href", fc.system_information.url);
-      systemWebsite.innerHTML = fc.system_information.url;
-    } else {
-      systemWebsite.setAttribute("href", "#");
-      systemWebsite.innerHTML = "Unavailable";
-    }
-
-    // Set Email
-    if (fc.system_information.email) {
-      systemEmail.setAttribute("href", "mailto:" + fc.system_information.email);
-      systemEmail.innerHTML = fc.system_information.email;
-    } else {
-      systemEmail.setAttribute("href", "#");
-      systemEmail.innerHTML = "Unavailable";
-    }
-
-    // Set Phone
-    if (fc.system_information.phone_number) {
-      systemPhone.setAttribute("href", "tel:" + fc.system_information.phone_number);
-      systemPhone.innerHTML = fc.system_information.phone_number;
-    } else {
-      systemPhone.setAttribute("href", "#");
-      systemPhone.innerHTML = "Unavailable";
-    }
-
-    // Set system size
-    systemSize.innerHTML = fc.features.length;
-
-
-    // Set Pricing Options
-    if (fc.system_pricing_plans && fc.system_pricing_plans.plans.length > 0) {
-      listPricingOptions(fc);
-    } else {
-      pricingContentDiv.innerHTML =
-      '<p class="mdl-typography--text-center">'+
-        'Unavailable'+
-      '</p>';
-    }
-
-    callback();
-
-  }
-
-
-  const setStationInfo = (station, newStation) => {
-
-    if (newStation) {
-      clearStationInfo();
-
-      // Prevent station names from getting too long
-      let name = station.properties.name.replace("/", " / ");
-      stationName.innerHTML = name;
-
-    }
-
-    // Update station-header content
-    let updateTime = moment(lastUpdate).format("ddd, MMM Do - h:mm:ssA");
-    lastReported.innerHTML = updateTime
-    bikeGauge.refresh(station.properties.num_bikes_available,
-                      station.properties.total_docks);
-    stationHeader.classList.remove("hidden");
-    gaugeWrapper.classList.remove("hidden");
-
-    // Update station-status content
-    // Style is-installed
-    if (station.properties.is_installed) {
-      isInstalled.innerHTML = "check_circle";
-      isInstalled.classList.add("yes");
-      isInstalled.classList.remove("no");
-    } else {
-      isInstalled.innerHTML = "do_not_disturb";
-      isInstalled.classList.add("no");
-      isInstalled.classList.remove("yes");
-    }
-
-    // Style is-renting
-    if (station.properties.is_renting) {
-      isRenting.innerHTML = "check_circle";
-      isRenting.classList.add("yes");
-      isRenting.classList.remove("no");
-    } else {
-      isRenting.innerHTML = "do_not_disturb";
-      isRenting.classList.add("no");
-      isRenting.classList.remove("yes");
-    }
-
-    // Style is-returning
-    if (station.properties.is_returning) {
-      isReturning.innerHTML = "check_circle";
-      isReturning.classList.add("yes");
-      isReturning.classList.remove("no");
-    } else {
-      isReturning.innerHTML = "do_not_disturb";
-      isReturning.classList.add("no");
-      isReturning.classList.remove("yes");
-    }
-
-    // Update station-info
-    listPaymentOptions(station);
-    stationInfo.classList.remove("hidden");
-
-  }
-
-
-  const listPaymentOptions = (station) => {
-    // Payment Method Info
-    if (station.properties.rental_methods){
-      for (method of station.properties.rental_methods) {
-        let tile = document.getElementById(paymentMethods[method]);
-        tile.classList.remove("hidden");
-      }
-    } else {
-      paymentFallback.classList.remove("hidden");
-    }
-  }
-
-
-  const clearStationInfo = () => {
-
-    // Hide all paymentTile values
-    for (tile of paymentTiles) {
-      tile.classList.add("hidden")
-    }
-    paymentFallback.classList.add("hidden");
-
-    stationHeader.classList.add("hidden");
-    gaugeWrapper.classList.add("hidden");
-    stationInfo.classList.add("hidden");
-    stationInstructions.classList.add("hidden");
-
-  }
-
-
-  const clearSystemInfo = () => {
-
-    for (let el of welcomePanelContent) {
-      el.classList.add("hidden");
-    }
-  }
-
-
-  const convertWelcomePanel = () => {
-
-    if (welcomeDiv.classList.contains("data-mode")) {
-
-      // Convert to Display Mode
-      welcomeDiv.classList.add("display-mode")
-      welcomeDiv.classList.remove("data-mode")
-      welcomeHeading.classList.remove("hidden")
-      welcomeSubheading.classList.remove("hidden")
-
-    } else {
-
-      // Convert to Data Mode
-      welcomeDiv.classList.remove("display-mode")
-      welcomeDiv.classList.add("data-mode")
-      welcomeHeading.classList.add("hidden")
-      welcomeSubheading.classList.add("hidden")
-
-    }
-
-  }
-
-
-  const setCurrentStation = (stationID, callback) => {
-
-    for (let i = 0; i < bss.features.length; i++) {
-      if (bss.features[i].properties.station_id == stationID) {
-        currentStationIndex = stationID
-        callback(bss.features[i]);
-        break;
-      }
-    }
-
-  }
-
-
-  const toggleSidebar = () => {
-    if (panelContainer.classList.contains("hidden")) {
-      // Reveal panel, shrink map
-      sidebarToggleBtn.classList.add("hidden")
-      panelContainer.classList.remove("hidden")
-      mapContainer.classList.remove("full")
-      activateLastTab();
-    } else {
-      // Hide panel, grow map
-      sidebarToggleBtn.classList.remove("hidden")
-      panelContainer.classList.add("hidden")
-      mapContainer.classList.add("full")
-    }
-  }
-
-
-  const logActiveTab = () => {
-    for (tab of sidebarTabs) {
-      if (tab.classList.contains("is-active") && tab.id != "menu-a") {
-          lastActiveTab = tab.id;
-        }
-    }
-  }
-
-
-  const activateLastTab = () => {
-    switch(lastActiveTab) {
-      case "panel-welcome-a":
-        welcomeTab.click();
-        break;
-      case "panel-station-a":
-        stationTab.click();
-        break;
-      case "panel-help-a":
-        helpTab.click();
-        break;
-    }
-  }
-
-
-  const badGBFS = () => {
-    spinnerOff();
-    convertWelcomePanel();
-    welcomeDiv.classList.remove("hidden");
-    welcomeHeading.innerHTML = "Woops!";
-    welcomeSubheading.innerHTML = "That system is experience technical difficulties. Try exploring another.";
-
-  }
-
-
-  const spinnerOn = () => {
-    for (let spinner of loadingSpinners) {
-      spinner.classList.remove("hidden");
-      welcomeDiv.classList.add("hidden")
-    }
-  }
-
-
-  const spinnerOff = () => {
-    for (let spinner of loadingSpinners) {
-      spinner.classList.add("hidden");
-      welcomeDiv.classList.remove("hidden")
-    }
-  }
-
-
-  let animation;
-  const animateMarker = (timestamp) => {
-
-    animation = setTimeout(() => {
-
-      requestAnimationFrame(animateMarker);
-      ulConfig.radius += (ulConfig.maxRadius - ulConfig.radius) / ulConfig.fps;
-      ulConfig.opacity -= ( .9 / ulConfig.fps );
-
-      if (ulConfig.opacity <= 0) {
-          ulConfig.radius = ulConfig.initialRadius;
-          ulConfig.opacity = ulConfig.initialOpacity;
-      }
-
-      map.setPaintProperty('ul-flash', 'circle-radius', ulConfig.radius);
-      map.setPaintProperty('ul-flash', 'circle-opacity', ulConfig.opacity);
-
-    }, 1000 / ulConfig.fps);
-  }
-
-
-  const geolocateSuccess = (data) => {
-
-    // If layer exists, set data.
-    if (map.getSource("ul")) {
-
-      map.getSource("ul").setData({
-        "type": "geojson",
-        "data": {
-          "type": "Point",
-          "coordinates": [
-            data.coords.longitude, data.coords.latitude
-          ]
-        }
-      });
-
-    // If not, create it.
-    } else {
-
-      // Add a source and layer displaying a point which will be animated in a circle.
-      map.addSource('ul', {
-        "type": "geojson",
-        "data": {
-          "type": "Point",
-          "coordinates": [
-            data.coords.longitude, data.coords.latitude
-          ]
-        }
-      });
-
-      // User Location - Flash
-      map.addLayer({
-        "id": "ul-flash",
-        "source": "ul",
-        "type": "circle",
-        "paint": {
-          "circle-radius": ulConfig.initialRadius,
-          "circle-opacity": 1,
-          "circle-radius-transition": {duration: 0},
-          "circle-opacity-transition": {duration: 0},
-          "circle-color": "#ffc300"
-        }
-      }, "ul-core");
-
-      // User Location - Core
-      map.addLayer({
-        "id": "ul-core",
-        "source": "ul",
-        "type": "circle",
-        "paint": {
-          "circle-radius": ulConfig.initialRadius,
-          "circle-color": "#ffc300",
-          "circle-blur": 0.3,
-        }
-      });
-
-      // Start the animation.
-      animateMarker(0);
-
-    }
-  }
-
 } else {
   alert("Your browser doesn't support Mapbx GL JS. This app won't work for you. Please download a modern browser like Chrome, Firefox, or Edge.")
+}
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////                 Custom Functions                 ///////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+const mdStationPanel = (e) => {
+
+  // Hide Station Instructions, if necessary
+  stationInstructions.classList.add("hidden");
+
+  let features = map.queryRenderedFeatures(e.point, {layers: ["stations"]});
+
+  if (features.length) {
+
+    // Make clear which station is selected
+    map.setFilter("station-selected", ["==", "station_id", features[0].properties.station_id]);
+
+    // Get coordinates from the symbol and center the map on those coordinates
+    map.flyTo({center: features[0].geometry.coordinates});
+
+    // Get index of clicked station
+    currentStationIndex = undefined;
+    setCurrentStation(features[0].properties.station_id, (selectedStation) => {
+      setStationInfo(selectedStation, true);
+    });
+
+    // Switch to Station Info Panel
+    stationTab.click();
+
+    // Show sidebar if hidden
+    if (panelContainer.classList.contains("hidden")) {
+      lastActiveTab = 'panel-station-a';
+      toggleSidebar();
+    }
+  }
+}
+
+
+const mmChangeCursor = (e) => {
+  // Change the cursor to a pointer on top of Symbols
+  let features = map.queryRenderedFeatures(e.point, {layers: ["stations"]});
+  map.getCanvas().style.cursor = (features.length) ? 'pointer' : '';
+}
+
+
+const getBSSBounds = (fc, bufferDistance) => {
+  // Buffer the stations to make our bounds more reasonable
+  // Use a half-mile buffer from all stations - this is relatively arbitrary
+  let bufferedFeatureCollection = buffer(fc, bufferDistance, 'miles');
+
+  let bufferedEnvelope = envelope(bufferedFeatureCollection);
+
+  let bounds = getExtent(bufferedEnvelope);
+
+  return bounds;
+}
+
+
+const setNewBSS = (url, callback) => {
+  // Note that this function depends on `bss` and `map` already being declared
+
+  // Show loading spinner
+  spinnerOn();
+
+  // Remove geolocation layers, if they exist
+  if (map.getSource("ul")) {
+    // Clear animation
+    clearTimeout(animation);
+    map.removeSource("ul");
+    map.removeLayer("ul-flash");
+    map.removeLayer("ul-core");
+  }
+
+  // Convert Welcome Panel from Welcome mode to Data mode
+  if (welcomeDiv.classList.contains("data-mode") == false) {
+    convertWelcomePanel();
+  }
+
+  // Use gbfs2gjfc to get the new GBFS data from the GBFS Auto-discovery JSON
+  g2g.setGBFS(url, () => {
+    g2g.buildFeatureCollection((fc) => {
+
+      // Set bss equal to our FeatureCollection so we can pull data from it later
+      bss = fc;
+      ttlInterval = (bss.status_ttl * 1000);
+
+      // If source already exists, update it
+      if(map.getSource("bikeshare")) {
+
+        map.getSource("bikeshare").setData(bss);
+        map.setFilter("station-selected", ["==", "station_id", ""]);
+
+      // Otherwise, add the source
+      } else {
+
+        // Add geojson source
+        map.addSource("bikeshare", {
+          "type": "geojson",
+          "data": bss,
+          "tolerance": 0.2
+        });
+
+        // Add and style layer - Color
+        map.addLayer({
+          "id": "stations",
+          "source": "bikeshare",
+          "type": "circle",
+          "paint": {
+            "circle-radius": {
+              type: "exponential",
+              property: "style_size",
+              stops: [
+                [{zoom: 10, value: .25}, 4],
+                [{zoom: 10, value: 5}, 12],
+                [{zoom: 15, value: .25}, 6],
+                [{zoom: 15, value: 5}, 18],
+                [{zoom: 20, value: .25}, 8],
+                [{zoom: 20, value: 5}, 24]
+              ]
+            },
+            "circle-opacity": 0.7,
+            "circle-blur": 0.3,
+            "circle-color": {
+              property: 'pct_available',
+              type: 'exponential',
+              stops: [
+                [0, "#2807ff"], // All docks, then blue
+                [1, "#ff0000"] // All bikes, then red
+              ]
+            },
+          }
+        });
+
+        // Add and style layer - Halo
+        map.addLayer({
+          "id": "station-halo",
+          "source": "bikeshare",
+          "type": "circle",
+          "paint": {
+            "circle-radius": {
+              type: "exponential",
+              property: "style_size",
+              stops: [
+                [{zoom: 10, value: .25}, 4],
+                [{zoom: 10, value: 5}, 12],
+                [{zoom: 15, value: .25}, 6],
+                [{zoom: 15, value: 5}, 18],
+                [{zoom: 20, value: .25}, 8],
+                [{zoom: 20, value: 5}, 24]
+              ]
+            },
+
+            "circle-opacity": 0.4,
+            "circle-color": "#fff"
+          }
+        }, 'stations');
+
+        // Add and style layer - Selected
+        map.addLayer({
+          "id": "station-selected",
+          "source": "bikeshare",
+          "type": "circle",
+          "paint": {
+            "circle-radius": {
+              type: "exponential",
+              property: "style_size",
+              stops: [
+                [{zoom: 10, value: .25}, 6],
+                [{zoom: 10, value: 5}, 14],
+                [{zoom: 15, value: .25}, 8],
+                [{zoom: 15, value: 5}, 20],
+                [{zoom: 20, value: .25}, 10],
+                [{zoom: 20, value: 5}, 26]
+              ]
+            },
+
+            "circle-opacity": 0.8,
+            "circle-color": "#fff"
+          },
+          "filter": ["==", "station_id", ""],
+        }, 'station-halo');
+
+      }
+
+      // Notice that all of this is done inside the callback, so we
+      // don't do any of it until we have the data in hand.
+      callback();
+
+    // END setGBFS callback
+    });
+
+  // Handle GBFS failure
+  }, () => {
+    badGBFS();
+  });
+
+}
+
+
+const listPricingOptions = (fc) => {
+
+  // Create an empty string so we can keep concatenating it.
+  let newHTML = "";
+
+  for (let plan of fc.system_pricing_plans.plans) {
+
+    let divHTML =
+    '<br>'+
+    '<div class="mdl-grid mdl-grid--no-spacing">'+
+      '<div class="pricing-plan mdl-cell--12-col">'+
+        '<h5 class="mdl-typography--text-center sub-heading">'+
+          plan.name+
+        '</h5>';
+
+    newHTML = newHTML.concat(divHTML);
+
+    // Add plan description as p if available
+    if (plan.description) {
+      let descHTML =
+      '<p class="mdl-typography--text-center"> ' +
+        plan.description +
+      '</p>';
+      newHTML = newHTML.concat(descHTML);
+    }
+
+    // Add price and currency as p
+    let priceHTML =
+    '<p class="mdl-typography--text-center">'+
+      '<strong>Price: </strong>' + plan.price + ' ' + plan.currency+
+    '</p>';
+    newHTML = newHTML.concat(priceHTML);
+
+    // Add URL to buy online, if available.
+    if (plan.url) {
+      let buttonHTML =
+      '<div class="mdl-grid mdl-grid--no-spacing center-items">'+
+        '<button class="mdl-button '+
+          'panel-content' +
+          'mdl-js-button '+
+          'mdl-button--raised '+
+          'mdl-js-ripple-effect '+
+          'mdl-button--colored '+
+          'mdl-cell '+
+          'mdl-cell--8-col">'+
+            '<a href="' + plan.url + '" target="_blank">'+
+              'View Official Pricing'+
+            '</a>'+
+        '</button>'+
+      '</div>'+ // close button's mdl-grid div
+      '</div>'+ // close pricing-plan div
+      '</div>'; // close top mdl-grid
+      newHTML = newHTML.concat(buttonHTML);
+
+    } else {
+
+      // if URL not available, close the containing div
+      newHTML = newHTML.concat("</div>");
+
+    }
+  }
+
+
+  // Fill pricing content div with your HTML
+  pricingContentDiv.innerHTML = newHTML;
+
+}
+
+
+const setSystemInfo = (fc, callback) => {
+
+  // Set system name
+  if (fc.system_information.short_name) {
+    systemName.innerHTML = fc.system_information.short_name;
+  } else {
+    systemName.innerHTML = fc.system_information.name;
+  }
+
+  // Set operator name
+  if (fc.system_information.operator) {
+    systemOperator.innerHTML = fc.system_information.operator;
+  } else {
+    systemOperator.innerHTML = fc.system_information.name;
+  }
+
+  // Set Website
+  if (fc.system_information.url) {
+    systemWebsite.setAttribute("href", fc.system_information.url);
+    systemWebsite.innerHTML = fc.system_information.url;
+  } else {
+    systemWebsite.setAttribute("href", "#");
+    systemWebsite.innerHTML = "Unavailable";
+  }
+
+  // Set Email
+  if (fc.system_information.email) {
+    systemEmail.setAttribute("href", "mailto:" + fc.system_information.email);
+    systemEmail.innerHTML = fc.system_information.email;
+  } else {
+    systemEmail.setAttribute("href", "#");
+    systemEmail.innerHTML = "Unavailable";
+  }
+
+  // Set Phone
+  if (fc.system_information.phone_number) {
+    systemPhone.setAttribute("href", "tel:" + fc.system_information.phone_number);
+    systemPhone.innerHTML = fc.system_information.phone_number;
+  } else {
+    systemPhone.setAttribute("href", "#");
+    systemPhone.innerHTML = "Unavailable";
+  }
+
+  // Set system size
+  systemSize.innerHTML = fc.features.length;
+
+
+  // Set Pricing Options
+  if (fc.system_pricing_plans && fc.system_pricing_plans.plans.length > 0) {
+    listPricingOptions(fc);
+  } else {
+    pricingContentDiv.innerHTML =
+    '<p class="mdl-typography--text-center">'+
+      'Unavailable'+
+    '</p>';
+  }
+
+  callback();
+
+}
+
+
+const setStationInfo = (station, newStation) => {
+
+  if (newStation) {
+    clearStationInfo();
+
+    // Prevent station names from getting too long
+    let name = station.properties.name.replace("/", " / ");
+    stationName.innerHTML = name;
+
+  }
+
+  // Update station-header content
+  let updateTime = moment(lastUpdate).format("ddd, MMM Do - h:mm:ssA");
+  lastReported.innerHTML = updateTime
+  bikeGauge.refresh(station.properties.num_bikes_available,
+                    station.properties.total_docks);
+  stationHeader.classList.remove("hidden");
+  gaugeWrapper.classList.remove("hidden");
+
+  // Update station-status content
+  // Style is-installed
+  if (station.properties.is_installed) {
+    isInstalled.innerHTML = "check_circle";
+    isInstalled.classList.add("yes");
+    isInstalled.classList.remove("no");
+  } else {
+    isInstalled.innerHTML = "do_not_disturb";
+    isInstalled.classList.add("no");
+    isInstalled.classList.remove("yes");
+  }
+
+  // Style is-renting
+  if (station.properties.is_renting) {
+    isRenting.innerHTML = "check_circle";
+    isRenting.classList.add("yes");
+    isRenting.classList.remove("no");
+  } else {
+    isRenting.innerHTML = "do_not_disturb";
+    isRenting.classList.add("no");
+    isRenting.classList.remove("yes");
+  }
+
+  // Style is-returning
+  if (station.properties.is_returning) {
+    isReturning.innerHTML = "check_circle";
+    isReturning.classList.add("yes");
+    isReturning.classList.remove("no");
+  } else {
+    isReturning.innerHTML = "do_not_disturb";
+    isReturning.classList.add("no");
+    isReturning.classList.remove("yes");
+  }
+
+  // Update station-info
+  listPaymentOptions(station);
+  stationInfo.classList.remove("hidden");
+
+}
+
+
+const listPaymentOptions = (station) => {
+  // Payment Method Info
+  if (station.properties.rental_methods){
+    for (method of station.properties.rental_methods) {
+      let tile = document.getElementById(paymentMethods[method]);
+      tile.classList.remove("hidden");
+    }
+  } else {
+    paymentFallback.classList.remove("hidden");
+  }
+}
+
+
+const clearStationInfo = () => {
+
+  // Hide all paymentTile values
+  for (tile of paymentTiles) {
+    tile.classList.add("hidden")
+  }
+  paymentFallback.classList.add("hidden");
+
+  stationHeader.classList.add("hidden");
+  gaugeWrapper.classList.add("hidden");
+  stationInfo.classList.add("hidden");
+  stationInstructions.classList.add("hidden");
+
+}
+
+
+const clearSystemInfo = () => {
+
+  for (let el of welcomePanelContent) {
+    el.classList.add("hidden");
+  }
+}
+
+
+const convertWelcomePanel = () => {
+
+  if (welcomeDiv.classList.contains("data-mode")) {
+
+    // Convert to Display Mode
+    welcomeDiv.classList.add("display-mode")
+    welcomeDiv.classList.remove("data-mode")
+    welcomeHeading.classList.remove("hidden")
+    welcomeSubheading.classList.remove("hidden")
+
+  } else {
+
+    // Convert to Data Mode
+    welcomeDiv.classList.remove("display-mode")
+    welcomeDiv.classList.add("data-mode")
+    welcomeHeading.classList.add("hidden")
+    welcomeSubheading.classList.add("hidden")
+
+  }
+
+}
+
+
+const setCurrentStation = (stationID, callback) => {
+
+  for (let i = 0; i < bss.features.length; i++) {
+    if (bss.features[i].properties.station_id == stationID) {
+      currentStationIndex = stationID
+      callback(bss.features[i]);
+      break;
+    }
+  }
+
+}
+
+
+const toggleSidebar = () => {
+  if (panelContainer.classList.contains("hidden")) {
+    // Reveal panel, shrink map
+    sidebarToggleBtn.classList.add("hidden")
+    panelContainer.classList.remove("hidden")
+    mapContainer.classList.remove("full")
+    activateLastTab();
+  } else {
+    // Hide panel, grow map
+    sidebarToggleBtn.classList.remove("hidden")
+    panelContainer.classList.add("hidden")
+    mapContainer.classList.add("full")
+  }
+}
+
+
+const logActiveTab = () => {
+  for (tab of sidebarTabs) {
+    if (tab.classList.contains("is-active") && tab.id != "menu-a") {
+        lastActiveTab = tab.id;
+      }
+  }
+}
+
+
+const activateLastTab = () => {
+  switch(lastActiveTab) {
+    case "panel-welcome-a":
+      welcomeTab.click();
+      break;
+    case "panel-station-a":
+      stationTab.click();
+      break;
+    case "panel-help-a":
+      helpTab.click();
+      break;
+  }
+}
+
+
+const badGBFS = () => {
+  spinnerOff();
+  convertWelcomePanel();
+  welcomeDiv.classList.remove("hidden");
+  welcomeHeading.innerHTML = "Woops!";
+  welcomeSubheading.innerHTML = "That system is experience technical difficulties. Try exploring another.";
+
+}
+
+
+const spinnerOn = () => {
+  for (let spinner of loadingSpinners) {
+    spinner.classList.remove("hidden");
+    welcomeDiv.classList.add("hidden")
+  }
+}
+
+
+const spinnerOff = () => {
+  for (let spinner of loadingSpinners) {
+    spinner.classList.add("hidden");
+    welcomeDiv.classList.remove("hidden")
+  }
+}
+
+
+let animation;
+const animateMarker = (timestamp) => {
+
+  animation = setTimeout(() => {
+
+    requestAnimationFrame(animateMarker);
+    ulConfig.radius += (ulConfig.maxRadius - ulConfig.radius) / ulConfig.fps;
+    ulConfig.opacity -= ( .9 / ulConfig.fps );
+
+    if (ulConfig.opacity <= 0) {
+        ulConfig.radius = ulConfig.initialRadius;
+        ulConfig.opacity = ulConfig.initialOpacity;
+    }
+
+    map.setPaintProperty('ul-flash', 'circle-radius', ulConfig.radius);
+    map.setPaintProperty('ul-flash', 'circle-opacity', ulConfig.opacity);
+
+  }, 1000 / ulConfig.fps);
+}
+
+
+const geolocateSuccess = (data) => {
+
+  // If layer exists, set data.
+  if (map.getSource("ul")) {
+
+    map.getSource("ul").setData({
+      "type": "geojson",
+      "data": {
+        "type": "Point",
+        "coordinates": [
+          data.coords.longitude, data.coords.latitude
+        ]
+      }
+    });
+
+  // If not, create it.
+  } else {
+
+    // Add a source and layer displaying a point which will be animated in a circle.
+    map.addSource('ul', {
+      "type": "geojson",
+      "data": {
+        "type": "Point",
+        "coordinates": [
+          data.coords.longitude, data.coords.latitude
+        ]
+      }
+    });
+
+    // User Location - Flash
+    map.addLayer({
+      "id": "ul-flash",
+      "source": "ul",
+      "type": "circle",
+      "paint": {
+        "circle-radius": ulConfig.initialRadius,
+        "circle-opacity": 1,
+        "circle-radius-transition": {duration: 0},
+        "circle-opacity-transition": {duration: 0},
+        "circle-color": "#ffc300"
+      }
+    }, "ul-core");
+
+    // User Location - Core
+    map.addLayer({
+      "id": "ul-core",
+      "source": "ul",
+      "type": "circle",
+      "paint": {
+        "circle-radius": ulConfig.initialRadius,
+        "circle-color": "#ffc300",
+        "circle-blur": 0.3,
+      }
+    });
+
+    // Start the animation.
+    animateMarker(0);
+
+  }
 }
 
 },{"@turf/bbox":169,"@turf/buffer":170,"@turf/envelope":171,"gbfs2gjfc":240,"mapbox-gl":354,"moment":462}]},{},[542]);
