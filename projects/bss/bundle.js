@@ -106553,6 +106553,8 @@ const ulConfig = {
 
 if (mgl.supported()) {
 
+
+
   // SVG Gauge
   const bikeGauge = new JustGage({
         id: "station-gauge",
@@ -106582,6 +106584,7 @@ if (mgl.supported()) {
   // Make welcomePanelLinks work
   for (link of welcomePanelLinks) {
     link.addEventListener("click", () => {
+      console.log("click! - welcome panel");
       welcomeTab.click();
     });
   }
@@ -106591,6 +106594,7 @@ if (mgl.supported()) {
   // after sidebar is expanded
   for (tab of sidebarTabs) {
     tab.addEventListener("click", () => {
+      alert("click! - active tab");
       logActiveTab();
     })
   }
@@ -106637,6 +106641,8 @@ if (mgl.supported()) {
 
   // Let it roar
   map.on("load", () => {
+
+    alert("Map loaded.");
 
     // On geolocation success
     geolocator.on("geolocate", (data) => {
@@ -106729,6 +106735,13 @@ if (mgl.supported()) {
   ///////////////                 Custom Functions                 ///////////////
   ////////////////////////////////////////////////////////////////////////////////
 
+
+  const delayedAlert = () => {
+    setTimeout(() => {
+      alert("alert.")
+    }, 5000);
+
+  }
 
   const mdStationPanel = (e) => {
 
