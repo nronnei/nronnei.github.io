@@ -126,7 +126,7 @@
   width:100%
 }
 .hidden {
-  display: none !important;
+  display: none;
 }
 
 
@@ -200,7 +200,6 @@ a {
 */
 
 body {
-  cursor: pointer;
   margin:0;
   padding:0;
   height: 100%;

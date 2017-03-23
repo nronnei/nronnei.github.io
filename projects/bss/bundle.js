@@ -106479,14 +106479,14 @@ mgl.accessToken = "pk.eyJ1IjoibnJvbm5laSIsImEiOiJ2emt3WUY4In0.cRYAp7rDFZvRUBkExD
 
 
 // Containers
-const mapContainer = document.getElementById("map")
-const panelContainer = document.getElementById("container-panel")
-const sidebarToggleBtn = document.getElementById("sidebar-toggle-btn")
-const sidebarToggles = document.getElementsByClassName("sidebar-toggle")
+const mapContainer = document.getElementById("map");
+const panelContainer = document.getElementById("container-panel");
+const sidebarToggleBtn = document.getElementById("sidebar-toggle-btn");
+const sidebarToggles = Array.from(document.getElementsByClassName("sidebar-toggle"));
 
 // Panel Anchors
-const welcomePanelLinks = document.getElementsByClassName("panel-welcome-link");
-const sidebarTabs = document.getElementsByClassName("mdl-tabs__tab")
+const welcomePanelLinks = Array.from(document.getElementsByClassName("panel-welcome-link"));
+const sidebarTabs = Array.from(document.getElementsByClassName("mdl-tabs__tab"));
 var lastActiveTab;
 const welcomeTab = document.getElementById("panel-welcome-a");
 const stationTab = document.getElementById("panel-station-a");
@@ -106494,15 +106494,15 @@ const helpTab = document.getElementById("panel-help-a");
 const menuTab = document.getElementById("menu-a");
 
 // Loading and Dropdown
-const loadingSpinners = document.getElementsByClassName("loading");
+const loadingSpinners = Array.from(document.getElementsByClassName("loading"));
 const bssDropDown = document.getElementById("bss-drop-down");
 
 // Welcome Panel
 const welcomeDiv = document.getElementById("welcome-action");
 const welcomeHeading = document.getElementById("welcome-heading");
 const welcomeSubheading = document.getElementById("welcome-subheading");
-const centerMapButtons = document.getElementsByClassName("center-map");
-const welcomePanelContent = document.getElementsByClassName('welcome-panel-content');
+const centerMapButtons = Array.from(document.getElementsByClassName("center-map"));
+const welcomePanelContent = Array.from(document.getElementsByClassName('welcome-panel-content'));
 const systemName = document.getElementById("system-name");
 const systemOperator = document.getElementById("system-operator");
 const systemWebsite = document.getElementById("system-website-a");
@@ -106516,7 +106516,7 @@ var ttlInterval;
 var lastUpdate;
 var currentStationIndex;
 // Use `var` so they're available to the global scope
-const stationInstructions = document.getElementById("station-instructions")
+const stationInstructions = document.getElementById("station-instructions");
 const stationPanelContent = document.getElementById("station-panel-wrapper");
 const stationHeader = document.getElementById("station-header");
 const stationName = document.getElementById("station-name");
@@ -106527,7 +106527,7 @@ const gaugeWrapper = document.getElementById("station-gauge-container");
 const isInstalled = document.getElementById("is-installed");
 const isRenting = document.getElementById("is-renting");
 const isReturning = document.getElementById("is-returning");
-const paymentTiles = document.getElementsByClassName("payment-tile");
+const paymentTiles = Array.from(document.getElementsByClassName("payment-tile"));
 const paymentFallback = document.getElementById("payment-fallback");
 const paymentMethods = {
   "KEY": "payment-key",
@@ -106547,7 +106547,7 @@ const ulConfig = {
   "initialRadius": 8,
   "radius": 8,
   "maxRadius": 16
-}
+};
 
 
 
@@ -106574,7 +106574,7 @@ if (mgl.supported()) {
 
 
   // Center Map control
-  for (btn of centerMapButtons) {
+  for (let btn of centerMapButtons) {
     btn.addEventListener('click', () => {
       map.fitBounds(bssBounds);
     });
@@ -106582,9 +106582,8 @@ if (mgl.supported()) {
 
 
   // Make welcomePanelLinks work
-  for (link of welcomePanelLinks) {
+  for (let link of welcomePanelLinks) {
     link.addEventListener("click", () => {
-      console.log("click! - welcome panel");
       welcomeTab.click();
     });
   }
@@ -106592,21 +106591,20 @@ if (mgl.supported()) {
 
   // Log the last active tab (other than menu) so we can return to it
   // after sidebar is expanded
-  for (tab of sidebarTabs) {
+  for (let tab of sidebarTabs) {
     tab.addEventListener("click", () => {
-      alert("click! - active tab");
       logActiveTab();
     })
   }
 
 
   // Make sidebarToggles work
-  for (btn of sidebarToggles) {
+  for (let btn of sidebarToggles) {
     btn.addEventListener("click", () => {
       toggleSidebar();
-      map.resize();
     });
   }
+
 
   // Initialize our map object
   const map = new mgl.Map({
@@ -106641,8 +106639,6 @@ if (mgl.supported()) {
 
   // Let it roar
   map.on("load", () => {
-
-    alert("Map loaded.");
 
     // On geolocation success
     geolocator.on("geolocate", (data) => {
@@ -106735,13 +106731,6 @@ if (mgl.supported()) {
   ///////////////                 Custom Functions                 ///////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-
-  const delayedAlert = () => {
-    setTimeout(() => {
-      alert("alert.")
-    }, 5000);
-
-  }
 
   const mdStationPanel = (e) => {
 
@@ -107208,11 +107197,13 @@ if (mgl.supported()) {
       panelContainer.classList.remove("hidden")
       mapContainer.classList.remove("full")
       activateLastTab();
+      map.resize();
     } else {
       // Hide panel, grow map
       sidebarToggleBtn.classList.remove("hidden")
       panelContainer.classList.add("hidden")
       mapContainer.classList.add("full")
+      map.resize();
     }
   }
 
