@@ -42735,6 +42735,7 @@ const setGBFS = (url, callback, failure) => {
 
       // Set feed urls in meta
       for (feed of data.data[meta.feedLanaguage].feeds) {
+        feed.url = feed.url.replace('http', 'https')
         meta[feed.name] = feed.url;
       }
 
