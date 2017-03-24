@@ -1,4 +1,3 @@
-
 /*
     MEDIA QUERIES FOR LAYOUT BREAKPOINTS
 */
@@ -111,6 +110,17 @@
 
 
 /*
+
+  DIALOG
+
+*/
+.mdl-dialog__title {
+  line-height: 3.25rem;
+}
+
+
+
+/*
     MISC
 */
 #map {
@@ -126,7 +136,7 @@
   width:100%
 }
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 

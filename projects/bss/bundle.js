@@ -30800,6 +30800,7 @@ var polygon = require('@turf/helpers').polygon;
  * @name bboxPolygon
  * @param {Array<number>} bbox extent in [minX, minY, maxX, maxY] order
  * @return {Feature<Polygon>} a Polygon representation of the bounding box
+ * @addToMap poly
  * @example
  * var bbox = [0, 0, 10, 10];
  *
@@ -30831,7 +30832,8 @@ var each = require('@turf/meta').coordEach;
  *
  * @name bbox
  * @param {(Feature|FeatureCollection)} geojson input features
- * @return {Array<number>} bbox extent in [minX, minY, maxX, maxY] order
+ * @returns {Array<number>} bbox extent in [minX, minY, maxX, maxY] order
+ * @addToMap features, bboxPolygon
  * @example
  * var pt1 = turf.point([114.175329, 22.2524])
  * var pt2 = turf.point([114.170007, 22.267969])
@@ -30877,7 +30879,7 @@ var normalize = require('@mapbox/geojson-normalize');
  * @param {number} radius distance to draw the buffer
  * @param {string} units any of the options supported by turf units
  * @return {FeatureCollection<Polygon>|FeatureCollection<MultiPolygon>|Polygon|MultiPolygon} buffered features
- *
+ * @addToMap pt, buffered
  * @example
  * var pt = {
  *   "type": "Feature",
@@ -30890,9 +30892,8 @@ var normalize = require('@mapbox/geojson-normalize');
  * var unit = 'miles';
  *
  * var buffered = turf.buffer(pt, 500, unit);
- * var result = turf.featureCollection([buffered, pt]);
  *
- * //=result
+ * //=buffered
  */
 
 module.exports = function (feature, radius, units) {
@@ -30921,7 +30922,7 @@ function bufferOp(feature, radius) {
     };
 }
 
-},{"@mapbox/geojson-normalize":167,"@turf/helpers":172,"jsts":307}],171:[function(require,module,exports){
+},{"@mapbox/geojson-normalize":167,"@turf/helpers":172,"jsts":308}],171:[function(require,module,exports){
 var bbox = require('@turf/bbox');
 var bboxPolygon = require('@turf/bbox-polygon');
 
@@ -32381,7 +32382,7 @@ function Ajv(opts) {
   }
 }
 
-},{"./async":175,"./cache":176,"./compile":180,"./compile/formats":179,"./compile/resolve":181,"./compile/rules":182,"./compile/schema_obj":183,"./compile/util":185,"./compile/validation_error":186,"./keyword":211,"./refs/json-schema-draft-04.json":212,"./v5":214,"co":227,"json-stable-stringify":300}],175:[function(require,module,exports){
+},{"./async":175,"./cache":176,"./compile":180,"./compile/formats":179,"./compile/resolve":181,"./compile/rules":182,"./compile/schema_obj":183,"./compile/util":185,"./compile/validation_error":186,"./keyword":211,"./refs/json-schema-draft-04.json":212,"./v5":214,"co":227,"json-stable-stringify":301}],175:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -33264,7 +33265,7 @@ function vars(arr, statement) {
   return code;
 }
 
-},{"../async":175,"../dotjs/validate":210,"./equal":178,"./resolve":181,"./util":185,"./validation_error":186,"co":227,"json-stable-stringify":300}],181:[function(require,module,exports){
+},{"../async":175,"../dotjs/validate":210,"./equal":178,"./resolve":181,"./util":185,"./validation_error":186,"co":227,"json-stable-stringify":301}],181:[function(require,module,exports){
 'use strict';
 
 var url = require('url')
@@ -33867,7 +33868,7 @@ function unescapeJsonPointer(str) {
   return str.replace(/~1/g, '/').replace(/~0/g, '~');
 }
 
-},{"./ucs2length":184,"json-stable-stringify":300}],186:[function(require,module,exports){
+},{"./ucs2length":184,"json-stable-stringify":301}],186:[function(require,module,exports){
 'use strict';
 
 module.exports = ValidationError;
@@ -39875,7 +39876,7 @@ module.exports = {
       pbkdf: bcrypt_pbkdf
 };
 
-},{"tweetnacl":524}],226:[function(require,module,exports){
+},{"tweetnacl":525}],226:[function(require,module,exports){
 function Caseless (dict) {
   this.dict = dict || {}
 }
@@ -40688,6 +40689,661 @@ DelayedStream.prototype._checkIfMaxDataSizeExceeded = function() {
 };
 
 },{"stream":152,"util":164}],231:[function(require,module,exports){
+(function() {
+
+  // nb. This is for IE10 and lower _only_.
+  var supportCustomEvent = window.CustomEvent;
+  if (!supportCustomEvent || typeof supportCustomEvent == 'object') {
+    supportCustomEvent = function CustomEvent(event, x) {
+      x = x || {};
+      var ev = document.createEvent('CustomEvent');
+      ev.initCustomEvent(event, !!x.bubbles, !!x.cancelable, x.detail || null);
+      return ev;
+    };
+    supportCustomEvent.prototype = window.Event.prototype;
+  }
+
+  /**
+   * @param {Element} el to check for stacking context
+   * @return {boolean} whether this el or its parents creates a stacking context
+   */
+  function createsStackingContext(el) {
+    while (el && el !== document.body) {
+      var s = window.getComputedStyle(el);
+      var invalid = function(k, ok) {
+        return !(s[k] === undefined || s[k] === ok);
+      }
+      if (s.opacity < 1 ||
+          invalid('zIndex', 'auto') ||
+          invalid('transform', 'none') ||
+          invalid('mixBlendMode', 'normal') ||
+          invalid('filter', 'none') ||
+          invalid('perspective', 'none') ||
+          s['isolation'] === 'isolate' ||
+          s.position === 'fixed' ||
+          s.webkitOverflowScrolling === 'touch') {
+        return true;
+      }
+      el = el.parentElement;
+    }
+    return false;
+  }
+
+  /**
+   * Finds the nearest <dialog> from the passed element.
+   *
+   * @param {Element} el to search from
+   * @return {HTMLDialogElement} dialog found
+   */
+  function findNearestDialog(el) {
+    while (el) {
+      if (el.localName === 'dialog') {
+        return /** @type {HTMLDialogElement} */ (el);
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  /**
+   * Blur the specified element, as long as it's not the HTML body element.
+   * This works around an IE9/10 bug - blurring the body causes Windows to
+   * blur the whole application.
+   *
+   * @param {Element} el to blur
+   */
+  function safeBlur(el) {
+    if (el && el.blur && el != document.body) {
+      el.blur();
+    }
+  }
+
+  /**
+   * @param {!NodeList} nodeList to search
+   * @param {Node} node to find
+   * @return {boolean} whether node is inside nodeList
+   */
+  function inNodeList(nodeList, node) {
+    for (var i = 0; i < nodeList.length; ++i) {
+      if (nodeList[i] == node) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @param {!HTMLDialogElement} dialog to upgrade
+   * @constructor
+   */
+  function dialogPolyfillInfo(dialog) {
+    this.dialog_ = dialog;
+    this.replacedStyleTop_ = false;
+    this.openAsModal_ = false;
+
+    // Set a11y role. Browsers that support dialog implicitly know this already.
+    if (!dialog.hasAttribute('role')) {
+      dialog.setAttribute('role', 'dialog');
+    }
+
+    dialog.show = this.show.bind(this);
+    dialog.showModal = this.showModal.bind(this);
+    dialog.close = this.close.bind(this);
+
+    if (!('returnValue' in dialog)) {
+      dialog.returnValue = '';
+    }
+
+    if ('MutationObserver' in window) {
+      var mo = new MutationObserver(this.maybeHideModal.bind(this));
+      mo.observe(dialog, {attributes: true, attributeFilter: ['open']});
+    } else {
+      // IE10 and below support. Note that DOMNodeRemoved etc fire _before_ removal. They also
+      // seem to fire even if the element was removed as part of a parent removal. Use the removed
+      // events to force downgrade (useful if removed/immediately added).
+      var removed = false;
+      var cb = function() {
+        removed ? this.downgradeModal() : this.maybeHideModal();
+        removed = false;
+      }.bind(this);
+      var timeout;
+      var delayModel = function(ev) {
+        var cand = 'DOMNodeRemoved';
+        removed |= (ev.type.substr(0, cand.length) === cand);
+        window.clearTimeout(timeout);
+        timeout = window.setTimeout(cb, 0);
+      };
+      ['DOMAttrModified', 'DOMNodeRemoved', 'DOMNodeRemovedFromDocument'].forEach(function(name) {
+        dialog.addEventListener(name, delayModel);
+      });
+    }
+    // Note that the DOM is observed inside DialogManager while any dialog
+    // is being displayed as a modal, to catch modal removal from the DOM.
+
+    Object.defineProperty(dialog, 'open', {
+      set: this.setOpen.bind(this),
+      get: dialog.hasAttribute.bind(dialog, 'open')
+    });
+
+    this.backdrop_ = document.createElement('div');
+    this.backdrop_.className = 'backdrop';
+    this.backdrop_.addEventListener('click', this.backdropClick_.bind(this));
+  }
+
+  dialogPolyfillInfo.prototype = {
+
+    get dialog() {
+      return this.dialog_;
+    },
+
+    /**
+     * Maybe remove this dialog from the modal top layer. This is called when
+     * a modal dialog may no longer be tenable, e.g., when the dialog is no
+     * longer open or is no longer part of the DOM.
+     */
+    maybeHideModal: function() {
+      if (this.dialog_.hasAttribute('open') && document.body.contains(this.dialog_)) { return; }
+      this.downgradeModal();
+    },
+
+    /**
+     * Remove this dialog from the modal top layer, leaving it as a non-modal.
+     */
+    downgradeModal: function() {
+      if (!this.openAsModal_) { return; }
+      this.openAsModal_ = false;
+      this.dialog_.style.zIndex = '';
+
+      // This won't match the native <dialog> exactly because if the user set top on a centered
+      // polyfill dialog, that top gets thrown away when the dialog is closed. Not sure it's
+      // possible to polyfill this perfectly.
+      if (this.replacedStyleTop_) {
+        this.dialog_.style.top = '';
+        this.replacedStyleTop_ = false;
+      }
+
+      // Clear the backdrop and remove from the manager.
+      this.backdrop_.parentNode && this.backdrop_.parentNode.removeChild(this.backdrop_);
+      dialogPolyfill.dm.removeDialog(this);
+    },
+
+    /**
+     * @param {boolean} value whether to open or close this dialog
+     */
+    setOpen: function(value) {
+      if (value) {
+        this.dialog_.hasAttribute('open') || this.dialog_.setAttribute('open', '');
+      } else {
+        this.dialog_.removeAttribute('open');
+        this.maybeHideModal();  // nb. redundant with MutationObserver
+      }
+    },
+
+    /**
+     * Handles clicks on the fake .backdrop element, redirecting them as if
+     * they were on the dialog itself.
+     *
+     * @param {!Event} e to redirect
+     */
+    backdropClick_: function(e) {
+      if (!this.dialog_.hasAttribute('tabindex')) {
+        // Clicking on the backdrop should move the implicit cursor, even if dialog cannot be
+        // focused. Create a fake thing to focus on. If the backdrop was _before_ the dialog, this
+        // would not be needed - clicks would move the implicit cursor there.
+        var fake = document.createElement('div');
+        this.dialog_.insertBefore(fake, this.dialog_.firstChild);
+        fake.tabIndex = -1;
+        fake.focus();
+        this.dialog_.removeChild(fake);
+      } else {
+        this.dialog_.focus();
+      }
+
+      var redirectedEvent = document.createEvent('MouseEvents');
+      redirectedEvent.initMouseEvent(e.type, e.bubbles, e.cancelable, window,
+          e.detail, e.screenX, e.screenY, e.clientX, e.clientY, e.ctrlKey,
+          e.altKey, e.shiftKey, e.metaKey, e.button, e.relatedTarget);
+      this.dialog_.dispatchEvent(redirectedEvent);
+      e.stopPropagation();
+    },
+
+    /**
+     * Focuses on the first focusable element within the dialog. This will always blur the current
+     * focus, even if nothing within the dialog is found.
+     */
+    focus_: function() {
+      // Find element with `autofocus` attribute, or fall back to the first form/tabindex control.
+      var target = this.dialog_.querySelector('[autofocus]:not([disabled])');
+      if (!target && this.dialog_.tabIndex >= 0) {
+        target = this.dialog_;
+      }
+      if (!target) {
+        // Note that this is 'any focusable area'. This list is probably not exhaustive, but the
+        // alternative involves stepping through and trying to focus everything.
+        var opts = ['button', 'input', 'keygen', 'select', 'textarea'];
+        var query = opts.map(function(el) {
+          return el + ':not([disabled])';
+        });
+        // TODO(samthor): tabindex values that are not numeric are not focusable.
+        query.push('[tabindex]:not([disabled]):not([tabindex=""])');  // tabindex != "", not disabled
+        target = this.dialog_.querySelector(query.join(', '));
+      }
+      safeBlur(document.activeElement);
+      target && target.focus();
+    },
+
+    /**
+     * Sets the zIndex for the backdrop and dialog.
+     *
+     * @param {number} dialogZ
+     * @param {number} backdropZ
+     */
+    updateZIndex: function(dialogZ, backdropZ) {
+      if (dialogZ < backdropZ) {
+        throw new Error('dialogZ should never be < backdropZ');
+      }
+      this.dialog_.style.zIndex = dialogZ;
+      this.backdrop_.style.zIndex = backdropZ;
+    },
+
+    /**
+     * Shows the dialog. If the dialog is already open, this does nothing.
+     */
+    show: function() {
+      if (!this.dialog_.open) {
+        this.setOpen(true);
+        this.focus_();
+      }
+    },
+
+    /**
+     * Show this dialog modally.
+     */
+    showModal: function() {
+      if (this.dialog_.hasAttribute('open')) {
+        throw new Error('Failed to execute \'showModal\' on dialog: The element is already open, and therefore cannot be opened modally.');
+      }
+      if (!document.body.contains(this.dialog_)) {
+        throw new Error('Failed to execute \'showModal\' on dialog: The element is not in a Document.');
+      }
+      if (!dialogPolyfill.dm.pushDialog(this)) {
+        throw new Error('Failed to execute \'showModal\' on dialog: There are too many open modal dialogs.');
+      }
+
+      if (createsStackingContext(this.dialog_.parentElement)) {
+        console.warn('A dialog is being shown inside a stacking context. ' +
+            'This may cause it to be unusable. For more information, see this link: ' +
+            'https://github.com/GoogleChrome/dialog-polyfill/#stacking-context');
+      }
+
+      this.setOpen(true);
+      this.openAsModal_ = true;
+
+      // Optionally center vertically, relative to the current viewport.
+      if (dialogPolyfill.needsCentering(this.dialog_)) {
+        dialogPolyfill.reposition(this.dialog_);
+        this.replacedStyleTop_ = true;
+      } else {
+        this.replacedStyleTop_ = false;
+      }
+
+      // Insert backdrop.
+      this.dialog_.parentNode.insertBefore(this.backdrop_, this.dialog_.nextSibling);
+
+      // Focus on whatever inside the dialog.
+      this.focus_();
+    },
+
+    /**
+     * Closes this HTMLDialogElement. This is optional vs clearing the open
+     * attribute, however this fires a 'close' event.
+     *
+     * @param {string=} opt_returnValue to use as the returnValue
+     */
+    close: function(opt_returnValue) {
+      if (!this.dialog_.hasAttribute('open')) {
+        throw new Error('Failed to execute \'close\' on dialog: The element does not have an \'open\' attribute, and therefore cannot be closed.');
+      }
+      this.setOpen(false);
+
+      // Leave returnValue untouched in case it was set directly on the element
+      if (opt_returnValue !== undefined) {
+        this.dialog_.returnValue = opt_returnValue;
+      }
+
+      // Triggering "close" event for any attached listeners on the <dialog>.
+      var closeEvent = new supportCustomEvent('close', {
+        bubbles: false,
+        cancelable: false
+      });
+      this.dialog_.dispatchEvent(closeEvent);
+    }
+
+  };
+
+  var dialogPolyfill = {};
+
+  dialogPolyfill.reposition = function(element) {
+    var scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
+    var topValue = scrollTop + (window.innerHeight - element.offsetHeight) / 2;
+    element.style.top = Math.max(scrollTop, topValue) + 'px';
+  };
+
+  dialogPolyfill.isInlinePositionSetByStylesheet = function(element) {
+    for (var i = 0; i < document.styleSheets.length; ++i) {
+      var styleSheet = document.styleSheets[i];
+      var cssRules = null;
+      // Some browsers throw on cssRules.
+      try {
+        cssRules = styleSheet.cssRules;
+      } catch (e) {}
+      if (!cssRules) { continue; }
+      for (var j = 0; j < cssRules.length; ++j) {
+        var rule = cssRules[j];
+        var selectedNodes = null;
+        // Ignore errors on invalid selector texts.
+        try {
+          selectedNodes = document.querySelectorAll(rule.selectorText);
+        } catch(e) {}
+        if (!selectedNodes || !inNodeList(selectedNodes, element)) {
+          continue;
+        }
+        var cssTop = rule.style.getPropertyValue('top');
+        var cssBottom = rule.style.getPropertyValue('bottom');
+        if ((cssTop && cssTop != 'auto') || (cssBottom && cssBottom != 'auto')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  dialogPolyfill.needsCentering = function(dialog) {
+    var computedStyle = window.getComputedStyle(dialog);
+    if (computedStyle.position != 'absolute') {
+      return false;
+    }
+
+    // We must determine whether the top/bottom specified value is non-auto.  In
+    // WebKit/Blink, checking computedStyle.top == 'auto' is sufficient, but
+    // Firefox returns the used value. So we do this crazy thing instead: check
+    // the inline style and then go through CSS rules.
+    if ((dialog.style.top != 'auto' && dialog.style.top != '') ||
+        (dialog.style.bottom != 'auto' && dialog.style.bottom != ''))
+      return false;
+    return !dialogPolyfill.isInlinePositionSetByStylesheet(dialog);
+  };
+
+  /**
+   * @param {!Element} element to force upgrade
+   */
+  dialogPolyfill.forceRegisterDialog = function(element) {
+    if (element.showModal) {
+      console.warn('This browser already supports <dialog>, the polyfill ' +
+          'may not work correctly', element);
+    }
+    if (element.localName !== 'dialog') {
+      throw new Error('Failed to register dialog: The element is not a dialog.');
+    }
+    new dialogPolyfillInfo(/** @type {!HTMLDialogElement} */ (element));
+  };
+
+  /**
+   * @param {!Element} element to upgrade, if necessary
+   */
+  dialogPolyfill.registerDialog = function(element) {
+    if (!element.showModal) {
+      dialogPolyfill.forceRegisterDialog(element);
+    }
+  };
+
+  /**
+   * @constructor
+   */
+  dialogPolyfill.DialogManager = function() {
+    /** @type {!Array<!dialogPolyfillInfo>} */
+    this.pendingDialogStack = [];
+
+    var checkDOM = this.checkDOM_.bind(this);
+
+    // The overlay is used to simulate how a modal dialog blocks the document.
+    // The blocking dialog is positioned on top of the overlay, and the rest of
+    // the dialogs on the pending dialog stack are positioned below it. In the
+    // actual implementation, the modal dialog stacking is controlled by the
+    // top layer, where z-index has no effect.
+    this.overlay = document.createElement('div');
+    this.overlay.className = '_dialog_overlay';
+    this.overlay.addEventListener('click', function(e) {
+      this.forwardTab_ = undefined;
+      e.stopPropagation();
+      checkDOM([]);  // sanity-check DOM
+    }.bind(this));
+
+    this.handleKey_ = this.handleKey_.bind(this);
+    this.handleFocus_ = this.handleFocus_.bind(this);
+
+    this.zIndexLow_ = 100000;
+    this.zIndexHigh_ = 100000 + 150;
+
+    this.forwardTab_ = undefined;
+
+    if ('MutationObserver' in window) {
+      this.mo_ = new MutationObserver(function(records) {
+        var removed = [];
+        records.forEach(function(rec) {
+          for (var i = 0, c; c = rec.removedNodes[i]; ++i) {
+            if (!(c instanceof Element)) {
+              continue;
+            } else if (c.localName === 'dialog') {
+              removed.push(c);
+            } else {
+              var q = c.querySelector('dialog');
+              q && removed.push(q);
+            }
+          }
+        });
+        removed.length && checkDOM(removed);
+      });
+    }
+  };
+
+  /**
+   * Called on the first modal dialog being shown. Adds the overlay and related
+   * handlers.
+   */
+  dialogPolyfill.DialogManager.prototype.blockDocument = function() {
+    document.documentElement.addEventListener('focus', this.handleFocus_, true);
+    document.addEventListener('keydown', this.handleKey_);
+    this.mo_ && this.mo_.observe(document, {childList: true, subtree: true});
+  };
+
+  /**
+   * Called on the first modal dialog being removed, i.e., when no more modal
+   * dialogs are visible.
+   */
+  dialogPolyfill.DialogManager.prototype.unblockDocument = function() {
+    document.documentElement.removeEventListener('focus', this.handleFocus_, true);
+    document.removeEventListener('keydown', this.handleKey_);
+    this.mo_ && this.mo_.disconnect();
+  };
+
+  /**
+   * Updates the stacking of all known dialogs.
+   */
+  dialogPolyfill.DialogManager.prototype.updateStacking = function() {
+    var zIndex = this.zIndexHigh_;
+
+    for (var i = 0, dpi; dpi = this.pendingDialogStack[i]; ++i) {
+      dpi.updateZIndex(--zIndex, --zIndex);
+      if (i === 0) {
+        this.overlay.style.zIndex = --zIndex;
+      }
+    }
+
+    // Make the overlay a sibling of the dialog itself.
+    var last = this.pendingDialogStack[0];
+    if (last) {
+      var p = last.dialog.parentNode || document.body;
+      p.appendChild(this.overlay);
+    } else if (this.overlay.parentNode) {
+      this.overlay.parentNode.removeChild(this.overlay);
+    }
+  };
+
+  /**
+   * @param {Element} candidate to check if contained or is the top-most modal dialog
+   * @return {boolean} whether candidate is contained in top dialog
+   */
+  dialogPolyfill.DialogManager.prototype.containedByTopDialog_ = function(candidate) {
+    while (candidate = findNearestDialog(candidate)) {
+      for (var i = 0, dpi; dpi = this.pendingDialogStack[i]; ++i) {
+        if (dpi.dialog === candidate) {
+          return i === 0;  // only valid if top-most
+        }
+      }
+      candidate = candidate.parentElement;
+    }
+    return false;
+  };
+
+  dialogPolyfill.DialogManager.prototype.handleFocus_ = function(event) {
+    if (this.containedByTopDialog_(event.target)) { return; }
+
+    event.preventDefault();
+    event.stopPropagation();
+    safeBlur(/** @type {Element} */ (event.target));
+
+    if (this.forwardTab_ === undefined) { return; }  // move focus only from a tab key
+
+    var dpi = this.pendingDialogStack[0];
+    var dialog = dpi.dialog;
+    var position = dialog.compareDocumentPosition(event.target);
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+      if (this.forwardTab_) {  // forward
+        dpi.focus_();
+      } else {  // backwards
+        document.documentElement.focus();
+      }
+    } else {
+      // TODO: Focus after the dialog, is ignored.
+    }
+
+    return false;
+  };
+
+  dialogPolyfill.DialogManager.prototype.handleKey_ = function(event) {
+    this.forwardTab_ = undefined;
+    if (event.keyCode === 27) {
+      event.preventDefault();
+      event.stopPropagation();
+      var cancelEvent = new supportCustomEvent('cancel', {
+        bubbles: false,
+        cancelable: true
+      });
+      var dpi = this.pendingDialogStack[0];
+      if (dpi && dpi.dialog.dispatchEvent(cancelEvent)) {
+        dpi.dialog.close();
+      }
+    } else if (event.keyCode === 9) {
+      this.forwardTab_ = !event.shiftKey;
+    }
+  };
+
+  /**
+   * Finds and downgrades any known modal dialogs that are no longer displayed. Dialogs that are
+   * removed and immediately readded don't stay modal, they become normal.
+   *
+   * @param {!Array<!HTMLDialogElement>} removed that have definitely been removed
+   */
+  dialogPolyfill.DialogManager.prototype.checkDOM_ = function(removed) {
+    // This operates on a clone because it may cause it to change. Each change also calls
+    // updateStacking, which only actually needs to happen once. But who removes many modal dialogs
+    // at a time?!
+    var clone = this.pendingDialogStack.slice();
+    clone.forEach(function(dpi) {
+      if (removed.indexOf(dpi.dialog) !== -1) {
+        dpi.downgradeModal();
+      } else {
+        dpi.maybeHideModal();
+      }
+    });
+  };
+
+  /**
+   * @param {!dialogPolyfillInfo} dpi
+   * @return {boolean} whether the dialog was allowed
+   */
+  dialogPolyfill.DialogManager.prototype.pushDialog = function(dpi) {
+    var allowed = (this.zIndexHigh_ - this.zIndexLow_) / 2 - 1;
+    if (this.pendingDialogStack.length >= allowed) {
+      return false;
+    }
+    if (this.pendingDialogStack.unshift(dpi) === 1) {
+      this.blockDocument();
+    }
+    this.updateStacking();
+    return true;
+  };
+
+  /**
+   * @param {!dialogPolyfillInfo} dpi
+   */
+  dialogPolyfill.DialogManager.prototype.removeDialog = function(dpi) {
+    var index = this.pendingDialogStack.indexOf(dpi);
+    if (index == -1) { return; }
+
+    this.pendingDialogStack.splice(index, 1);
+    if (this.pendingDialogStack.length === 0) {
+      this.unblockDocument();
+    }
+    this.updateStacking();
+  };
+
+  dialogPolyfill.dm = new dialogPolyfill.DialogManager();
+
+  /**
+   * Global form 'dialog' method handler. Closes a dialog correctly on submit
+   * and possibly sets its return value.
+   */
+  document.addEventListener('submit', function(ev) {
+    var target = ev.target;
+    if (!target || !target.hasAttribute('method')) { return; }
+    if (target.getAttribute('method').toLowerCase() !== 'dialog') { return; }
+    ev.preventDefault();
+
+    var dialog = findNearestDialog(/** @type {Element} */ (ev.target));
+    if (!dialog) { return; }
+
+    // FIXME: The original event doesn't contain the element used to submit the
+    // form (if any). Look in some possible places.
+    var returnValue;
+    var cands = [document.activeElement, ev.explicitOriginalTarget];
+    var els = ['BUTTON', 'INPUT'];
+    cands.some(function(cand) {
+      if (cand && cand.form == ev.target && els.indexOf(cand.nodeName.toUpperCase()) != -1) {
+        returnValue = cand.value;
+        return true;
+      }
+    });
+    dialog.close(returnValue);
+  }, true);
+
+  dialogPolyfill['forceRegisterDialog'] = dialogPolyfill.forceRegisterDialog;
+  dialogPolyfill['registerDialog'] = dialogPolyfill.registerDialog;
+
+  if (typeof define === 'function' && 'amd' in define) {
+    // AMD support
+    define(function() { return dialogPolyfill; });
+  } else if (typeof module === 'object' && typeof module['exports'] === 'object') {
+    // CommonJS support
+    module['exports'] = dialogPolyfill;
+  } else {
+    // all others
+    window['dialogPolyfill'] = dialogPolyfill;
+  }
+})();
+
+},{}],232:[function(require,module,exports){
 'use strict';
 
 module.exports = earcut;
@@ -41333,7 +41989,7 @@ earcut.flatten = function (data) {
     return result;
 };
 
-},{}],232:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 (function (Buffer){
 var crypto = require("crypto");
 var BigInteger = require("jsbn").BigInteger;
@@ -41394,7 +42050,7 @@ exports.ECKey = function(curve, key, isPublic)
 
 
 }).call(this,require("buffer").Buffer)
-},{"./lib/ec.js":233,"./lib/sec.js":234,"buffer":49,"crypto":58,"jsbn":298}],233:[function(require,module,exports){
+},{"./lib/ec.js":234,"./lib/sec.js":235,"buffer":49,"crypto":58,"jsbn":299}],234:[function(require,module,exports){
 // Basic Javascript Elliptic Curve implementation
 // Ported loosely from BouncyCastle's Java EC code
 // Only Fp curves implemented for now
@@ -41957,7 +42613,7 @@ var exports = {
 
 module.exports = exports
 
-},{"jsbn":298}],234:[function(require,module,exports){
+},{"jsbn":299}],235:[function(require,module,exports){
 // Named EC curves
 
 // Requires ec.js, jsbn.js, and jsbn2.js
@@ -42129,7 +42785,7 @@ module.exports = {
   "secp256r1":secp256r1
 }
 
-},{"./ec.js":233,"jsbn":298}],235:[function(require,module,exports){
+},{"./ec.js":234,"jsbn":299}],236:[function(require,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -42217,7 +42873,7 @@ module.exports = function extend() {
 };
 
 
-},{}],236:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 /*
  * extsprintf.js: extended POSIX-style sprintf
  */
@@ -42385,7 +43041,7 @@ function dumpException(ex)
 	return (ret);
 }
 
-},{"assert":15,"util":164}],237:[function(require,module,exports){
+},{"assert":15,"util":164}],238:[function(require,module,exports){
 'use strict';
 
 module.exports = createFilter;
@@ -42469,7 +43125,7 @@ function compare(a, b) {
     return a < b ? -1 : a > b ? 1 : 0;
 }
 
-},{}],238:[function(require,module,exports){
+},{}],239:[function(require,module,exports){
 module.exports = ForeverAgent
 ForeverAgent.SSL = ForeverAgentSSL
 
@@ -42609,11 +43265,11 @@ function createConnectionSSL (port, host, options) {
   return tls.connect(options);
 }
 
-},{"http":153,"https":94,"net":46,"tls":46,"util":164}],239:[function(require,module,exports){
+},{"http":153,"https":94,"net":46,"tls":46,"util":164}],240:[function(require,module,exports){
 /* eslint-env browser */
 module.exports = typeof self == 'object' ? self.FormData : window.FormData;
 
-},{}],240:[function(require,module,exports){
+},{}],241:[function(require,module,exports){
 const request = require("request");
 
 // Set default meta to NiceRide MN (object of my own work)
@@ -42735,7 +43391,9 @@ const setGBFS = (url, callback, failure) => {
 
       // Set feed urls in meta
       for (feed of data.data[meta.feedLanaguage].feeds) {
-        feed.url = feed.url.replace('http', 'https')
+        if (feed.url.substring(0, 4) == 'http:') {
+          feed.url = feed.url.replace('http', 'https');
+        }
         meta[feed.name] = feed.url;
       }
 
@@ -42955,7 +43613,7 @@ module.exports = {
   buildFeatureCollection: buildFeatureCollection
 }
 
-},{"request":469}],241:[function(require,module,exports){
+},{"request":470}],242:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports.geometry = geometry;
@@ -43021,7 +43679,7 @@ function rad(_) {
     return _ * Math.PI / 180;
 }
 
-},{"wgs84":540}],242:[function(require,module,exports){
+},{"wgs84":541}],243:[function(require,module,exports){
 var geojsonArea = require('geojson-area');
 
 module.exports = rewind;
@@ -43072,7 +43730,7 @@ function cw(_) {
     return geojsonArea.ring(_) >= 0;
 }
 
-},{"geojson-area":241}],243:[function(require,module,exports){
+},{"geojson-area":242}],244:[function(require,module,exports){
 'use strict';
 
 module.exports = clip;
@@ -43223,7 +43881,7 @@ function newSlice(slices, slice, area, dist, outer) {
     return [];
 }
 
-},{"./feature":245}],244:[function(require,module,exports){
+},{"./feature":246}],245:[function(require,module,exports){
 'use strict';
 
 module.exports = convert;
@@ -43346,7 +44004,7 @@ function calcSize(points) {
     points.dist = dist;
 }
 
-},{"./feature":245,"./simplify":247}],245:[function(require,module,exports){
+},{"./feature":246,"./simplify":248}],246:[function(require,module,exports){
 'use strict';
 
 module.exports = createFeature;
@@ -43391,7 +44049,7 @@ function calcRingBBox(min, max, points) {
     }
 }
 
-},{}],246:[function(require,module,exports){
+},{}],247:[function(require,module,exports){
 'use strict';
 
 module.exports = geojsonvt;
@@ -43635,7 +44293,7 @@ function isClippedSquare(tile, extent, buffer) {
     return true;
 }
 
-},{"./clip":243,"./convert":244,"./tile":248,"./transform":249,"./wrap":250}],247:[function(require,module,exports){
+},{"./clip":244,"./convert":245,"./tile":249,"./transform":250,"./wrap":251}],248:[function(require,module,exports){
 'use strict';
 
 module.exports = simplify;
@@ -43711,7 +44369,7 @@ function getSqSegDist(p, a, b) {
     return dx * dx + dy * dy;
 }
 
-},{}],248:[function(require,module,exports){
+},{}],249:[function(require,module,exports){
 'use strict';
 
 module.exports = createTile;
@@ -43819,7 +44477,7 @@ function signedArea(ring) {
     return sum;
 }
 
-},{}],249:[function(require,module,exports){
+},{}],250:[function(require,module,exports){
 'use strict';
 
 exports.tile = transformTile;
@@ -43862,7 +44520,7 @@ function transformPoint(p, extent, z2, tx, ty) {
     return [x, y];
 }
 
-},{}],250:[function(require,module,exports){
+},{}],251:[function(require,module,exports){
 'use strict';
 
 var clip = require('./clip');
@@ -43920,7 +44578,7 @@ function shiftCoords(points, offset) {
     return newPoints;
 }
 
-},{"./clip":243,"./feature":245}],251:[function(require,module,exports){
+},{"./clip":244,"./feature":246}],252:[function(require,module,exports){
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations
  * @author Brandon Jones
@@ -43958,7 +44616,7 @@ exports.quat = require("./gl-matrix/quat.js");
 exports.vec2 = require("./gl-matrix/vec2.js");
 exports.vec3 = require("./gl-matrix/vec3.js");
 exports.vec4 = require("./gl-matrix/vec4.js");
-},{"./gl-matrix/common.js":252,"./gl-matrix/mat2.js":253,"./gl-matrix/mat2d.js":254,"./gl-matrix/mat3.js":255,"./gl-matrix/mat4.js":256,"./gl-matrix/quat.js":257,"./gl-matrix/vec2.js":258,"./gl-matrix/vec3.js":259,"./gl-matrix/vec4.js":260}],252:[function(require,module,exports){
+},{"./gl-matrix/common.js":253,"./gl-matrix/mat2.js":254,"./gl-matrix/mat2d.js":255,"./gl-matrix/mat3.js":256,"./gl-matrix/mat4.js":257,"./gl-matrix/quat.js":258,"./gl-matrix/vec2.js":259,"./gl-matrix/vec3.js":260,"./gl-matrix/vec4.js":261}],253:[function(require,module,exports){
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44030,7 +44688,7 @@ glMatrix.equals = function(a, b) {
 
 module.exports = glMatrix;
 
-},{}],253:[function(require,module,exports){
+},{}],254:[function(require,module,exports){
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44468,7 +45126,7 @@ mat2.multiplyScalarAndAdd = function(out, a, b, scale) {
 
 module.exports = mat2;
 
-},{"./common.js":252}],254:[function(require,module,exports){
+},{"./common.js":253}],255:[function(require,module,exports){
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44939,7 +45597,7 @@ mat2d.equals = function (a, b) {
 
 module.exports = mat2d;
 
-},{"./common.js":252}],255:[function(require,module,exports){
+},{"./common.js":253}],256:[function(require,module,exports){
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -45687,7 +46345,7 @@ mat3.equals = function (a, b) {
 
 module.exports = mat3;
 
-},{"./common.js":252}],256:[function(require,module,exports){
+},{"./common.js":253}],257:[function(require,module,exports){
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -47825,7 +48483,7 @@ mat4.equals = function (a, b) {
 
 module.exports = mat4;
 
-},{"./common.js":252}],257:[function(require,module,exports){
+},{"./common.js":253}],258:[function(require,module,exports){
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -48427,7 +49085,7 @@ quat.equals = vec4.equals;
 
 module.exports = quat;
 
-},{"./common.js":252,"./mat3.js":255,"./vec3.js":259,"./vec4.js":260}],258:[function(require,module,exports){
+},{"./common.js":253,"./mat3.js":256,"./vec3.js":260,"./vec4.js":261}],259:[function(require,module,exports){
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -49016,7 +49674,7 @@ vec2.equals = function (a, b) {
 
 module.exports = vec2;
 
-},{"./common.js":252}],259:[function(require,module,exports){
+},{"./common.js":253}],260:[function(require,module,exports){
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -49795,7 +50453,7 @@ vec3.equals = function (a, b) {
 
 module.exports = vec3;
 
-},{"./common.js":252}],260:[function(require,module,exports){
+},{"./common.js":253}],261:[function(require,module,exports){
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -50406,7 +51064,7 @@ vec4.equals = function (a, b) {
 
 module.exports = vec4;
 
-},{"./common.js":252}],261:[function(require,module,exports){
+},{"./common.js":253}],262:[function(require,module,exports){
 'use strict';
 
 module.exports = GridIndex;
@@ -50568,7 +51226,7 @@ GridIndex.prototype.toArrayBuffer = function() {
     return array.buffer;
 };
 
-},{}],262:[function(require,module,exports){
+},{}],263:[function(require,module,exports){
 module.exports={
   "id": "afterRequest.json#",
   "type": "object",
@@ -50599,7 +51257,7 @@ module.exports={
   }
 }
 
-},{}],263:[function(require,module,exports){
+},{}],264:[function(require,module,exports){
 module.exports={
   "id": "beforeRequest.json#",
   "type": "object",
@@ -50630,7 +51288,7 @@ module.exports={
   }
 }
 
-},{}],264:[function(require,module,exports){
+},{}],265:[function(require,module,exports){
 module.exports={
   "id": "browser.json#",
   "type": "object",
@@ -50651,7 +51309,7 @@ module.exports={
   }
 }
 
-},{}],265:[function(require,module,exports){
+},{}],266:[function(require,module,exports){
 module.exports={
   "id": "cache.json#",
   "properties": {
@@ -50673,7 +51331,7 @@ module.exports={
   }
 }
 
-},{}],266:[function(require,module,exports){
+},{}],267:[function(require,module,exports){
 module.exports={
   "id": "content.json#",
   "type": "object",
@@ -50703,7 +51361,7 @@ module.exports={
   }
 }
 
-},{}],267:[function(require,module,exports){
+},{}],268:[function(require,module,exports){
 module.exports={
   "id": "cookie.json#",
   "type": "object",
@@ -50740,7 +51398,7 @@ module.exports={
   }
 }
 
-},{}],268:[function(require,module,exports){
+},{}],269:[function(require,module,exports){
 module.exports={
   "id": "creator.json#",
   "type": "object",
@@ -50761,7 +51419,7 @@ module.exports={
   }
 }
 
-},{}],269:[function(require,module,exports){
+},{}],270:[function(require,module,exports){
 module.exports={
   "id": "entry.json#",
   "type": "object",
@@ -50815,7 +51473,7 @@ module.exports={
   }
 }
 
-},{}],270:[function(require,module,exports){
+},{}],271:[function(require,module,exports){
 module.exports={
   "id": "har.json#",
   "type": "object",
@@ -50829,7 +51487,7 @@ module.exports={
   }
 }
 
-},{}],271:[function(require,module,exports){
+},{}],272:[function(require,module,exports){
 module.exports={
   "id": "header.json#",
   "type": "object",
@@ -50850,7 +51508,7 @@ module.exports={
   }
 }
 
-},{}],272:[function(require,module,exports){
+},{}],273:[function(require,module,exports){
 'use strict'
 
 module.exports = {
@@ -50874,7 +51532,7 @@ module.exports = {
   timings: require('./timings.json')
 }
 
-},{"./afterRequest.json":262,"./beforeRequest.json":263,"./browser.json":264,"./cache.json":265,"./content.json":266,"./cookie.json":267,"./creator.json":268,"./entry.json":269,"./har.json":270,"./header.json":271,"./log.json":273,"./page.json":274,"./pageTimings.json":275,"./postData.json":276,"./query.json":277,"./request.json":278,"./response.json":279,"./timings.json":280}],273:[function(require,module,exports){
+},{"./afterRequest.json":263,"./beforeRequest.json":264,"./browser.json":265,"./cache.json":266,"./content.json":267,"./cookie.json":268,"./creator.json":269,"./entry.json":270,"./har.json":271,"./header.json":272,"./log.json":274,"./page.json":275,"./pageTimings.json":276,"./postData.json":277,"./query.json":278,"./request.json":279,"./response.json":280,"./timings.json":281}],274:[function(require,module,exports){
 module.exports={
   "id": "log.json#",
   "type": "object",
@@ -50911,7 +51569,7 @@ module.exports={
   }
 }
 
-},{}],274:[function(require,module,exports){
+},{}],275:[function(require,module,exports){
 module.exports={
   "id": "page.json#",
   "type": "object",
@@ -50944,7 +51602,7 @@ module.exports={
   }
 }
 
-},{}],275:[function(require,module,exports){
+},{}],276:[function(require,module,exports){
 module.exports={
   "id": "pageTimings.json#",
   "type": "object",
@@ -50963,7 +51621,7 @@ module.exports={
   }
 }
 
-},{}],276:[function(require,module,exports){
+},{}],277:[function(require,module,exports){
 module.exports={
   "id": "postData.json#",
   "type": "object",
@@ -51007,7 +51665,7 @@ module.exports={
   }
 }
 
-},{}],277:[function(require,module,exports){
+},{}],278:[function(require,module,exports){
 module.exports={
   "id": "query.json#",
   "type": "object",
@@ -51028,7 +51686,7 @@ module.exports={
   }
 }
 
-},{}],278:[function(require,module,exports){
+},{}],279:[function(require,module,exports){
 module.exports={
   "id": "request.json#",
   "type": "object",
@@ -51086,7 +51744,7 @@ module.exports={
   }
 }
 
-},{}],279:[function(require,module,exports){
+},{}],280:[function(require,module,exports){
 module.exports={
   "id": "response.json#",
   "type": "object",
@@ -51141,7 +51799,7 @@ module.exports={
   }
 }
 
-},{}],280:[function(require,module,exports){
+},{}],281:[function(require,module,exports){
 module.exports={
   "id": "timings.json#",
   "required": [
@@ -51184,7 +51842,7 @@ module.exports={
   }
 }
 
-},{}],281:[function(require,module,exports){
+},{}],282:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -51207,7 +51865,7 @@ function HARError(errors) {
 
 HARError.prototype = Error.prototype;
 module.exports = exports['default'];
-},{}],282:[function(require,module,exports){
+},{}],283:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -51340,7 +51998,7 @@ function response(data) {
 function timings(data) {
   return validate('timings', data);
 }
-},{"./error":281,"ajv":174,"har-schema":272}],283:[function(require,module,exports){
+},{"./error":282,"ajv":174,"har-schema":273}],284:[function(require,module,exports){
 /*
     HTTP Hawk Authentication Scheme
     Copyright (c) 2012-2014, Eran Hammer <eran@hammer.io>
@@ -51979,7 +52637,7 @@ if (typeof module !== 'undefined' && module.exports) {
 /* eslint-enable */
 // $lab:coverage:on$
 
-},{}],284:[function(require,module,exports){
+},{}],285:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var parser = require('./parser');
@@ -52010,7 +52668,7 @@ module.exports = {
   verifyHMAC: verify.verifyHMAC
 };
 
-},{"./parser":285,"./signer":286,"./utils":287,"./verify":288}],285:[function(require,module,exports){
+},{"./parser":286,"./signer":287,"./utils":288,"./verify":289}],286:[function(require,module,exports){
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = require('assert-plus');
@@ -52330,7 +52988,7 @@ module.exports = {
 
 };
 
-},{"./utils":287,"assert-plus":221,"util":164}],286:[function(require,module,exports){
+},{"./utils":288,"assert-plus":221,"util":164}],287:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
@@ -52733,7 +53391,7 @@ module.exports = {
 };
 
 }).call(this,{"isBuffer":require("../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js")})
-},{"../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"./utils":287,"assert-plus":221,"crypto":58,"http":153,"jsprim":305,"sshpk":506,"util":164}],287:[function(require,module,exports){
+},{"../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"./utils":288,"assert-plus":221,"crypto":58,"http":153,"jsprim":306,"sshpk":507,"util":164}],288:[function(require,module,exports){
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = require('assert-plus');
@@ -52847,7 +53505,7 @@ module.exports = {
   }
 };
 
-},{"assert-plus":221,"sshpk":506,"util":164}],288:[function(require,module,exports){
+},{"assert-plus":221,"sshpk":507,"util":164}],289:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -52939,9 +53597,9 @@ module.exports = {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./utils":287,"assert-plus":221,"buffer":49,"crypto":58,"sshpk":506}],289:[function(require,module,exports){
+},{"./utils":288,"assert-plus":221,"buffer":49,"crypto":58,"sshpk":507}],290:[function(require,module,exports){
 arguments[4][95][0].apply(exports,arguments)
-},{"dup":95}],290:[function(require,module,exports){
+},{"dup":95}],291:[function(require,module,exports){
 module.exports      = isTypedArray
 isTypedArray.strict = isStrictTypedArray
 isTypedArray.loose  = isLooseTypedArray
@@ -52984,7 +53642,7 @@ function isLooseTypedArray(arr) {
   return names[toString.call(arr)]
 }
 
-},{}],291:[function(require,module,exports){
+},{}],292:[function(require,module,exports){
 var stream = require('stream')
 
 
@@ -53013,7 +53671,7 @@ module.exports.isReadable = isReadable
 module.exports.isWritable = isWritable
 module.exports.isDuplex   = isDuplex
 
-},{"stream":152}],292:[function(require,module,exports){
+},{"stream":152}],293:[function(require,module,exports){
 "use strict";
 
 /*
@@ -53050,7 +53708,7 @@ var utils = require('./lib/utils');
 
 module.exports = ns;
 
-},{"./lib/curve255":294,"./lib/dh":295,"./lib/eddsa":296,"./lib/utils":297}],293:[function(require,module,exports){
+},{"./lib/curve255":295,"./lib/dh":296,"./lib/eddsa":297,"./lib/utils":298}],294:[function(require,module,exports){
 "use strict";
 /**
  * @fileOverview
@@ -53533,7 +54191,7 @@ var crypto = require('crypto');
 
 module.exports = ns;
 
-},{"crypto":58}],294:[function(require,module,exports){
+},{"crypto":58}],295:[function(require,module,exports){
 "use strict";
 /**
  * @fileOverview
@@ -53756,7 +54414,7 @@ var utils = require('./utils');
 
 module.exports = ns;
 
-},{"./core":293,"./utils":297}],295:[function(require,module,exports){
+},{"./core":294,"./utils":298}],296:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 /**
@@ -53871,7 +54529,7 @@ var curve255 = require('./curve255');
 module.exports = ns;
 
 }).call(this,require("buffer").Buffer)
-},{"./core":293,"./curve255":294,"./utils":297,"buffer":49}],296:[function(require,module,exports){
+},{"./core":294,"./curve255":295,"./utils":298,"buffer":49}],297:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 /**
@@ -54448,7 +55106,7 @@ var crypto = require('crypto');
 module.exports = ns;
 
 }).call(this,{"isBuffer":require("../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js")})
-},{"../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"./core":293,"./curve255":294,"./utils":297,"crypto":58,"jsbn":298}],297:[function(require,module,exports){
+},{"../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"./core":294,"./curve255":295,"./utils":298,"crypto":58,"jsbn":299}],298:[function(require,module,exports){
 "use strict";
 /**
  * @fileOverview
@@ -54648,7 +55306,7 @@ var core = require('./core');
 
 module.exports = ns;
 
-},{"./core":293}],298:[function(require,module,exports){
+},{"./core":294}],299:[function(require,module,exports){
 (function(){
 
     // Copyright (c) 2005  Tom Wu
@@ -56007,7 +56665,7 @@ module.exports = ns;
 
 }).call(this);
 
-},{}],299:[function(require,module,exports){
+},{}],300:[function(require,module,exports){
 /**
  * JSONSchema Validator - Validates JavaScript objects using JSON Schemas
  *	(http://www.json.com/json-schema-proposal/)
@@ -56282,7 +56940,7 @@ exports.mustBeValid = function(result){
 return exports;
 }));
 
-},{}],300:[function(require,module,exports){
+},{}],301:[function(require,module,exports){
 var json = typeof JSON !== 'undefined' ? JSON : require('jsonify');
 
 module.exports = function (obj, opts) {
@@ -56368,7 +57026,7 @@ var objectKeys = Object.keys || function (obj) {
     return keys;
 };
 
-},{"jsonify":302}],301:[function(require,module,exports){
+},{"jsonify":303}],302:[function(require,module,exports){
 exports = module.exports = stringify
 exports.getSerialize = serializer
 
@@ -56397,11 +57055,11 @@ function serializer(replacer, cycleReplacer) {
   }
 }
 
-},{}],302:[function(require,module,exports){
+},{}],303:[function(require,module,exports){
 exports.parse = require('./lib/parse');
 exports.stringify = require('./lib/stringify');
 
-},{"./lib/parse":303,"./lib/stringify":304}],303:[function(require,module,exports){
+},{"./lib/parse":304,"./lib/stringify":305}],304:[function(require,module,exports){
 var at, // The index of the current character
     ch, // The current character
     escapee = {
@@ -56676,7 +57334,7 @@ module.exports = function (source, reviver) {
     }({'': result}, '')) : result;
 };
 
-},{}],304:[function(require,module,exports){
+},{}],305:[function(require,module,exports){
 var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
     escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
     gap,
@@ -56832,7 +57490,7 @@ module.exports = function (value, replacer, space) {
     return str('', {'': value});
 };
 
-},{}],305:[function(require,module,exports){
+},{}],306:[function(require,module,exports){
 /*
  * lib/jsprim.js: utilities for primitive JavaScript types
  */
@@ -57569,7 +58227,7 @@ function mergeObjects(provided, overrides, defaults)
 	return (rv);
 }
 
-},{"assert-plus":306,"extsprintf":236,"json-schema":299,"util":164,"verror":535}],306:[function(require,module,exports){
+},{"assert-plus":307,"extsprintf":237,"json-schema":300,"util":164,"verror":536}],307:[function(require,module,exports){
 (function (Buffer,process){
 // Copyright (c) 2012, Mark Cavage. All rights reserved.
 // Copyright 2015 Joyent, Inc.
@@ -57784,7 +58442,7 @@ function _setExports(ndebug) {
 module.exports = _setExports(process.env.NODE_NDEBUG);
 
 }).call(this,{"isBuffer":require("../../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js")},require('_process'))
-},{"../../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"_process":120,"assert":15,"stream":152,"util":164}],307:[function(require,module,exports){
+},{"../../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"_process":120,"assert":15,"stream":152,"util":164}],308:[function(require,module,exports){
 // JSTS. See https://github.com/bjornharrtell/jsts
 // Licenses:
 // https://github.com/bjornharrtell/jsts/blob/master/LICENSE_EDLv1.txt
@@ -57805,7 +58463,7 @@ return[]},getClass:function(){return Oi}}),Oi.isValidEdge=function(t,e){var n=e.
 if(this.polyList=new I,null===this.graph)return null;this.dangles=this.graph.deleteDangles(),this.cutEdges=this.graph.deleteCutEdges();var t=this.graph.getEdgeRings(),e=new I;this.invalidRingLines=new I,this.isCheckingRingsValid?this.findValidRings(t,e,this.invalidRingLines):e=t,this.findShellsAndHoles(e),jr.assignHolesToShells(this.holeList,this.shellList),ho.sort(this.shellList,new Xr.EnvelopeComparator);var n=!0;this.extractOnlyPolygonal&&(jr.findDisjointShells(this.shellList),n=!1),this.polyList=jr.extractPolygons(this.shellList,n)},getDangles:function(){return this.polygonize(),this.dangles},getCutEdges:function(){return this.polygonize(),this.cutEdges},getPolygons:function(){return this.polygonize(),this.polyList},add:function(){if(R(arguments[0],v))for(var t=arguments[0],e=t.iterator();e.hasNext();){var n=e.next();this.add(n)}else if(arguments[0]instanceof St){var i=arguments[0];this.geomFactory=i.getFactory(),null===this.graph&&(this.graph=new Wr(this.geomFactory)),this.graph.addEdge(i)}else if(arguments[0]instanceof B){var r=arguments[0];r.apply(this.lineStringAdder)}},setCheckRingsValid:function(t){this.isCheckingRingsValid=t},findShellsAndHoles:function(t){this.holeList=new I,this.shellList=new I;for(var e=t.iterator();e.hasNext();){var n=e.next();n.computeHole(),n.isHole()?this.holeList.add(n):this.shellList.add(n)}},interfaces_:function(){return[]},getClass:function(){return jr}}),jr.findOuterShells=function(t){for(var e=t.iterator();e.hasNext();){var n=e.next(),i=n.getOuterHole();null===i||i.isProcessed()||(n.setIncluded(!0),i.setProcessed(!0))}},jr.extractPolygons=function(t,e){for(var n=new I,i=t.iterator();i.hasNext();){var r=i.next();(e||r.isIncluded())&&n.add(r.getPolygon())}return n},jr.assignHolesToShells=function(t,e){for(var n=t.iterator();n.hasNext();){var i=n.next();jr.assignHoleToShell(i,e)}},jr.assignHoleToShell=function(t,e){var n=Xr.findEdgeRingContaining(t,e);null!==n&&n.addHole(t)},jr.findDisjointShells=function(t){jr.findOuterShells(t);var e=null;do{e=!1;for(var n=t.iterator();n.hasNext();){var i=n.next();i.isIncludedSet()||(i.updateIncluded(),i.isIncludedSet()||(e=!0))}}while(e)},e(Kr.prototype,{filter:function(t){t instanceof St&&this.p.add(t)},interfaces_:function(){return[q]},getClass:function(){return Kr}}),jr.LineStringAdder=Kr;var To=Object.freeze({Polygonizer:jr});e(Zr.prototype,{insertEdgeEnds:function(t){for(var e=t.iterator();e.hasNext();){var n=e.next();this.nodes.add(n)}},computeProperIntersectionIM:function(t,e){var n=this.arg[0].getGeometry().getDimension(),i=this.arg[1].getGeometry().getDimension(),r=t.hasProperIntersection(),s=t.hasProperInteriorIntersection();2===n&&2===i?r&&e.setAtLeast("212101212"):2===n&&1===i?(r&&e.setAtLeast("FFF0FFFF2"),s&&e.setAtLeast("1FFFFF1FF")):1===n&&2===i?(r&&e.setAtLeast("F0FFFFFF2"),s&&e.setAtLeast("1F1FFFFFF")):1===n&&1===i&&s&&e.setAtLeast("0FFFFFFFF")},labelIsolatedEdges:function(t,e){for(var n=this.arg[t].getEdgeIterator();n.hasNext();){var i=n.next();i.isIsolated()&&(this.labelIsolatedEdge(i,e,this.arg[e].getGeometry()),this.isolatedEdges.add(i))}},labelIsolatedEdge:function(t,e,n){if(n.getDimension()>0){var i=this.ptLocator.locate(t.getCoordinate(),n);t.getLabel().setAllLocations(e,i)}else t.getLabel().setAllLocations(e,L.EXTERIOR)},computeIM:function(){var t=new fe;if(t.set(L.EXTERIOR,L.EXTERIOR,2),!this.arg[0].getGeometry().getEnvelopeInternal().intersects(this.arg[1].getGeometry().getEnvelopeInternal()))return this.computeDisjointIM(t),t;this.arg[0].computeSelfNodes(this.li,!1),this.arg[1].computeSelfNodes(this.li,!1);var e=this.arg[0].computeEdgeIntersections(this.arg[1],this.li,!1);this.computeIntersectionNodes(0),this.computeIntersectionNodes(1),this.copyNodesAndLabels(0),this.copyNodesAndLabels(1),this.labelIsolatedNodes(),this.computeProperIntersectionIM(e,t);var n=new Ar,i=n.computeEdgeEnds(this.arg[0].getEdgeIterator());this.insertEdgeEnds(i);var r=n.computeEdgeEnds(this.arg[1].getEdgeIterator());return this.insertEdgeEnds(r),this.labelNodeEdges(),this.labelIsolatedEdges(0,1),this.labelIsolatedEdges(1,0),this.updateIM(t),t},labelNodeEdges:function(){for(var t=this.nodes.iterator();t.hasNext();){var e=t.next();e.getEdges().computeLabelling(this.arg)}},copyNodesAndLabels:function(t){for(var e=this.arg[t].getNodeIterator();e.hasNext();){var n=e.next(),i=this.nodes.addNode(n.getCoordinate());i.setLabel(t,n.getLabel().getLocation(t))}},labelIntersectionNodes:function(t){for(var e=this.arg[t].getEdgeIterator();e.hasNext();)for(var n=e.next(),i=n.getLabel().getLocation(t),r=n.getEdgeIntersectionList().iterator();r.hasNext();){var s=r.next(),o=this.nodes.find(s.coord);o.getLabel().isNull(t)&&(i===L.BOUNDARY?o.setLabelBoundary(t):o.setLabel(t,L.INTERIOR))}},labelIsolatedNode:function(t,e){var n=this.ptLocator.locate(t.getCoordinate(),this.arg[e].getGeometry());t.getLabel().setAllLocations(e,n)},computeIntersectionNodes:function(t){for(var e=this.arg[t].getEdgeIterator();e.hasNext();)for(var n=e.next(),i=n.getLabel().getLocation(t),r=n.getEdgeIntersectionList().iterator();r.hasNext();){var s=r.next(),o=this.nodes.addNode(s.coord);i===L.BOUNDARY?o.setLabelBoundary(t):o.getLabel().isNull(t)&&o.setLabel(t,L.INTERIOR)}},labelIsolatedNodes:function(){for(var t=this.nodes.iterator();t.hasNext();){var e=t.next(),n=e.getLabel();f.isTrue(n.getGeometryCount()>0,"node with empty label found"),e.isIsolated()&&(n.isNull(0)?this.labelIsolatedNode(e,0):this.labelIsolatedNode(e,1))}},updateIM:function(t){for(var e=this.isolatedEdges.iterator();e.hasNext();){var n=e.next();n.updateIM(t)}for(var i=this.nodes.iterator();i.hasNext();){var r=i.next();r.updateIM(t),r.updateIMFromEdges(t)}},computeDisjointIM:function(t){var e=this.arg[0].getGeometry();e.isEmpty()||(t.set(L.INTERIOR,L.EXTERIOR,e.getDimension()),t.set(L.BOUNDARY,L.EXTERIOR,e.getBoundaryDimension()));var n=this.arg[1].getGeometry();n.isEmpty()||(t.set(L.EXTERIOR,L.INTERIOR,n.getDimension()),t.set(L.EXTERIOR,L.BOUNDARY,n.getBoundaryDimension()))},interfaces_:function(){return[]},getClass:function(){return Zr}}),e(Qr.prototype,{isContainedInBoundary:function(t){if(t instanceof Tt)return!1;if(t instanceof Lt)return this.isPointContainedInBoundary(t);if(t instanceof St)return this.isLineStringContainedInBoundary(t);for(var e=0;e<t.getNumGeometries();e++){var n=t.getGeometryN(e);if(!this.isContainedInBoundary(n))return!1}return!0},isLineSegmentContainedInBoundary:function(t,e){if(t.equals(e))return this.isPointContainedInBoundary(t);if(t.x===e.x){if(t.x===this.rectEnv.getMinX()||t.x===this.rectEnv.getMaxX())return!0}else if(t.y===e.y&&(t.y===this.rectEnv.getMinY()||t.y===this.rectEnv.getMaxY()))return!0;return!1},isLineStringContainedInBoundary:function(t){for(var e=t.getCoordinateSequence(),n=new g,i=new g,r=0;r<e.size()-1;r++)if(e.getCoordinate(r,n),e.getCoordinate(r+1,i),!this.isLineSegmentContainedInBoundary(n,i))return!1;return!0},isPointContainedInBoundary:function(){if(arguments[0]instanceof Lt){var t=arguments[0];return this.isPointContainedInBoundary(t.getCoordinate())}if(arguments[0]instanceof g){var e=arguments[0];return e.x===this.rectEnv.getMinX()||e.x===this.rectEnv.getMaxX()||e.y===this.rectEnv.getMinY()||e.y===this.rectEnv.getMaxY()}},contains:function(t){return!!this.rectEnv.contains(t.getEnvelopeInternal())&&!this.isContainedInBoundary(t)},interfaces_:function(){return[]},getClass:function(){return Qr}}),Qr.contains=function(t,e){var n=new Qr(t);return n.contains(e)},e(Jr.prototype,{intersects:function(t,e){var n=new C(t,e);if(!this.rectEnv.intersects(n))return!1;if(this.rectEnv.intersects(t))return!0;if(this.rectEnv.intersects(e))return!0;if(t.compareTo(e)>0){var i=t;t=e,e=i}var r=!1;return e.y>t.y&&(r=!0),r?this.li.computeIntersection(t,e,this.diagDown0,this.diagDown1):this.li.computeIntersection(t,e,this.diagUp0,this.diagUp1),!!this.li.hasIntersection()},interfaces_:function(){return[]},getClass:function(){return Jr}}),e($r.prototype,{applyTo:function(t){for(var e=0;e<t.getNumGeometries()&&!this._isDone;e++){var n=t.getGeometryN(e);if(n instanceof ft)this.applyTo(n);else if(this.visit(n),this.isDone())return this._isDone=!0,null}},interfaces_:function(){return[]},getClass:function(){return $r}}),e(ts.prototype,{intersects:function(t){if(!this.rectEnv.intersects(t.getEnvelopeInternal()))return!1;var e=new es(this.rectEnv);if(e.applyTo(t),e.intersects())return!0;var n=new ns(this.rectangle);if(n.applyTo(t),n.containsPoint())return!0;var i=new is(this.rectangle);return i.applyTo(t),!!i.intersects()},interfaces_:function(){return[]},getClass:function(){return ts}}),ts.intersects=function(t,e){var n=new ts(t);return n.intersects(e)},h(es,$r),e(es.prototype,{isDone:function(){return this._intersects===!0},visit:function(t){var e=t.getEnvelopeInternal();return this.rectEnv.intersects(e)?this.rectEnv.contains(e)?(this._intersects=!0,null):e.getMinX()>=this.rectEnv.getMinX()&&e.getMaxX()<=this.rectEnv.getMaxX()?(this._intersects=!0,null):e.getMinY()>=this.rectEnv.getMinY()&&e.getMaxY()<=this.rectEnv.getMaxY()?(this._intersects=!0,null):void 0:null},intersects:function(){return this._intersects},interfaces_:function(){return[]},getClass:function(){return es}}),h(ns,$r),e(ns.prototype,{isDone:function(){return this._containsPoint===!0},visit:function(t){if(!(t instanceof Tt))return null;var e=t.getEnvelopeInternal();if(!this.rectEnv.intersects(e))return null;for(var n=new g,i=0;i<4;i++)if(this.rectSeq.getCoordinate(i,n),e.contains(n)&&Tn.containsPointInPolygon(n,t))return this._containsPoint=!0,null},containsPoint:function(){return this._containsPoint},interfaces_:function(){return[]},getClass:function(){return ns}}),h(is,$r),e(is.prototype,{intersects:function(){return this.hasIntersection},isDone:function(){return this.hasIntersection===!0},visit:function(t){var e=t.getEnvelopeInternal();if(!this.rectEnv.intersects(e))return null;var n=kn.getLines(t);this.checkIntersectionWithLineStrings(n)},checkIntersectionWithLineStrings:function(t){for(var e=t.iterator();e.hasNext();){var n=e.next();if(this.checkIntersectionWithSegments(n),this.hasIntersection)return null}},checkIntersectionWithSegments:function(t){for(var e=t.getCoordinateSequence(),n=1;n<e.size();n++)if(e.getCoordinate(n-1,this.p0),e.getCoordinate(n,this.p1),this.rectIntersector.intersects(this.p0,this.p1))return this.hasIntersection=!0,null},interfaces_:function(){return[]},getClass:function(){return is}}),h(rs,ti),e(rs.prototype,{getIntersectionMatrix:function(){return this._relate.computeIM()},interfaces_:function(){return[]},getClass:function(){return rs}}),rs.covers=function(t,e){return!!t.getEnvelopeInternal().covers(e.getEnvelopeInternal())&&(!!t.isRectangle()||rs.relate(t,e).isCovers())},rs.intersects=function(t,e){return!!t.getEnvelopeInternal().intersects(e.getEnvelopeInternal())&&(t.isRectangle()?ts.intersects(t,e):e.isRectangle()?ts.intersects(e,t):rs.relate(t,e).isIntersects())},rs.touches=function(t,e){return!!t.getEnvelopeInternal().intersects(e.getEnvelopeInternal())&&rs.relate(t,e).isTouches(t.getDimension(),e.getDimension())},rs.within=function(t,e){return e.contains(t)},rs.coveredBy=function(t,e){return rs.covers(e,t)},rs.relate=function(){if(2===arguments.length){var t=arguments[0],e=arguments[1],n=new rs(t,e),i=n.getIntersectionMatrix();return i}if(3===arguments.length){if("string"==typeof arguments[2]&&arguments[0]instanceof B&&arguments[1]instanceof B){var r=arguments[0],s=arguments[1],o=arguments[2];return rs.relateWithCheck(r,s).matches(o)}if(R(arguments[2],V)&&arguments[0]instanceof B&&arguments[1]instanceof B){var a=arguments[0],u=arguments[1],l=arguments[2],n=new rs(a,u,l),i=n.getIntersectionMatrix();return i}}},rs.overlaps=function(t,e){return!!t.getEnvelopeInternal().intersects(e.getEnvelopeInternal())&&rs.relate(t,e).isOverlaps(t.getDimension(),e.getDimension())},rs.disjoint=function(t,e){return!t.intersects(e)},rs.relateWithCheck=function(t,e){return t.checkNotGeometryCollection(t),t.checkNotGeometryCollection(e),rs.relate(t,e)},rs.crosses=function(t,e){return!!t.getEnvelopeInternal().intersects(e.getEnvelopeInternal())&&rs.relate(t,e).isCrosses(t.getDimension(),e.getDimension())},rs.contains=function(t,e){return!!t.getEnvelopeInternal().contains(e.getEnvelopeInternal())&&(t.isRectangle()?Qr.contains(t,e):rs.relate(t,e).isContains())};var Po=Object.freeze({RelateOp:rs});e(ss.prototype,{extractElements:function(t,e){if(null===t)return null;for(var n=0;n<t.getNumGeometries();n++){var i=t.getGeometryN(n);this.skipEmpty&&i.isEmpty()||e.add(i)}},combine:function(){for(var t=new I,e=this.inputGeoms.iterator();e.hasNext();){var n=e.next();this.extractElements(n,t)}return 0===t.size()?null!==this.geomFactory?this.geomFactory.createGeometryCollection(null):null:this.geomFactory.buildGeometry(t)},interfaces_:function(){return[]},getClass:function(){return ss}}),ss.combine=function(){if(1===arguments.length){var t=arguments[0],e=new ss(t);return e.combine()}if(2===arguments.length){var n=arguments[0],i=arguments[1],e=new ss(ss.createList(n,i));return e.combine()}if(3===arguments.length){var r=arguments[0],s=arguments[1],o=arguments[2],e=new ss(ss.createList(r,s,o));return e.combine()}},ss.extractFactory=function(t){return t.isEmpty()?null:t.iterator().next().getFactory()},ss.createList=function(){if(2===arguments.length){var t=arguments[0],e=arguments[1],n=new I;return n.add(t),n.add(e),n}if(3===arguments.length){var i=arguments[0],r=arguments[1],s=arguments[2],n=new I;return n.add(i),n.add(r),n.add(s),n}},e(os.prototype,{union:function(){for(var t=new Te,e=new at,n=0;n<this.pointGeom.getNumGeometries();n++){var i=this.pointGeom.getGeometryN(n),r=i.getCoordinate(),s=t.locate(r,this.otherGeom);s===L.EXTERIOR&&e.add(r)}if(0===e.size())return this.otherGeom;var o=null,a=H.toCoordinateArray(e);return o=1===a.length?this.geomFact.createPoint(a[0]):this.geomFact.createMultiPointFromCoords(a),ss.combine(o,this.otherGeom)},interfaces_:function(){return[]},getClass:function(){return os}}),os.union=function(t,e){var n=new os(t,e);return n.union()},e(as.prototype,{filter:function(t){this.sortIndex!==-1&&t.getSortIndex()!==this.sortIndex||this.comps.add(t)},interfaces_:function(){return[ht]},getClass:function(){return as}}),as.extract=function(){if(2===arguments.length){var t=arguments[0],e=arguments[1];return as.extract(t,e,new I)}if(3===arguments.length){var n=arguments[0],i=arguments[1],r=arguments[2];return n.getSortIndex()===i?r.add(n):n instanceof ft&&n.apply(new as(i,r)),r}},e(us.prototype,{reduceToGeometries:function(t){for(var e=new I,n=t.iterator();n.hasNext();){var i=n.next(),r=null;R(i,y)?r=this.unionTree(i):i instanceof B&&(r=i),e.add(r)}return e},extractByEnvelope:function(t,e,n){for(var i=new I,r=0;r<e.getNumGeometries();r++){var s=e.getGeometryN(r);s.getEnvelopeInternal().intersects(t)?i.add(s):n.add(s)}return this.geomFactory.buildGeometry(i)},unionOptimized:function(t,e){var n=t.getEnvelopeInternal(),i=e.getEnvelopeInternal();if(!n.intersects(i)){var r=ss.combine(t,e);return r}if(t.getNumGeometries()<=1&&e.getNumGeometries()<=1)return this.unionActual(t,e);var s=n.intersection(i);return this.unionUsingEnvelopeIntersection(t,e,s)},union:function(){if(null===this.inputPolys)throw new IllegalStateException("union() method cannot be called twice");if(this.inputPolys.isEmpty())return null;this.geomFactory=this.inputPolys.iterator().next().getFactory();for(var t=new ke(us.STRTREE_NODE_CAPACITY),e=this.inputPolys.iterator();e.hasNext();){var n=e.next();t.insert(n.getEnvelopeInternal(),n)}this.inputPolys=null;var i=t.itemsTree(),r=this.unionTree(i);return r},binaryUnion:function(){if(1===arguments.length){var t=arguments[0];return this.binaryUnion(t,0,t.size())}if(3===arguments.length){var e=arguments[0],n=arguments[1],i=arguments[2];if(i-n<=1){var r=us.getGeometry(e,n);return this.unionSafe(r,null)}if(i-n===2)return this.unionSafe(us.getGeometry(e,n),us.getGeometry(e,n+1));var s=Math.trunc((i+n)/2),r=this.binaryUnion(e,n,s),o=this.binaryUnion(e,s,i);return this.unionSafe(r,o)}},repeatedUnion:function(t){for(var e=null,n=t.iterator();n.hasNext();){var i=n.next();e=null===e?i.copy():e.union(i)}return e},unionSafe:function(t,e){return null===t&&null===e?null:null===t?e.copy():null===e?t.copy():this.unionOptimized(t,e)},unionActual:function(t,e){return us.restrictToPolygons(t.union(e))},unionTree:function(t){var e=this.reduceToGeometries(t),n=this.binaryUnion(e);return n},unionUsingEnvelopeIntersection:function(t,e,n){var i=new I,r=this.extractByEnvelope(n,t,i),s=this.extractByEnvelope(n,e,i),o=this.unionActual(r,s);i.add(o);var a=ss.combine(i);return a},bufferUnion:function(){if(1===arguments.length){var t=arguments[0],e=t.get(0).getFactory(),n=e.buildGeometry(t),i=n.buffer(0);return i}if(2===arguments.length){var r=arguments[0],s=arguments[1],e=r.getFactory(),n=e.createGeometryCollection([r,s]),i=n.buffer(0);return i}},interfaces_:function(){return[]},getClass:function(){return us}}),us.restrictToPolygons=function(t){if(R(t,Rt))return t;var e=pr.getPolygons(t);return 1===e.size()?e.get(0):t.getFactory().createMultiPolygon(ie.toPolygonArray(e))},us.getGeometry=function(t,e){return e>=t.size()?null:t.get(e)},us.union=function(t){var e=new us(t);return e.union()},us.STRTREE_NODE_CAPACITY=4,e(ls.prototype,{unionNoOpt:function(t){var e=this.geomFact.createPoint();return si.overlayOp(t,e,ii.UNION)},unionWithNull:function(t,e){return null===t&&null===e?null:null===e?t:null===t?e:t.union(e)},extract:function(){if(R(arguments[0],v))for(var t=arguments[0],e=t.iterator();e.hasNext();){var n=e.next();this.extract(n)}else if(arguments[0]instanceof B){var i=arguments[0];null===this.geomFact&&(this.geomFact=i.getFactory()),as.extract(i,B.SORTINDEX_POLYGON,this.polygons),as.extract(i,B.SORTINDEX_LINESTRING,this.lines),as.extract(i,B.SORTINDEX_POINT,this.points)}},union:function t(){if(null===this.geomFact)return null;var e=null;if(this.points.size()>0){var n=this.geomFact.buildGeometry(this.points);e=this.unionNoOpt(n)}var i=null;if(this.lines.size()>0){var r=this.geomFact.buildGeometry(this.lines);i=this.unionNoOpt(r)}var s=null;this.polygons.size()>0&&(s=us.union(this.polygons));var o=this.unionWithNull(i,s),t=null;return t=null===e?o:null===o?e:os.union(e,o),null===t?this.geomFact.createGeometryCollection():t},interfaces_:function(){return[]},getClass:function(){return ls}}),ls.union=function(){if(1===arguments.length){if(R(arguments[0],v)){var t=arguments[0],e=new ls(t);return e.union()}if(arguments[0]instanceof B){var n=arguments[0],e=new ls(n);return e.union()}}else if(2===arguments.length){var i=arguments[0],r=arguments[1],e=new ls(i,r);return e.union()}};var bo=Object.freeze({UnaryUnionOp:ls}),Oo=Object.freeze({IsValidOp:Ur,ConsistentAreaTester:Vr}),_o=Object.freeze({BoundaryOp:dt,IsSimpleOp:Wi,buffer:So,distance:wo,linemerge:Lo,overlay:Ro,polygonize:To,relate:Po,union:bo,valid:Oo});h(hs,_t.CoordinateOperation),e(hs.prototype,{editCoordinates:function(t,e){if(0===t.length)return null;for(var n=new Array(t.length).fill(null),i=0;i<t.length;i++){var r=new g(t[i]);this.targetPM.makePrecise(r),n[i]=r}var s=new N(n,(!1)),o=s.toCoordinateArray(),a=0;e instanceof St&&(a=2),e instanceof bt&&(a=4);var u=n;return this.removeCollapsed&&(u=null),o.length<a?u:o},interfaces_:function(){return[]},getClass:function(){return hs}}),e(cs.prototype,{fixPolygonalTopology:function(t){var e=t;this.changePrecisionModel||(e=this.changePM(t,this.targetPM));var n=e.buffer(0),i=n;return this.changePrecisionModel||(i=this.changePM(n,t.getPrecisionModel())),i},reducePointwise:function(t){var e=null;if(this.changePrecisionModel){var n=this.createFactory(t.getFactory(),this.targetPM);e=new _t(n)}else e=new _t;var i=this.removeCollapsed;t.getDimension()>=2&&(i=!0);var r=e.edit(t,new hs(this.targetPM,i));return r},changePM:function(t,e){var n=this.createEditor(t.getFactory(),e);return n.edit(t,new _t.NoOpGeometryOperation)},setRemoveCollapsedComponents:function(t){this.removeCollapsed=t},createFactory:function(t,e){var n=new ie(e,t.getSRID(),t.getCoordinateSequenceFactory());return n},setChangePrecisionModel:function(t){this.changePrecisionModel=t},reduce:function(t){var e=this.reducePointwise(t);return this.isPointwise?e:R(e,Rt)?e.isValid()?e:this.fixPolygonalTopology(e):e},setPointwise:function(t){this.isPointwise=t},createEditor:function(t,e){if(t.getPrecisionModel()===e)return new _t;var n=this.createFactory(t,e),i=new _t(n);return i},interfaces_:function(){return[]},getClass:function(){return cs}}),cs.reduce=function(t,e){var n=new cs(e);return n.reduce(t)},cs.reducePointwise=function(t,e){var n=new cs(e);return n.setPointwise(!0),n.reduce(t)};var Mo=Object.freeze({GeometryPrecisionReducer:cs});e(fs.prototype,{simplifySection:function(t,e){if(t+1===e)return null;this.seg.p0=this.pts[t],this.seg.p1=this.pts[e];for(var n=-1,i=t,r=t+1;r<e;r++){var s=this.seg.distance(this.pts[r]);s>n&&(n=s,i=r)}if(n<=this.distanceTolerance)for(var r=t+1;r<e;r++)this.usePt[r]=!1;else this.simplifySection(t,i),this.simplifySection(i,e)},setDistanceTolerance:function(t){this.distanceTolerance=t},simplify:function(){this.usePt=new Array(this.pts.length).fill(null);for(var t=0;t<this.pts.length;t++)this.usePt[t]=!0;this.simplifySection(0,this.pts.length-1);for(var e=new N,t=0;t<this.pts.length;t++)this.usePt[t]&&e.add(new g(this.pts[t]));return e.toCoordinateArray()},interfaces_:function(){return[]},getClass:function(){return fs}}),fs.simplify=function(t,e){var n=new fs(t);return n.setDistanceTolerance(e),n.simplify()},e(gs.prototype,{setEnsureValid:function(t){this.isEnsureValidTopology=t},getResultGeometry:function(){return this.inputGeom.isEmpty()?this.inputGeom.copy():new ds(this.isEnsureValidTopology,this.distanceTolerance).transform(this.inputGeom)},setDistanceTolerance:function(t){if(t<0)throw new i("Tolerance must be non-negative");this.distanceTolerance=t},interfaces_:function(){return[]},getClass:function(){return gs}}),gs.simplify=function(t,e){var n=new gs(t);return n.setDistanceTolerance(e),n.getResultGeometry()},h(ds,xe),e(ds.prototype,{transformPolygon:function(t,e){if(t.isEmpty())return null;var n=xe.prototype.transformPolygon.call(this,t,e);return e instanceof Ot?n:this.createValidArea(n)},createValidArea:function(t){return this.isEnsureValidTopology?t.buffer(0):t},transformCoordinates:function(t,e){var n=t.toCoordinateArray(),i=null;return i=0===n.length?new Array(0).fill(null):fs.simplify(n,this.distanceTolerance),this.factory.getCoordinateSequenceFactory().create(i)},transformMultiPolygon:function(t,e){var n=xe.prototype.transformMultiPolygon.call(this,t,e);return this.createValidArea(n)},transformLinearRing:function(t,e){var n=e instanceof Tt,i=xe.prototype.transformLinearRing.call(this,t,e);return!n||i instanceof bt?i:null},interfaces_:function(){return[]},getClass:function(){return ds}}),gs.DPTransformer=ds,h(ps,ce),e(ps.prototype,{getIndex:function(){return this.index},getParent:function(){return this.parent},interfaces_:function(){return[]},getClass:function(){return ps}}),e(vs.prototype,{addToResult:function(t){this.resultSegs.add(t)},asLineString:function(){return this.parentLine.getFactory().createLineString(vs.extractCoordinates(this.resultSegs))},getResultSize:function(){var t=this.resultSegs.size();return 0===t?0:t+1},getParent:function(){return this.parentLine},getSegment:function(t){return this.segs[t]},getParentCoordinates:function(){return this.parentLine.getCoordinates()},getMinimumSize:function(){return this.minimumSize},asLinearRing:function(){return this.parentLine.getFactory().createLinearRing(vs.extractCoordinates(this.resultSegs))},getSegments:function(){return this.segs},init:function(){var t=this.parentLine.getCoordinates();this.segs=new Array(t.length-1).fill(null);for(var e=0;e<t.length-1;e++){var n=new ps(t[e],t[e+1],this.parentLine,e);this.segs[e]=n}},getResultCoordinates:function(){return vs.extractCoordinates(this.resultSegs)},interfaces_:function(){return[]},getClass:function(){return vs}}),vs.extractCoordinates=function(t){for(var e=new Array(t.size()+1).fill(null),n=null,i=0;i<t.size();i++)n=t.get(i),e[i]=n.p0;return e[e.length-1]=n.p1,e},e(ms.prototype,{remove:function(t){this.index.remove(new C(t.p0,t.p1),t)},add:function(){if(arguments[0]instanceof vs)for(var t=arguments[0],e=t.getSegments(),n=0;n<e.length;n++){var i=e[n];this.add(i)}else if(arguments[0]instanceof ce){var r=arguments[0];this.index.insert(new C(r.p0,r.p1),r)}},query:function(t){var e=new C(t.p0,t.p1),n=new ys(t);this.index.query(e,n);var i=n.getItems();return i},interfaces_:function(){return[]},getClass:function(){return ms}}),e(ys.prototype,{visitItem:function(t){var e=t;C.intersects(e.p0,e.p1,this.querySeg.p0,this.querySeg.p1)&&this.items.add(t)},getItems:function(){return this.items},interfaces_:function(){return[Ae]},getClass:function(){return ys}}),e(xs.prototype,{flatten:function(t,e){var n=this.linePts[t],i=this.linePts[e],r=new ce(n,i);return this.remove(this.line,t,e),this.outputIndex.add(r),r},hasBadIntersection:function(t,e,n){return!!this.hasBadOutputIntersection(n)||!!this.hasBadInputIntersection(t,e,n)},setDistanceTolerance:function(t){this.distanceTolerance=t},simplifySection:function(t,e,n){n+=1;var i=new Array(2).fill(null);if(t+1===e){var r=this.line.getSegment(t);return this.line.addToResult(r),null}var s=!0;if(this.line.getResultSize()<this.line.getMinimumSize()){var o=n+1;o<this.line.getMinimumSize()&&(s=!1)}var a=new Array(1).fill(null),u=this.findFurthestPoint(this.linePts,t,e,a);a[0]>this.distanceTolerance&&(s=!1);var l=new ce;if(l.p0=this.linePts[t],l.p1=this.linePts[e],i[0]=t,i[1]=e,this.hasBadIntersection(this.line,i,l)&&(s=!1),s){var r=this.flatten(t,e);return this.line.addToResult(r),null}this.simplifySection(t,u,n),this.simplifySection(u,e,n)},hasBadOutputIntersection:function(t){for(var e=this.outputIndex.query(t),n=e.iterator();n.hasNext();){var i=n.next();if(this.hasInteriorIntersection(i,t))return!0}return!1},findFurthestPoint:function(t,e,n,i){var r=new ce;r.p0=t[e],r.p1=t[n];for(var s=-1,o=e,a=e+1;a<n;a++){var u=t[a],l=r.distance(u);l>s&&(s=l,o=a)}return i[0]=s,o},simplify:function(t){this.line=t,this.linePts=t.getParentCoordinates(),this.simplifySection(0,this.linePts.length-1,0)},remove:function(t,e,n){for(var i=e;i<n;i++){var r=t.getSegment(i);this.inputIndex.remove(r)}},hasInteriorIntersection:function(t,e){return this.li.computeIntersection(t.p0,t.p1,e.p0,e.p1),this.li.isInteriorIntersection()},hasBadInputIntersection:function(t,e,n){for(var i=this.inputIndex.query(n),r=i.iterator();r.hasNext();){var s=r.next();if(this.hasInteriorIntersection(s,n)){if(xs.isInLineSection(t,e,s))continue;return!0}}return!1},interfaces_:function(){return[]},getClass:function(){return xs}}),xs.isInLineSection=function(t,e,n){if(n.getParent()!==t.getParent())return!1;var i=n.getIndex();return i>=e[0]&&i<e[1]},e(Es.prototype,{setDistanceTolerance:function(t){this.distanceTolerance=t},simplify:function(t){for(var e=t.iterator();e.hasNext();)this.inputIndex.add(e.next());for(var e=t.iterator();e.hasNext();){var n=new xs(this.inputIndex,this.outputIndex);n.setDistanceTolerance(this.distanceTolerance),n.simplify(e.next())}},interfaces_:function(){return[]},getClass:function(){return Es}}),e(Is.prototype,{getResultGeometry:function(){if(this.inputGeom.isEmpty())return this.inputGeom.copy();this.linestringMap=new te,this.inputGeom.apply(new Cs(this)),this.lineSimplifier.simplify(this.linestringMap.values());var t=new Ns(this.linestringMap).transform(this.inputGeom);return t},setDistanceTolerance:function(t){if(t<0)throw new i("Tolerance must be non-negative");this.lineSimplifier.setDistanceTolerance(t)},interfaces_:function(){return[]},getClass:function(){return Is}}),Is.simplify=function(t,e){var n=new Is(t);return n.setDistanceTolerance(e),n.getResultGeometry()},h(Ns,xe),e(Ns.prototype,{transformCoordinates:function(t,e){if(0===t.size())return null;if(e instanceof St){var n=this.linestringMap.get(e);return this.createCoordinateSequence(n.getResultCoordinates())}return xe.prototype.transformCoordinates.call(this,t,e)},interfaces_:function(){return[]},getClass:function(){return Ns}}),e(Cs.prototype,{filter:function(t){if(t instanceof St){var e=t;if(e.isEmpty())return null;var n=e.isClosed()?4:2,i=new vs(e,n);this.tps.linestringMap.put(e,i)}},interfaces_:function(){return[q]},getClass:function(){return Cs}}),Is.LineStringTransformer=Ns,Is.LineStringMapBuilderFilter=Cs;var Do=Object.freeze({DouglasPeuckerSimplifier:gs,TopologyPreservingSimplifier:Is});e(Ss.prototype,{splitAt:function(){if(1===arguments.length){var t=arguments[0],e=this.minimumLen/this.segLen;if(t.distance(this.seg.p0)<this.minimumLen)return this.splitPt=this.seg.pointAlong(e),null;if(t.distance(this.seg.p1)<this.minimumLen)return this.splitPt=Ss.pointAlongReverse(this.seg,e),null;this.splitPt=t}else if(2===arguments.length){var n=arguments[0],i=arguments[1],r=this.getConstrainedLength(n),s=r/this.segLen;i.equals2D(this.seg.p0)?this.splitPt=this.seg.pointAlong(s):this.splitPt=Ss.pointAlongReverse(this.seg,s)}},setMinimumLength:function(t){this.minimumLen=t},getConstrainedLength:function(t){return t<this.minimumLen?this.minimumLen:t},getSplitPoint:function(){return this.splitPt},interfaces_:function(){return[]},getClass:function(){return Ss}}),Ss.pointAlongReverse=function(t,e){var n=new g;return n.x=t.p1.x-e*(t.p1.x-t.p0.x),n.y=t.p1.y-e*(t.p1.y-t.p0.y),n},e(ws.prototype,{findSplitPoint:function(t,e){},interfaces_:function(){return[]},getClass:function(){return ws}}),e(Ls.prototype,{findSplitPoint:function(t,e){var n=t.getLineSegment(),i=n.getLength(),r=i/2,s=new Ss(n),o=Ls.projectedSplitPoint(t,e),a=2*o.distance(e)*.8,u=a;return u>r&&(u=r),s.setMinimumLength(u),s.splitAt(o),s.getSplitPoint()},interfaces_:function(){return[ws]},getClass:function(){return Ls}}),Ls.projectedSplitPoint=function(t,e){var n=t.getLineSegment(),i=n.project(e);return i},e(Rs.prototype,{interfaces_:function(){return[]},getClass:function(){return Rs}}),Rs.triArea=function(t,e,n){return(e.x-t.x)*(n.y-t.y)-(e.y-t.y)*(n.x-t.x)},Rs.isInCircleDDNormalized=function(t,e,n,i){var r=_.valueOf(t.x).selfSubtract(i.x),s=_.valueOf(t.y).selfSubtract(i.y),o=_.valueOf(e.x).selfSubtract(i.x),a=_.valueOf(e.y).selfSubtract(i.y),u=_.valueOf(n.x).selfSubtract(i.x),l=_.valueOf(n.y).selfSubtract(i.y),h=r.multiply(a).selfSubtract(o.multiply(s)),c=o.multiply(l).selfSubtract(u.multiply(a)),f=u.multiply(s).selfSubtract(r.multiply(l)),g=r.multiply(r).selfAdd(s.multiply(s)),d=o.multiply(o).selfAdd(a.multiply(a)),p=u.multiply(u).selfAdd(l.multiply(l)),v=g.selfMultiply(c).selfAdd(d.selfMultiply(f)).selfAdd(p.selfMultiply(h)),m=v.doubleValue()>0;return m},Rs.checkRobustInCircle=function(t,e,n,i){var r=Rs.isInCircleNonRobust(t,e,n,i),s=Rs.isInCircleDDSlow(t,e,n,i),o=Rs.isInCircleCC(t,e,n,i),a=Si.circumcentre(t,e,n);A.out.println("p radius diff a = "+Math.abs(i.distance(a)-t.distance(a))/t.distance(a)),r===s&&r===o||(A.out.println("inCircle robustness failure (double result = "+r+", DD result = "+s+", CC result = "+o+")"),A.out.println(se.toLineString(new Gt([t,e,n,i]))),A.out.println("Circumcentre = "+se.toPoint(a)+" radius = "+t.distance(a)),A.out.println("p radius diff a = "+Math.abs(i.distance(a)/t.distance(a)-1)),A.out.println("p radius diff b = "+Math.abs(i.distance(a)/e.distance(a)-1)),A.out.println("p radius diff c = "+Math.abs(i.distance(a)/n.distance(a)-1)),A.out.println())},Rs.isInCircleDDFast=function(t,e,n,i){var r=_.sqr(t.x).selfAdd(_.sqr(t.y)).selfMultiply(Rs.triAreaDDFast(e,n,i)),s=_.sqr(e.x).selfAdd(_.sqr(e.y)).selfMultiply(Rs.triAreaDDFast(t,n,i)),o=_.sqr(n.x).selfAdd(_.sqr(n.y)).selfMultiply(Rs.triAreaDDFast(t,e,i)),a=_.sqr(i.x).selfAdd(_.sqr(i.y)).selfMultiply(Rs.triAreaDDFast(t,e,n)),u=r.selfSubtract(s).selfAdd(o).selfSubtract(a),l=u.doubleValue()>0;return l},Rs.isInCircleCC=function(t,e,n,i){var r=Si.circumcentre(t,e,n),s=t.distance(r),o=i.distance(r)-s;return o<=0},Rs.isInCircleNormalized=function(t,e,n,i){var r=t.x-i.x,s=t.y-i.y,o=e.x-i.x,a=e.y-i.y,u=n.x-i.x,l=n.y-i.y,h=r*a-o*s,c=o*l-u*a,f=u*s-r*l,g=r*r+s*s,d=o*o+a*a,p=u*u+l*l,v=g*c+d*f+p*h;
 return v>0},Rs.isInCircleDDSlow=function(t,e,n,i){var r=_.valueOf(i.x),s=_.valueOf(i.y),o=_.valueOf(t.x),a=_.valueOf(t.y),u=_.valueOf(e.x),l=_.valueOf(e.y),h=_.valueOf(n.x),c=_.valueOf(n.y),f=o.multiply(o).add(a.multiply(a)).multiply(Rs.triAreaDDSlow(u,l,h,c,r,s)),g=u.multiply(u).add(l.multiply(l)).multiply(Rs.triAreaDDSlow(o,a,h,c,r,s)),d=h.multiply(h).add(c.multiply(c)).multiply(Rs.triAreaDDSlow(o,a,u,l,r,s)),p=r.multiply(r).add(s.multiply(s)).multiply(Rs.triAreaDDSlow(o,a,u,l,h,c)),v=f.subtract(g).add(d).subtract(p),m=v.doubleValue()>0;return m},Rs.isInCircleNonRobust=function(t,e,n,i){var r=(t.x*t.x+t.y*t.y)*Rs.triArea(e,n,i)-(e.x*e.x+e.y*e.y)*Rs.triArea(t,n,i)+(n.x*n.x+n.y*n.y)*Rs.triArea(t,e,i)-(i.x*i.x+i.y*i.y)*Rs.triArea(t,e,n)>0;return r},Rs.isInCircleRobust=function(t,e,n,i){return Rs.isInCircleNormalized(t,e,n,i)},Rs.triAreaDDSlow=function(t,e,n,i,r,s){return n.subtract(t).multiply(s.subtract(e)).subtract(i.subtract(e).multiply(r.subtract(t)))},Rs.triAreaDDFast=function(t,e,n){var i=_.valueOf(e.x).selfSubtract(t.x).selfMultiply(_.valueOf(n.y).selfSubtract(t.y)),r=_.valueOf(e.y).selfSubtract(t.y).selfMultiply(_.valueOf(n.x).selfSubtract(t.x));return i.selfSubtract(r)},e(Ts.prototype,{circleCenter:function(t,e){var n=new Ts(this.getX(),this.getY()),i=this.bisector(n,t),r=this.bisector(t,e),s=new F(i,r),o=null;try{o=new Ts(s.getX(),s.getY())}catch(i){if(!(i instanceof w))throw i;A.err.println("a: "+n+"  b: "+t+"  c: "+e),A.err.println(i)}finally{}return o},dot:function(t){return this.p.x*t.getX()+this.p.y*t.getY()},magn:function(){return Math.sqrt(this.p.x*this.p.x+this.p.y*this.p.y)},getZ:function(){return this.p.z},bisector:function(t,e){var n=e.getX()-t.getX(),i=e.getY()-t.getY(),r=new F(t.getX()+n/2,t.getY()+i/2,1),s=new F(t.getX()-i+n/2,t.getY()+n+i/2,1);return new F(r,s)},equals:function(){if(1===arguments.length){var t=arguments[0];return this.p.x===t.getX()&&this.p.y===t.getY()}if(2===arguments.length){var e=arguments[0],n=arguments[1];return this.p.distance(e.getCoordinate())<n}},getCoordinate:function(){return this.p},isInCircle:function(t,e,n){return Rs.isInCircleRobust(t.p,e.p,n.p,this.p)},interpolateZValue:function(t,e,n){var i=t.getX(),r=t.getY(),s=e.getX()-i,o=n.getX()-i,a=e.getY()-r,u=n.getY()-r,l=s*u-o*a,h=this.getX()-i,c=this.getY()-r,f=(u*h-o*c)/l,g=(-a*h+s*c)/l,d=t.getZ()+f*(e.getZ()-t.getZ())+g*(n.getZ()-t.getZ());return d},midPoint:function(t){var e=(this.p.x+t.getX())/2,n=(this.p.y+t.getY())/2,i=(this.p.z+t.getZ())/2;return new Ts(e,n,i)},rightOf:function(t){return this.isCCW(t.dest(),t.orig())},isCCW:function(t,e){return(t.p.x-this.p.x)*(e.p.y-this.p.y)-(t.p.y-this.p.y)*(e.p.x-this.p.x)>0},getX:function(){return this.p.x},crossProduct:function(t){return this.p.x*t.getY()-this.p.y*t.getX()},setZ:function(t){this.p.z=t},times:function(t){return new Ts(t*this.p.x,t*this.p.y)},cross:function(){return new Ts(this.p.y,(-this.p.x))},leftOf:function(t){return this.isCCW(t.orig(),t.dest())},toString:function(){return"POINT ("+this.p.x+" "+this.p.y+")"},sub:function(t){return new Ts(this.p.x-t.getX(),this.p.y-t.getY())},getY:function(){return this.p.y},classify:function(t,e){var n=this,i=e.sub(t),r=n.sub(t),s=i.crossProduct(r);return s>0?Ts.LEFT:s<0?Ts.RIGHT:i.getX()*r.getX()<0||i.getY()*r.getY()<0?Ts.BEHIND:i.magn()<r.magn()?Ts.BEYOND:t.equals(n)?Ts.ORIGIN:e.equals(n)?Ts.DESTINATION:Ts.BETWEEN},sum:function(t){return new Ts(this.p.x+t.getX(),this.p.y+t.getY())},distance:function(t,e){return Math.sqrt(Math.pow(e.getX()-t.getX(),2)+Math.pow(e.getY()-t.getY(),2))},circumRadiusRatio:function(t,e){var n=this.circleCenter(t,e),i=this.distance(n,t),r=this.distance(this,t),s=this.distance(t,e);return s<r&&(r=s),s=this.distance(e,this),s<r&&(r=s),i/r},interfaces_:function(){return[]},getClass:function(){return Ts}}),Ts.interpolateZ=function(){if(3===arguments.length){var t=arguments[0],e=arguments[1],n=arguments[2],i=e.distance(n),r=t.distance(e),s=n.z-e.z,o=e.z+s*(r/i);return o}if(4===arguments.length){var a=arguments[0],u=arguments[1],l=arguments[2],h=arguments[3],c=u.x,f=u.y,g=l.x-c,d=h.x-c,p=l.y-f,v=h.y-f,m=g*v-d*p,y=a.x-c,x=a.y-f,E=(v*y-d*x)/m,I=(-p*y+g*x)/m,N=u.z+E*(l.z-u.z)+I*(h.z-u.z);return N}},Ts.LEFT=0,Ts.RIGHT=1,Ts.BEYOND=2,Ts.BEHIND=3,Ts.BETWEEN=4,Ts.ORIGIN=5,Ts.DESTINATION=6,h(Ps,Ts),e(Ps.prototype,{getConstraint:function(){return this.constraint},setOnConstraint:function(t){this._isOnConstraint=t},merge:function(t){t._isOnConstraint&&(this._isOnConstraint=!0,this.constraint=t.constraint)},isOnConstraint:function(){return this._isOnConstraint},setConstraint:function(t){this._isOnConstraint=!0,this.constraint=t},interfaces_:function(){return[]},getClass:function(){return Ps}}),e(bs.prototype,{equalsNonOriented:function(t){return!!this.equalsOriented(t)||!!this.equalsOriented(t.sym())},toLineSegment:function(){return new ce(this.vertex.getCoordinate(),this.dest().getCoordinate())},dest:function(){return this.sym().orig()},oNext:function(){return this.next},equalsOriented:function(t){return!(!this.orig().getCoordinate().equals2D(t.orig().getCoordinate())||!this.dest().getCoordinate().equals2D(t.dest().getCoordinate()))},dNext:function(){return this.sym().oNext().sym()},lPrev:function(){return this.next.sym()},rPrev:function(){return this.sym().oNext()},rot:function(){return this._rot},oPrev:function(){return this._rot.next._rot},sym:function(){return this._rot._rot},setOrig:function(t){this.vertex=t},lNext:function(){return this.invRot().oNext().rot()},getLength:function(){return this.orig().getCoordinate().distance(this.dest().getCoordinate())},invRot:function(){return this._rot.sym()},setDest:function(t){this.sym().setOrig(t)},setData:function(t){this.data=t},getData:function(){return this.data},delete:function(){this._rot=null},orig:function(){return this.vertex},rNext:function(){return this._rot.next.invRot()},toString:function(){var t=this.vertex.getCoordinate(),e=this.dest().getCoordinate();return se.toLineString(t,e)},isLive:function(){return null!==this._rot},getPrimary:function(){return this.orig().getCoordinate().compareTo(this.dest().getCoordinate())<=0?this:this.sym()},dPrev:function(){return this.invRot().oNext().invRot()},setNext:function(t){this.next=t},interfaces_:function(){return[]},getClass:function(){return bs}}),bs.makeEdge=function(t,e){var n=new bs,i=new bs,r=new bs,s=new bs;n._rot=i,i._rot=r,r._rot=s,s._rot=n,n.setNext(n),i.setNext(s),r.setNext(r),s.setNext(i);var o=n;return o.setOrig(t),o.setDest(e),o},bs.swap=function(t){var e=t.oPrev(),n=t.sym().oPrev();bs.splice(t,e),bs.splice(t.sym(),n),bs.splice(t,e.lNext()),bs.splice(t.sym(),n.lNext()),t.setOrig(e.dest()),t.setDest(n.dest())},bs.splice=function(t,e){var n=t.oNext().rot(),i=e.oNext().rot(),r=e.oNext(),s=t.oNext(),o=i.oNext(),a=n.oNext();t.setNext(r),e.setNext(s),n.setNext(o),i.setNext(a)},bs.connect=function(t,e){var n=bs.makeEdge(t.dest(),e.orig());return bs.splice(n,t.lNext()),bs.splice(n.sym(),e),n},e(Os.prototype,{insertSite:function(t){var e=this.subdiv.locate(t);if(this.subdiv.isVertexOfEdge(e,t))return e;this.subdiv.isOnEdge(e,t.getCoordinate())&&(e=e.oPrev(),this.subdiv.delete(e.oNext()));var n=this.subdiv.makeEdge(e.orig(),t);bs.splice(n,e);var i=n;do n=this.subdiv.connect(e,n.sym()),e=n.oPrev();while(e.lNext()!==i);for(;;){var r=e.oPrev();if(r.dest().rightOf(e)&&t.isInCircle(e.orig(),r.dest(),e.dest()))bs.swap(e),e=e.oPrev();else{if(e.oNext()===i)return n;e=e.oNext().lPrev()}}},insertSites:function(t){for(var e=t.iterator();e.hasNext();){var n=e.next();this.insertSite(n)}},interfaces_:function(){return[]},getClass:function(){return Os}}),e(_s.prototype,{locate:function(t){},interfaces_:function(){return[]},getClass:function(){return _s}}),e(Ms.prototype,{init:function(){this.lastEdge=this.findEdge()},locate:function(t){this.lastEdge.isLive()||this.init();var e=this.subdiv.locateFromEdge(t,this.lastEdge);return this.lastEdge=e,e},findEdge:function(){var t=this.subdiv.getEdges();return t.iterator().next()},interfaces_:function(){return[_s]},getClass:function(){return Ms}}),h(Ds,l),e(Ds.prototype,{getSegment:function(){return this.seg},interfaces_:function(){return[]},getClass:function(){return Ds}}),Ds.msgWithSpatial=function(t,e){return null!==e?t+" [ "+e+" ]":t},e(As.prototype,{visit:function(t){},interfaces_:function(){return[]},getClass:function(){return As}}),e(Fs.prototype,{getTriangleVertices:function(t){var e=new Bs;return this.visitTriangles(e,t),e.getTriangleVertices()},isFrameVertex:function(t){return!!t.equals(this.frameVertex[0])||(!!t.equals(this.frameVertex[1])||!!t.equals(this.frameVertex[2]))},isVertexOfEdge:function(t,e){return!(!e.equals(t.orig(),this.tolerance)&&!e.equals(t.dest(),this.tolerance))},connect:function(t,e){var n=bs.connect(t,e);return this.quadEdges.add(n),n},getVoronoiCellPolygon:function(t,e){var n=new I,i=t;do{var r=t.rot().orig().getCoordinate();n.add(r),t=t.oPrev()}while(t!==i);var s=new N;s.addAll(n,!1),s.closeRing(),s.size()<4&&(A.out.println(s),s.add(s.get(s.size()-1),!0));var o=s.toCoordinateArray(),a=e.createPolygon(e.createLinearRing(o),null),u=i.orig();return a.setUserData(u.getCoordinate()),a},setLocator:function(t){this.locator=t},initSubdiv:function(){var t=this.makeEdge(this.frameVertex[0],this.frameVertex[1]),e=this.makeEdge(this.frameVertex[1],this.frameVertex[2]);bs.splice(t.sym(),e);var n=this.makeEdge(this.frameVertex[2],this.frameVertex[0]);return bs.splice(e.sym(),n),bs.splice(n.sym(),t),t},isFrameBorderEdge:function(t){var e=new Array(3).fill(null);Fs.getTriangleEdges(t,e);var n=new Array(3).fill(null);Fs.getTriangleEdges(t.sym(),n);var i=t.lNext().dest();if(this.isFrameVertex(i))return!0;var r=t.sym().lNext().dest();return!!this.isFrameVertex(r)},makeEdge:function(t,e){var n=bs.makeEdge(t,e);return this.quadEdges.add(n),n},visitTriangles:function(t,e){this.visitedKey++;var n=new pe;n.push(this.startingEdge);for(var i=new J;!n.empty();){var r=n.pop();if(!i.contains(r)){var s=this.fetchTriangleToVisit(r,n,e,i);null!==s&&t.visit(s)}}},isFrameEdge:function(t){return!(!this.isFrameVertex(t.orig())&&!this.isFrameVertex(t.dest()))},isOnEdge:function(t,e){this.seg.setCoordinates(t.orig().getCoordinate(),t.dest().getCoordinate());var n=this.seg.distance(e);return n<this.edgeCoincidenceTolerance},getEnvelope:function(){return new C(this.frameEnv)},createFrame:function(t){var e=t.getWidth(),n=t.getHeight(),i=0;i=e>n?10*e:10*n,this.frameVertex[0]=new Ts((t.getMaxX()+t.getMinX())/2,t.getMaxY()+i),this.frameVertex[1]=new Ts(t.getMinX()-i,t.getMinY()-i),this.frameVertex[2]=new Ts(t.getMaxX()+i,t.getMinY()-i),this.frameEnv=new C(this.frameVertex[0].getCoordinate(),this.frameVertex[1].getCoordinate()),this.frameEnv.expandToInclude(this.frameVertex[2].getCoordinate())},getTriangleCoordinates:function(t){var e=new zs;return this.visitTriangles(e,t),e.getTriangles()},getVertices:function(t){for(var e=new J,n=this.quadEdges.iterator();n.hasNext();){var i=n.next(),r=i.orig();!t&&this.isFrameVertex(r)||e.add(r);var s=i.dest();!t&&this.isFrameVertex(s)||e.add(s)}return e},fetchTriangleToVisit:function(t,e,n,i){var r=t,s=0,o=!1;do{this.triEdges[s]=r,this.isFrameEdge(r)&&(o=!0);var a=r.sym();i.contains(a)||e.push(a),i.add(r),s++,r=r.lNext()}while(r!==t);return o&&!n?null:this.triEdges},getEdges:function(){if(0===arguments.length)return this.quadEdges;if(1===arguments.length){for(var t=arguments[0],e=this.getPrimaryEdges(!1),n=new Array(e.size()).fill(null),i=0,r=e.iterator();r.hasNext();){var s=r.next();n[i++]=t.createLineString([s.orig().getCoordinate(),s.dest().getCoordinate()])}return t.createMultiLineString(n)}},getVertexUniqueEdges:function(t){for(var e=new I,n=new J,i=this.quadEdges.iterator();i.hasNext();){var r=i.next(),s=r.orig();n.contains(s)||(n.add(s),!t&&this.isFrameVertex(s)||e.add(r));var o=r.sym(),a=o.orig();n.contains(a)||(n.add(a),!t&&this.isFrameVertex(a)||e.add(o))}return e},getTriangleEdges:function(t){var e=new qs;return this.visitTriangles(e,t),e.getTriangleEdges()},getPrimaryEdges:function(t){this.visitedKey++;var e=new I,n=new pe;n.push(this.startingEdge);for(var i=new J;!n.empty();){var r=n.pop();if(!i.contains(r)){var s=r.getPrimary();!t&&this.isFrameEdge(s)||e.add(s),n.push(r.oNext()),n.push(r.sym().oNext()),i.add(r),i.add(r.sym())}}return e},delete:function(t){bs.splice(t,t.oPrev()),bs.splice(t.sym(),t.sym().oPrev());var e=t.sym(),n=t.rot(),i=t.rot().sym();this.quadEdges.remove(t),this.quadEdges.remove(e),this.quadEdges.remove(n),this.quadEdges.remove(i),t.delete(),e.delete(),n.delete(),i.delete()},locateFromEdge:function(t,e){for(var n=0,i=this.quadEdges.size(),r=e;;){if(n++,n>i)throw new Ds(r.toLineSegment());if(t.equals(r.orig())||t.equals(r.dest()))break;if(t.rightOf(r))r=r.sym();else if(t.rightOf(r.oNext())){if(t.rightOf(r.dPrev()))break;r=r.dPrev()}else r=r.oNext()}return r},getTolerance:function(){return this.tolerance},getVoronoiCellPolygons:function(t){this.visitTriangles(new Gs,!0);for(var e=new I,n=this.getVertexUniqueEdges(!1),i=n.iterator();i.hasNext();){var r=i.next();e.add(this.getVoronoiCellPolygon(r,t))}return e},getVoronoiDiagram:function(t){var e=this.getVoronoiCellPolygons(t);return t.createGeometryCollection(ie.toGeometryArray(e))},getTriangles:function(t){for(var e=this.getTriangleCoordinates(!1),n=new Array(e.size()).fill(null),i=0,r=e.iterator();r.hasNext();){var s=r.next();n[i++]=t.createPolygon(t.createLinearRing(s),null)}return t.createGeometryCollection(n)},insertSite:function(t){var e=this.locate(t);if(t.equals(e.orig(),this.tolerance)||t.equals(e.dest(),this.tolerance))return e;var n=this.makeEdge(e.orig(),t);bs.splice(n,e);var i=n;do n=this.connect(e,n.sym()),e=n.oPrev();while(e.lNext()!==i);return i},locate:function(){if(1===arguments.length){if(arguments[0]instanceof Ts){var t=arguments[0];return this.locator.locate(t)}if(arguments[0]instanceof g){var e=arguments[0];return this.locator.locate(new Ts(e))}}else if(2===arguments.length){var n=arguments[0],i=arguments[1],r=this.locator.locate(new Ts(n));if(null===r)return null;var s=r;r.dest().getCoordinate().equals2D(n)&&(s=r.sym());var o=s;do{if(o.dest().getCoordinate().equals2D(i))return o;o=o.oNext()}while(o!==s);return null}},interfaces_:function(){return[]},getClass:function(){return Fs}}),Fs.getTriangleEdges=function(t,e){if(e[0]=t,e[1]=e[0].lNext(),e[2]=e[1].lNext(),e[2].lNext()!==e[0])throw new i("Edges do not form a triangle")},e(Gs.prototype,{visit:function(t){for(var e=t[0].orig().getCoordinate(),n=t[1].orig().getCoordinate(),i=t[2].orig().getCoordinate(),r=Si.circumcentre(e,n,i),s=new Ts(r),o=0;o<3;o++)t[o].rot().setOrig(s)},interfaces_:function(){return[As]},getClass:function(){return Gs}}),e(qs.prototype,{getTriangleEdges:function(){return this.triList},visit:function(t){this.triList.add(t.clone())},interfaces_:function(){return[As]},getClass:function(){return qs}}),e(Bs.prototype,{visit:function(t){this.triList.add([t[0].orig(),t[1].orig(),t[2].orig()])},getTriangleVertices:function(){return this.triList},interfaces_:function(){return[As]},getClass:function(){return Bs}}),e(zs.prototype,{checkTriangleSize:function(t){var e="";t.length>=2?e=se.toLineString(t[0],t[1]):t.length>=1&&(e=se.toPoint(t[0]))},visit:function(t){this.coordList.clear();for(var e=0;e<3;e++){var n=t[e].orig();this.coordList.add(n.getCoordinate())}if(this.coordList.size()>0){this.coordList.closeRing();var i=this.coordList.toCoordinateArray();if(4!==i.length)return null;this.triCoords.add(i)}},getTriangles:function(){return this.triCoords},interfaces_:function(){return[As]},getClass:function(){return zs}}),Fs.TriangleCircumcentreVisitor=Gs,Fs.TriangleEdgesListVisitor=qs,Fs.TriangleVertexListVisitor=Bs,Fs.TriangleCoordinatesVisitor=zs,Fs.EDGE_COINCIDENCE_TOL_FACTOR=1e3,e(Vs.prototype,{getLineSegment:function(){return this.ls},getEndZ:function(){var t=this.ls.getCoordinate(1);return t.z},getStartZ:function(){var t=this.ls.getCoordinate(0);return t.z},intersection:function(t){return this.ls.intersection(t.getLineSegment())},getStart:function(){return this.ls.getCoordinate(0)},getEnd:function(){return this.ls.getCoordinate(1)},getEndY:function(){var t=this.ls.getCoordinate(1);return t.y},getStartX:function(){var t=this.ls.getCoordinate(0);return t.x},equalsTopo:function(t){return this.ls.equalsTopo(t.getLineSegment())},getStartY:function(){var t=this.ls.getCoordinate(0);return t.y},setData:function(t){this.data=t},getData:function(){return this.data},getEndX:function(){var t=this.ls.getCoordinate(1);return t.x},toString:function(){return this.ls.toString()},interfaces_:function(){return[]},getClass:function(){return Vs}}),e(ks.prototype,{visit:function(t){},interfaces_:function(){return[]},getClass:function(){return ks}}),e(Ys.prototype,{isRepeated:function(){return this.count>1},getRight:function(){return this.right},getCoordinate:function(){return this.p},setLeft:function(t){this.left=t},getX:function(){return this.p.x},getData:function(){return this.data},getCount:function(){return this.count},getLeft:function(){return this.left},getY:function(){return this.p.y},increment:function(){this.count=this.count+1},setRight:function(t){this.right=t},interfaces_:function(){return[]},getClass:function(){return Ys}}),e(Us.prototype,{insert:function(){if(1===arguments.length){var t=arguments[0];return this.insert(t,null)}if(2===arguments.length){var e=arguments[0],n=arguments[1];if(null===this.root)return this.root=new Ys(e,n),this.root;if(this.tolerance>0){var i=this.findBestMatchNode(e);if(null!==i)return i.increment(),i}return this.insertExact(e,n)}},query:function(){var t=arguments,e=this;if(1===arguments.length){var n=arguments[0],i=new I;return this.query(n,i),i}if(2===arguments.length)if(arguments[0]instanceof C&&R(arguments[1],y))!function(){var n=t[0],i=t[1];e.queryNode(e.root,n,!0,{interfaces_:function(){return[ks]},visit:function(t){i.add(t)}})}();else if(arguments[0]instanceof C&&R(arguments[1],ks)){var r=arguments[0],s=arguments[1];this.queryNode(this.root,r,!0,s)}},queryNode:function(t,e,n,i){if(null===t)return null;var r=null,s=null,o=null;n?(r=e.getMinX(),s=e.getMaxX(),o=t.getX()):(r=e.getMinY(),s=e.getMaxY(),o=t.getY());var a=r<o,u=o<=s;a&&this.queryNode(t.getLeft(),e,!n,i),e.contains(t.getCoordinate())&&i.visit(t),u&&this.queryNode(t.getRight(),e,!n,i)},findBestMatchNode:function(t){var e=new Xs(t,this.tolerance);return this.query(e.queryEnvelope(),e),e.getNode()},isEmpty:function(){return null===this.root},insertExact:function(t,e){for(var n=this.root,i=this.root,r=!0,s=!0;null!==n;){if(null!==n){var o=t.distance(n.getCoordinate())<=this.tolerance;if(o)return n.increment(),n}s=r?t.x<n.getX():t.y<n.getY(),i=n,n=s?n.getLeft():n.getRight(),r=!r}this.numberOfNodes=this.numberOfNodes+1;var a=new Ys(t,e);return s?i.setLeft(a):i.setRight(a),a},interfaces_:function(){return[]},getClass:function(){return Us}}),Us.toCoordinates=function(){if(1===arguments.length){var t=arguments[0];return Us.toCoordinates(t,!1)}if(2===arguments.length){for(var e=arguments[0],n=arguments[1],i=new N,r=e.iterator();r.hasNext();)for(var s=r.next(),o=n?s.getCount():1,a=0;a<o;a++)i.add(s.getCoordinate(),!0);return i.toCoordinateArray()}},e(Xs.prototype,{visit:function(t){var e=this.p.distance(t.getCoordinate()),n=e<=this.tolerance;if(!n)return null;var i=!1;(null===this.matchNode||e<this.matchDist||null!==this.matchNode&&e===this.matchDist&&t.getCoordinate().compareTo(this.matchNode.getCoordinate())<1)&&(i=!0),i&&(this.matchNode=t,this.matchDist=e)},queryEnvelope:function(){var t=new C(this.p);return t.expandBy(this.tolerance),t},getNode:function(){return this.matchNode},interfaces_:function(){return[ks]},getClass:function(){return Xs}}),Us.BestMatchVisitor=Xs,e(Hs.prototype,{getInitialVertices:function(){return this.initialVertices},getKDT:function(){return this.kdt},enforceConstraints:function(){this.addConstraintVertices();var t=0,e=0;do e=this.enforceGabriel(this.segments),t++;while(e>0&&t<Hs.MAX_SPLIT_ITER)},insertSites:function(t){for(var e=t.iterator();e.hasNext();){var n=e.next();this.insertSite(n)}},getVertexFactory:function(){return this.vertexFactory},getPointArray:function(){for(var t=new Array(this.initialVertices.size()+this.segVertices.size()).fill(null),e=0,n=this.initialVertices.iterator();n.hasNext();){var i=n.next();t[e++]=i.getCoordinate()}for(var r=this.segVertices.iterator();r.hasNext();){var i=r.next();t[e++]=i.getCoordinate()}return t},setConstraints:function(t,e){this.segments=t,this.segVertices=e},computeConvexHull:function(){var t=new ie,e=this.getPointArray(),n=new me(e,t);this.convexHull=n.getConvexHull()},addConstraintVertices:function(){this.computeConvexHull(),this.insertSites(this.segVertices)},findNonGabrielPoint:function(t){var e=t.getStart(),n=t.getEnd(),i=new g((e.x+n.x)/2,(e.y+n.y)/2),s=e.distance(i),o=new C(i);o.expandBy(s);for(var a=this.kdt.query(o),u=null,l=r.MAX_VALUE,h=a.iterator();h.hasNext();){var c=h.next(),f=c.getCoordinate();if(!f.equals2D(e)&&!f.equals2D(n)){var d=i.distance(f);if(d<s){var p=d;(null===u||p<l)&&(u=f,l=p)}}}return u},getConstraintSegments:function(){return this.segments},setSplitPointFinder:function(t){this.splitFinder=t},getConvexHull:function(){return this.convexHull},getTolerance:function(){return this.tolerance},enforceGabriel:function(t){for(var e=new I,n=0,i=new I,r=t.iterator();r.hasNext();){var s=r.next(),o=this.findNonGabrielPoint(s);if(null!==o){this.splitPt=this.splitFinder.findSplitPoint(s,o);var a=this.createVertex(this.splitPt,s),u=(this.insertSite(a),new Vs(s.getStartX(),s.getStartY(),s.getStartZ(),a.getX(),a.getY(),a.getZ(),s.getData())),l=new Vs(a.getX(),a.getY(),a.getZ(),s.getEndX(),s.getEndY(),s.getEndZ(),s.getData());e.add(u),e.add(l),i.add(s),n+=1}}return t.removeAll(i),t.addAll(e),n},createVertex:function(){if(1===arguments.length){var t=arguments[0],e=null;return e=null!==this.vertexFactory?this.vertexFactory.createVertex(t,null):new Ps(t)}if(2===arguments.length){var n=arguments[0],i=arguments[1],e=null;return e=null!==this.vertexFactory?this.vertexFactory.createVertex(n,i):new Ps(n),e.setOnConstraint(!0),e}},getSubdivision:function(){return this.subdiv},computeBoundingBox:function(){var t=Hs.computeVertexEnvelope(this.initialVertices),e=Hs.computeVertexEnvelope(this.segVertices),n=new C(t);n.expandToInclude(e);var i=.2*n.getWidth(),r=.2*n.getHeight(),s=Math.max(i,r);this.computeAreaEnv=new C(n),this.computeAreaEnv.expandBy(s)},setVertexFactory:function(t){this.vertexFactory=t},formInitialDelaunay:function(){this.computeBoundingBox(),this.subdiv=new Fs(this.computeAreaEnv,this.tolerance),this.subdiv.setLocator(new Ms(this.subdiv)),this.incDel=new Os(this.subdiv),this.insertSites(this.initialVertices)},insertSite:function(){if(arguments[0]instanceof Ps){var t=arguments[0],e=this.kdt.insert(t.getCoordinate(),t);if(e.isRepeated()){var n=e.getData();return n.merge(t),n}return this.incDel.insertSite(t),t}if(arguments[0]instanceof g){var i=arguments[0];this.insertSite(this.createVertex(i))}},interfaces_:function(){return[]},getClass:function(){return Hs}}),Hs.computeVertexEnvelope=function(t){for(var e=new C,n=t.iterator();n.hasNext();){var i=n.next();e.expandToInclude(i.getCoordinate())}return e},Hs.MAX_SPLIT_ITER=99,e(Ws.prototype,{create:function(){if(null!==this.subdiv)return null;var t=Ws.envelope(this.siteCoords),e=Ws.toVertices(this.siteCoords);this.subdiv=new Fs(t,this.tolerance);var n=new Os(this.subdiv);n.insertSites(e)},setTolerance:function(t){this.tolerance=t},setSites:function(){if(arguments[0]instanceof B){var t=arguments[0];this.siteCoords=Ws.extractUniqueCoordinates(t)}else if(R(arguments[0],v)){var e=arguments[0];this.siteCoords=Ws.unique(H.toCoordinateArray(e))}},getEdges:function(t){return this.create(),this.subdiv.getEdges(t)},getSubdivision:function(){return this.create(),this.subdiv},getTriangles:function(t){return this.create(),this.subdiv.getTriangles(t)},interfaces_:function(){return[]},getClass:function(){return Ws}}),Ws.extractUniqueCoordinates=function(t){if(null===t)return new N;var e=t.getCoordinates();return Ws.unique(e)},Ws.envelope=function(t){for(var e=new C,n=t.iterator();n.hasNext();){var i=n.next();e.expandToInclude(i)}return e},Ws.unique=function(t){var e=H.copyDeep(t);ut.sort(e);var n=new N(e,(!1));return n},Ws.toVertices=function(t){for(var e=new I,n=t.iterator();n.hasNext();){var i=n.next();e.add(new Ts(i))}return e},e(js.prototype,{createSiteVertices:function(t){for(var e=new I,n=t.iterator();n.hasNext();){var i=n.next();this.constraintVertexMap.containsKey(i)||e.add(new Ps(i))}return e},create:function(){if(null!==this.subdiv)return null;var t=Ws.envelope(this.siteCoords),e=new I;null!==this.constraintLines&&(t.expandToInclude(this.constraintLines.getEnvelopeInternal()),this.createVertices(this.constraintLines),e=js.createConstraintSegments(this.constraintLines));var n=this.createSiteVertices(this.siteCoords),i=new Hs(n,this.tolerance);i.setConstraints(e,new I(this.constraintVertexMap.values())),i.formInitialDelaunay(),i.enforceConstraints(),this.subdiv=i.getSubdivision()},setTolerance:function(t){this.tolerance=t},setConstraints:function(t){this.constraintLines=t},setSites:function(t){this.siteCoords=Ws.extractUniqueCoordinates(t)},getEdges:function(t){return this.create(),this.subdiv.getEdges(t)},getSubdivision:function(){return this.create(),this.subdiv},getTriangles:function(t){return this.create(),this.subdiv.getTriangles(t)},createVertices:function(t){for(var e=t.getCoordinates(),n=0;n<e.length;n++){var i=new Ps(e[n]);this.constraintVertexMap.put(e[n],i)}},interfaces_:function(){return[]},getClass:function(){return js}}),js.createConstraintSegments=function(){if(1===arguments.length){for(var t=arguments[0],e=kn.getLines(t),n=new I,i=e.iterator();i.hasNext();){var r=i.next();js.createConstraintSegments(r,n)}return n}if(2===arguments.length)for(var s=arguments[0],o=arguments[1],a=s.getCoordinates(),i=1;i<a.length;i++)o.add(new Vs(a[i-1],a[i]))},e(Ks.prototype,{create:function(){if(null!==this.subdiv)return null;var t=Ws.envelope(this.siteCoords);this.diagramEnv=t;var e=Math.max(this.diagramEnv.getWidth(),this.diagramEnv.getHeight());this.diagramEnv.expandBy(e),null!==this.clipEnv&&this.diagramEnv.expandToInclude(this.clipEnv);var n=Ws.toVertices(this.siteCoords);this.subdiv=new Fs(t,this.tolerance);var i=new Os(this.subdiv);i.insertSites(n)},getDiagram:function(t){this.create();var e=this.subdiv.getVoronoiDiagram(t);return Ks.clipGeometryCollection(e,this.diagramEnv)},setTolerance:function(t){this.tolerance=t},setSites:function(){if(arguments[0]instanceof B){var t=arguments[0];this.siteCoords=Ws.extractUniqueCoordinates(t)}else if(R(arguments[0],v)){var e=arguments[0];this.siteCoords=Ws.unique(H.toCoordinateArray(e))}},setClipEnvelope:function(t){this.clipEnv=t},getSubdivision:function(){return this.create(),this.subdiv},interfaces_:function(){return[]},getClass:function(){return Ks}}),Ks.clipGeometryCollection=function(t,e){for(var n=t.getFactory().toGeometry(e),i=new I,r=0;r<t.getNumGeometries();r++){var s=t.getGeometryN(r),o=null;e.contains(s.getEnvelopeInternal())?o=s:e.intersects(s.getEnvelopeInternal())&&(o=n.intersection(s),o.setUserData(s.getUserData())),null===o||o.isEmpty()||i.add(o)}return t.getFactory().createGeometryCollection(ie.toGeometryArray(i))};var Ao=Object.freeze({Vertex:Ts}),Fo=Object.freeze({ConformingDelaunayTriangulationBuilder:js,DelaunayTriangulationBuilder:Ws,VoronoiDiagramBuilder:Ks,quadedge:Ao});e(Zs.prototype,{interfaces_:function(){return[]},getClass:function(){return Zs}}),Zs.union=function(t,e){if(t.isEmpty()||e.isEmpty()){if(t.isEmpty()&&e.isEmpty())return ii.createEmptyResult(ii.UNION,t,e,t.getFactory());if(t.isEmpty())return e.copy();if(e.isEmpty())return t.copy()}return t.checkNotGeometryCollection(t),t.checkNotGeometryCollection(e),si.overlayOp(t,e,ii.UNION)},e(B.prototype,{equalsTopo:function(t){return!!this.getEnvelopeInternal().equals(t.getEnvelopeInternal())&&rs.relate(this,t).isEquals(this.getDimension(),t.getDimension())},union:function(){if(0===arguments.length)return ls.union(this);if(1===arguments.length){var t=arguments[0];return Zs.union(this,t)}},isValid:function(){return Ur.isValid(this)},intersection:function(t){if(this.isEmpty()||t.isEmpty())return ii.createEmptyResult(ii.INTERSECTION,this,t,this.factory);if(this.isGeometryCollection()){var e=t;return hn.map(this,{interfaces_:function(){return[MapOp]},map:function(t){return t.intersection(e)}})}return this.checkNotGeometryCollection(this),this.checkNotGeometryCollection(t),si.overlayOp(this,t,ii.INTERSECTION)},covers:function(t){return rs.covers(this,t)},coveredBy:function(t){return rs.coveredBy(this,t)},touches:function(t){return rs.touches(this,t)},intersects:function(t){return rs.intersects(this,t)},within:function(t){return rs.within(this,t)},overlaps:function(t){return rs.overlaps(this,t)},disjoint:function(t){return rs.disjoint(this,t)},crosses:function(t){return rs.crosses(this,t)},buffer:function(){if(1===arguments.length){var t=arguments[0];return dr.bufferOp(this,t)}if(2===arguments.length){var e=arguments[0],n=arguments[1];return dr.bufferOp(this,e,n)}if(3===arguments.length){var i=arguments[0],r=arguments[1],s=arguments[2];return dr.bufferOp(this,i,r,s)}},convexHull:function(){return new me(this).getConvexHull()},relate:function(){for(var t=arguments.length,e=Array(t),n=0;n<t;n++)e[n]=arguments[n];return rs.relate.apply(rs,[this].concat(e))},getCentroid:function(){if(this.isEmpty())return this.factory.createPoint();var t=ge.getCentroid(this);return this.createPointFromInternalCoord(t,this)},getInteriorPoint:function(){if(this.isEmpty())return this.factory.createPoint();var t=null,e=this.getDimension();if(0===e){var n=new li(this);t=n.getInteriorPoint()}else if(1===e){var n=new ui(this);t=n.getInteriorPoint()}else{var n=new oi(this);t=n.getInteriorPoint()}return this.createPointFromInternalCoord(t,this)},symDifference:function(t){if(this.isEmpty()||t.isEmpty()){if(this.isEmpty()&&t.isEmpty())return ii.createEmptyResult(ii.SYMDIFFERENCE,this,t,this.factory);if(this.isEmpty())return t.copy();if(t.isEmpty())return this.copy()}return this.checkNotGeometryCollection(this),this.checkNotGeometryCollection(t),si.overlayOp(this,t,ii.SYMDIFFERENCE)},createPointFromInternalCoord:function(t,e){return e.getPrecisionModel().makePrecise(t),e.getFactory().createPoint(t)},toText:function(){var t=new se;return t.write(this)},toString:function(){this.toText()},contains:function(t){return rs.contains(this,t)},difference:function(t){return this.isEmpty()?ii.createEmptyResult(ii.DIFFERENCE,this,t,this.factory):t.isEmpty()?this.copy():(this.checkNotGeometryCollection(this),this.checkNotGeometryCollection(t),si.overlayOp(this,t,ii.DIFFERENCE))},isSimple:function(){var t=new Wi(this);return t.isSimple()},isWithinDistance:function(t,e){var n=this.getEnvelopeInternal().distance(t.getEnvelopeInternal());return!(n>e)&&xr.isWithinDistance(this,t,e)},distance:function(t){return xr.distance(this,t)},isEquivalentClass:function(t){return this.getClass()===t.getClass()}});var Go="1.3.0 (6e65adb)";t.version=Go,t.algorithm=co,t.densify=fo,t.dissolve=go,t.geom=lo,t.geomgraph=po,t.index=yo,t.io=No,t.noding=Co,t.operation=_o,t.precision=Mo,t.simplify=Do,t.triangulate=Fo,Object.defineProperty(t,"__esModule",{value:!0})});
 
-},{}],308:[function(require,module,exports){
+},{}],309:[function(require,module,exports){
 'use strict';
 
 var sort = require('./sort');
@@ -57851,7 +58509,7 @@ KDBush.prototype = {
 function defaultGetX(p) { return p[0]; }
 function defaultGetY(p) { return p[1]; }
 
-},{"./range":309,"./sort":310,"./within":311}],309:[function(require,module,exports){
+},{"./range":310,"./sort":311,"./within":312}],310:[function(require,module,exports){
 'use strict';
 
 module.exports = range;
@@ -57899,7 +58557,7 @@ function range(ids, coords, minX, minY, maxX, maxY, nodeSize) {
     return result;
 }
 
-},{}],310:[function(require,module,exports){
+},{}],311:[function(require,module,exports){
 'use strict';
 
 module.exports = sortKD;
@@ -57967,7 +58625,7 @@ function swap(arr, i, j) {
     arr[j] = tmp;
 }
 
-},{}],311:[function(require,module,exports){
+},{}],312:[function(require,module,exports){
 'use strict';
 
 module.exports = within;
@@ -58019,7 +58677,7 @@ function sqDist(ax, ay, bx, by) {
     return dx * dx + dy * dy;
 }
 
-},{}],312:[function(require,module,exports){
+},{}],313:[function(require,module,exports){
 'use strict';
 
 function createFunction(parameters, defaultType) {
@@ -58192,7 +58850,7 @@ module.exports['piecewise-constant'] = function(parameters) {
     return createFunction(parameters, 'interval');
 };
 
-},{}],313:[function(require,module,exports){
+},{}],314:[function(require,module,exports){
 
 var path = require('path');
 
@@ -58254,7 +58912,7 @@ module.exports = {
 
 module.exports.util = "float evaluate_zoom_function_1(const vec4 values, const float t) {\n    if (t < 1.0) {\n        return mix(values[0], values[1], t);\n    } else if (t < 2.0) {\n        return mix(values[1], values[2], t - 1.0);\n    } else {\n        return mix(values[2], values[3], t - 2.0);\n    }\n}\nvec4 evaluate_zoom_function_4(const vec4 value0, const vec4 value1, const vec4 value2, const vec4 value3, const float t) {\n    if (t < 1.0) {\n        return mix(value0, value1, t);\n    } else if (t < 2.0) {\n        return mix(value1, value2, t - 1.0);\n    } else {\n        return mix(value2, value3, t - 2.0);\n    }\n}\n";
 
-},{"path":117}],314:[function(require,module,exports){
+},{"path":117}],315:[function(require,module,exports){
 'use strict';
 
 var format = require('util').format;
@@ -58272,7 +58930,7 @@ function ValidationError(key, value /*, message, ...*/) {
 
 module.exports = ValidationError;
 
-},{"util":164}],315:[function(require,module,exports){
+},{"util":164}],316:[function(require,module,exports){
 'use strict';
 
 module.exports = function (output) {
@@ -58285,7 +58943,7 @@ module.exports = function (output) {
     return output;
 };
 
-},{}],316:[function(require,module,exports){
+},{}],317:[function(require,module,exports){
 'use strict';
 
 module.exports = function getType(val) {
@@ -58304,7 +58962,7 @@ module.exports = function getType(val) {
     }
 };
 
-},{}],317:[function(require,module,exports){
+},{}],318:[function(require,module,exports){
 'use strict';
 
 // Turn jsonlint-lines-primitives objects into primitive objects
@@ -58316,7 +58974,7 @@ module.exports = function unbundle(value) {
     }
 };
 
-},{}],318:[function(require,module,exports){
+},{}],319:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -58383,7 +59041,7 @@ module.exports = function validate(options) {
     }
 };
 
-},{"../error/validation_error":314,"../util/extend":315,"../util/get_type":316,"./validate_array":319,"./validate_boolean":320,"./validate_color":321,"./validate_constants":322,"./validate_enum":323,"./validate_filter":324,"./validate_function":325,"./validate_layer":327,"./validate_number":329,"./validate_object":330,"./validate_source":332,"./validate_string":333}],319:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/extend":316,"../util/get_type":317,"./validate_array":320,"./validate_boolean":321,"./validate_color":322,"./validate_constants":323,"./validate_enum":324,"./validate_filter":325,"./validate_function":326,"./validate_layer":328,"./validate_number":330,"./validate_object":331,"./validate_source":333,"./validate_string":334}],320:[function(require,module,exports){
 'use strict';
 
 var getType = require('../util/get_type');
@@ -58437,7 +59095,7 @@ module.exports = function validateArray(options) {
     return errors;
 };
 
-},{"../error/validation_error":314,"../util/get_type":316,"./validate":318}],320:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/get_type":317,"./validate":319}],321:[function(require,module,exports){
 'use strict';
 
 var getType = require('../util/get_type');
@@ -58455,7 +59113,7 @@ module.exports = function validateBoolean(options) {
     return [];
 };
 
-},{"../error/validation_error":314,"../util/get_type":316}],321:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/get_type":317}],322:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -58478,7 +59136,7 @@ module.exports = function validateColor(options) {
     return [];
 };
 
-},{"../error/validation_error":314,"../util/get_type":316,"csscolorparser":229}],322:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/get_type":317,"csscolorparser":229}],323:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -58512,7 +59170,7 @@ module.exports = function validateConstants(options) {
 
 };
 
-},{"../error/validation_error":314,"../util/get_type":316}],323:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/get_type":317}],324:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -58530,7 +59188,7 @@ module.exports = function validateEnum(options) {
     return errors;
 };
 
-},{"../error/validation_error":314,"../util/unbundle_jsonlint":317}],324:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/unbundle_jsonlint":318}],325:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -58635,7 +59293,7 @@ module.exports = function validateFilter(options) {
     return errors;
 };
 
-},{"../error/validation_error":314,"../util/get_type":316,"../util/unbundle_jsonlint":317,"./validate_enum":323}],325:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/get_type":317,"../util/unbundle_jsonlint":318,"./validate_enum":324}],326:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -58769,7 +59427,7 @@ module.exports = function validateFunction(options) {
 
 };
 
-},{"../error/validation_error":314,"../util/get_type":316,"./validate":318,"./validate_array":319,"./validate_number":329,"./validate_object":330}],326:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/get_type":317,"./validate":319,"./validate_array":320,"./validate_number":330,"./validate_object":331}],327:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -58793,7 +59451,7 @@ module.exports = function(options) {
     return errors;
 };
 
-},{"../error/validation_error":314,"./validate_string":333}],327:[function(require,module,exports){
+},{"../error/validation_error":315,"./validate_string":334}],328:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -58906,7 +59564,7 @@ module.exports = function validateLayer(options) {
     return errors;
 };
 
-},{"../error/validation_error":314,"../util/extend":315,"../util/unbundle_jsonlint":317,"./validate_filter":324,"./validate_layout_property":328,"./validate_object":330,"./validate_paint_property":331}],328:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/extend":316,"../util/unbundle_jsonlint":318,"./validate_filter":325,"./validate_layout_property":329,"./validate_object":331,"./validate_paint_property":332}],329:[function(require,module,exports){
 'use strict';
 
 var validate = require('./validate');
@@ -58945,7 +59603,7 @@ module.exports = function validateLayoutProperty(options) {
 
 };
 
-},{"../error/validation_error":314,"./validate":318}],329:[function(require,module,exports){
+},{"../error/validation_error":315,"./validate":319}],330:[function(require,module,exports){
 'use strict';
 
 var getType = require('../util/get_type');
@@ -58972,7 +59630,7 @@ module.exports = function validateNumber(options) {
     return [];
 };
 
-},{"../error/validation_error":314,"../util/get_type":316}],330:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/get_type":317}],331:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -59025,7 +59683,7 @@ module.exports = function validateObject(options) {
     return errors;
 };
 
-},{"../error/validation_error":314,"../util/get_type":316,"./validate":318}],331:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/get_type":317,"./validate":319}],332:[function(require,module,exports){
 'use strict';
 
 var validate = require('./validate');
@@ -59065,7 +59723,7 @@ module.exports = function validatePaintProperty(options) {
 
 };
 
-},{"../error/validation_error":314,"./validate":318}],332:[function(require,module,exports){
+},{"../error/validation_error":315,"./validate":319}],333:[function(require,module,exports){
 'use strict';
 
 var ValidationError = require('../error/validation_error');
@@ -59142,7 +59800,7 @@ module.exports = function validateSource(options) {
     }
 };
 
-},{"../error/validation_error":314,"../util/unbundle_jsonlint":317,"./validate_enum":323,"./validate_object":330}],333:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/unbundle_jsonlint":318,"./validate_enum":324,"./validate_object":331}],334:[function(require,module,exports){
 'use strict';
 
 var getType = require('../util/get_type');
@@ -59160,7 +59818,7 @@ module.exports = function validateString(options) {
     return [];
 };
 
-},{"../error/validation_error":314,"../util/get_type":316}],334:[function(require,module,exports){
+},{"../error/validation_error":315,"../util/get_type":317}],335:[function(require,module,exports){
 'use strict';
 
 var validateConstants = require('./validate/validate_constants');
@@ -59230,12 +59888,12 @@ function wrapCleanErrors(inner) {
 
 module.exports = validateStyleMin;
 
-},{"../reference/latest.min":335,"./validate/validate":318,"./validate/validate_constants":322,"./validate/validate_filter":324,"./validate/validate_glyphs_url":326,"./validate/validate_layer":327,"./validate/validate_layout_property":328,"./validate/validate_paint_property":331,"./validate/validate_source":332}],335:[function(require,module,exports){
+},{"../reference/latest.min":336,"./validate/validate":319,"./validate/validate_constants":323,"./validate/validate_filter":325,"./validate/validate_glyphs_url":327,"./validate/validate_layer":328,"./validate/validate_layout_property":329,"./validate/validate_paint_property":332,"./validate/validate_source":333}],336:[function(require,module,exports){
 module.exports = require('./v8.min.json');
 
-},{"./v8.min.json":336}],336:[function(require,module,exports){
+},{"./v8.min.json":337}],337:[function(require,module,exports){
 module.exports={"$version":8,"$root":{"version":{"required":true,"type":"enum","values":[8]},"name":{"type":"string"},"metadata":{"type":"*"},"center":{"type":"array","value":"number"},"zoom":{"type":"number"},"bearing":{"type":"number","default":0,"period":360,"units":"degrees"},"pitch":{"type":"number","default":0,"units":"degrees"},"sources":{"required":true,"type":"sources"},"sprite":{"type":"string"},"glyphs":{"type":"string"},"transition":{"type":"transition"},"layers":{"required":true,"type":"array","value":"layer"}},"sources":{"*":{"type":"source"}},"source":["source_tile","source_geojson","source_video","source_image"],"source_tile":{"type":{"required":true,"type":"enum","values":["vector","raster"]},"url":{"type":"string"},"tiles":{"type":"array","value":"string"},"minzoom":{"type":"number","default":0},"maxzoom":{"type":"number","default":22},"tileSize":{"type":"number","default":512,"units":"pixels"},"*":{"type":"*"}},"source_geojson":{"type":{"required":true,"type":"enum","values":["geojson"]},"data":{"type":"*"},"maxzoom":{"type":"number","default":14},"buffer":{"type":"number","default":64},"tolerance":{"type":"number","default":3},"cluster":{"type":"boolean","default":false},"clusterRadius":{"type":"number","default":400},"clusterMaxZoom":{"type":"number"}},"source_video":{"type":{"required":true,"type":"enum","values":["video"]},"urls":{"required":true,"type":"array","value":"string"},"coordinates":{"required":true,"type":"array","length":4,"value":{"type":"array","length":2,"value":"number"}}},"source_image":{"type":{"required":true,"type":"enum","values":["image"]},"url":{"required":true,"type":"string"},"coordinates":{"required":true,"type":"array","length":4,"value":{"type":"array","length":2,"value":"number"}}},"layer":{"id":{"type":"string","required":true},"type":{"type":"enum","values":["fill","line","symbol","circle","raster","background"]},"metadata":{"type":"*"},"ref":{"type":"string"},"source":{"type":"string"},"source-layer":{"type":"string"},"minzoom":{"type":"number","minimum":0,"maximum":22},"maxzoom":{"type":"number","minimum":0,"maximum":22},"interactive":{"type":"boolean","default":false},"filter":{"type":"filter"},"layout":{"type":"layout"},"paint":{"type":"paint"},"paint.*":{"type":"paint"}},"layout":["layout_fill","layout_line","layout_circle","layout_symbol","layout_raster","layout_background"],"layout_background":{"visibility":{"type":"enum","function":"piecewise-constant","zoom-function":true,"values":["visible","none"],"default":"visible"}},"layout_fill":{"visibility":{"type":"enum","function":"piecewise-constant","zoom-function":true,"values":["visible","none"],"default":"visible"}},"layout_circle":{"visibility":{"type":"enum","function":"piecewise-constant","zoom-function":true,"values":["visible","none"],"default":"visible"}},"layout_line":{"line-cap":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["butt","round","square"],"default":"butt"},"line-join":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["bevel","round","miter"],"default":"miter"},"line-miter-limit":{"type":"number","default":2,"function":"interpolated","zoom-function":true,"property-function":true,"requires":[{"line-join":"miter"}]},"line-round-limit":{"type":"number","default":1.05,"function":"interpolated","zoom-function":true,"property-function":true,"requires":[{"line-join":"round"}]},"visibility":{"type":"enum","function":"piecewise-constant","zoom-function":true,"values":["visible","none"],"default":"visible"}},"layout_symbol":{"symbol-placement":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["point","line"],"default":"point"},"symbol-spacing":{"type":"number","default":250,"minimum":1,"function":"interpolated","zoom-function":true,"property-function":true,"units":"pixels","requires":[{"symbol-placement":"line"}]},"symbol-avoid-edges":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":false},"icon-allow-overlap":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":false,"requires":["icon-image"]},"icon-ignore-placement":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":false,"requires":["icon-image"]},"icon-optional":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":false,"requires":["icon-image","text-field"]},"icon-rotation-alignment":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["map","viewport"],"default":"viewport","requires":["icon-image"]},"icon-size":{"type":"number","default":1,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"requires":["icon-image"]},"icon-text-fit":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":false,"values":["none","both","width","height"],"default":"none","requires":["icon-image","text-field"]},"icon-text-fit-padding":{"type":"array","value":"number","length":4,"default":[0,0,0,0],"units":"pixels","function":"interpolated","zoom-function":true,"property-function":true,"requires":["icon-image","icon-text-fit","text-field"]},"icon-image":{"type":"string","function":"piecewise-constant","zoom-function":true,"property-function":true,"tokens":true},"icon-rotate":{"type":"number","default":0,"period":360,"function":"interpolated","zoom-function":true,"property-function":true,"units":"degrees","requires":["icon-image"]},"icon-padding":{"type":"number","default":2,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"units":"pixels","requires":["icon-image"]},"icon-keep-upright":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":false,"requires":["icon-image",{"icon-rotation-alignment":"map"},{"symbol-placement":"line"}]},"icon-offset":{"type":"array","value":"number","length":2,"default":[0,0],"function":"interpolated","zoom-function":true,"property-function":true,"requires":["icon-image"]},"text-pitch-alignment":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["map","viewport"],"requires":["text-field"]},"text-rotation-alignment":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["map","viewport"],"default":"viewport","requires":["text-field"]},"text-field":{"type":"string","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":"","tokens":true},"text-font":{"type":"array","value":"string","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":["Open Sans Regular","Arial Unicode MS Regular"],"requires":["text-field"]},"text-size":{"type":"number","default":16,"minimum":0,"units":"pixels","function":"interpolated","zoom-function":true,"property-function":true,"requires":["text-field"]},"text-max-width":{"type":"number","default":10,"minimum":0,"units":"em","function":"interpolated","zoom-function":true,"property-function":true,"requires":["text-field"]},"text-line-height":{"type":"number","default":1.2,"units":"em","function":"interpolated","zoom-function":true,"property-function":true,"requires":["text-field"]},"text-letter-spacing":{"type":"number","default":0,"units":"em","function":"interpolated","zoom-function":true,"property-function":true,"requires":["text-field"]},"text-justify":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["left","center","right"],"default":"center","requires":["text-field"]},"text-anchor":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["center","left","right","top","bottom","top-left","top-right","bottom-left","bottom-right"],"default":"center","requires":["text-field"]},"text-max-angle":{"type":"number","default":45,"units":"degrees","function":"interpolated","zoom-function":true,"property-function":true,"requires":["text-field",{"symbol-placement":"line"}]},"text-rotate":{"type":"number","default":0,"period":360,"units":"degrees","function":"interpolated","zoom-function":true,"property-function":true,"requires":["text-field"]},"text-padding":{"type":"number","default":2,"minimum":0,"units":"pixels","function":"interpolated","zoom-function":true,"property-function":true,"requires":["text-field"]},"text-keep-upright":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":true,"requires":["text-field",{"text-rotation-alignment":"map"},{"symbol-placement":"line"}]},"text-transform":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["none","uppercase","lowercase"],"default":"none","requires":["text-field"]},"text-offset":{"type":"array","value":"number","units":"ems","function":"interpolated","zoom-function":true,"property-function":true,"length":2,"default":[0,0],"requires":["text-field"]},"text-allow-overlap":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":false,"requires":["text-field"]},"text-ignore-placement":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":false,"requires":["text-field"]},"text-optional":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":false,"requires":["text-field","icon-image"]},"visibility":{"type":"enum","function":"piecewise-constant","zoom-function":true,"values":["visible","none"],"default":"visible"}},"layout_raster":{"visibility":{"type":"enum","function":"piecewise-constant","zoom-function":true,"values":["visible","none"],"default":"visible"}},"filter":{"type":"array","value":"*"},"filter_operator":{"type":"enum","values":["==","!=",">",">=","<","<=","in","!in","all","any","none","has","!has"]},"geometry_type":{"type":"enum","values":["Point","LineString","Polygon"]},"color_operation":{"type":"enum","values":["lighten","saturate","spin","fade","mix"]},"function":{"stops":{"type":"array","required":true,"value":"function_stop"},"base":{"type":"number","default":1,"minimum":0},"property":{"type":"string","default":"$zoom"},"type":{"type":"enum","values":["exponential","interval","categorical"],"default":"exponential"}},"function_stop":{"type":"array","minimum":0,"maximum":22,"value":["number","color"],"length":2},"paint":["paint_fill","paint_line","paint_circle","paint_symbol","paint_raster","paint_background"],"paint_fill":{"fill-antialias":{"type":"boolean","function":"piecewise-constant","zoom-function":true,"property-function":true,"default":true},"fill-opacity":{"type":"number","function":"interpolated","zoom-function":true,"property-function":true,"default":1,"minimum":0,"maximum":1,"transition":true},"fill-color":{"type":"color","default":"#000000","function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"requires":[{"!":"fill-pattern"}]},"fill-outline-color":{"type":"color","function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"requires":[{"!":"fill-pattern"},{"fill-antialias":true}]},"fill-translate":{"type":"array","value":"number","length":2,"default":[0,0],"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels"},"fill-translate-anchor":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["map","viewport"],"default":"map","requires":["fill-translate"]},"fill-pattern":{"type":"string","function":"piecewise-constant","zoom-function":true,"property-function":true,"transition":true}},"paint_line":{"line-opacity":{"type":"number","function":"interpolated","zoom-function":true,"property-function":true,"default":1,"minimum":0,"maximum":1,"transition":true},"line-color":{"type":"color","default":"#000000","function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"requires":[{"!":"line-pattern"}]},"line-translate":{"type":"array","value":"number","length":2,"default":[0,0],"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels"},"line-translate-anchor":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["map","viewport"],"default":"map","requires":["line-translate"]},"line-width":{"type":"number","default":1,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels"},"line-gap-width":{"type":"number","default":0,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels"},"line-offset":{"type":"number","default":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels"},"line-blur":{"type":"number","default":0,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels"},"line-dasharray":{"type":"array","value":"number","function":"piecewise-constant","zoom-function":true,"property-function":true,"minimum":0,"transition":true,"units":"line widths","requires":[{"!":"line-pattern"}]},"line-pattern":{"type":"string","function":"piecewise-constant","zoom-function":true,"property-function":true,"transition":true}},"paint_circle":{"circle-radius":{"type":"number","default":5,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels"},"circle-color":{"type":"color","default":"#000000","function":"interpolated","zoom-function":true,"property-function":true,"transition":true},"circle-blur":{"type":"number","default":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true},"circle-opacity":{"type":"number","default":1,"minimum":0,"maximum":1,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true},"circle-translate":{"type":"array","value":"number","length":2,"default":[0,0],"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels"},"circle-translate-anchor":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["map","viewport"],"default":"map","requires":["circle-translate"]},"circle-pitch-scale":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["map","viewport"],"default":"map"}},"paint_symbol":{"icon-opacity":{"type":"number","default":1,"minimum":0,"maximum":1,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"requires":["icon-image"]},"icon-color":{"type":"color","default":"#000000","function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"requires":["icon-image"]},"icon-halo-color":{"type":"color","default":"rgba(0, 0, 0, 0)","function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"requires":["icon-image"]},"icon-halo-width":{"type":"number","default":0,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels","requires":["icon-image"]},"icon-halo-blur":{"type":"number","default":0,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels","requires":["icon-image"]},"icon-translate":{"type":"array","value":"number","length":2,"default":[0,0],"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels","requires":["icon-image"]},"icon-translate-anchor":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["map","viewport"],"default":"map","requires":["icon-image","icon-translate"]},"text-opacity":{"type":"number","default":1,"minimum":0,"maximum":1,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"requires":["text-field"]},"text-color":{"type":"color","default":"#000000","function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"requires":["text-field"]},"text-halo-color":{"type":"color","default":"rgba(0, 0, 0, 0)","function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"requires":["text-field"]},"text-halo-width":{"type":"number","default":0,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels","requires":["text-field"]},"text-halo-blur":{"type":"number","default":0,"minimum":0,"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels","requires":["text-field"]},"text-translate":{"type":"array","value":"number","length":2,"default":[0,0],"function":"interpolated","zoom-function":true,"property-function":true,"transition":true,"units":"pixels","requires":["text-field"]},"text-translate-anchor":{"type":"enum","function":"piecewise-constant","zoom-function":true,"property-function":true,"values":["map","viewport"],"default":"map","requires":["text-field","text-translate"]}},"paint_raster":{"raster-opacity":{"type":"number","default":1,"minimum":0,"maximum":1,"function":"interpolated","zoom-function":true,"transition":true},"raster-hue-rotate":{"type":"number","default":0,"period":360,"function":"interpolated","zoom-function":true,"transition":true,"units":"degrees"},"raster-brightness-min":{"type":"number","function":"interpolated","zoom-function":true,"default":0,"minimum":0,"maximum":1,"transition":true},"raster-brightness-max":{"type":"number","function":"interpolated","zoom-function":true,"default":1,"minimum":0,"maximum":1,"transition":true},"raster-saturation":{"type":"number","default":0,"minimum":-1,"maximum":1,"function":"interpolated","zoom-function":true,"transition":true},"raster-contrast":{"type":"number","default":0,"minimum":-1,"maximum":1,"function":"interpolated","zoom-function":true,"transition":true},"raster-fade-duration":{"type":"number","default":300,"minimum":0,"function":"interpolated","zoom-function":true,"transition":true,"units":"milliseconds"}},"paint_background":{"background-color":{"type":"color","default":"#000000","function":"interpolated","zoom-function":true,"transition":true,"requires":[{"!":"background-pattern"}]},"background-pattern":{"type":"string","function":"piecewise-constant","zoom-function":true,"transition":true},"background-opacity":{"type":"number","default":1,"minimum":0,"maximum":1,"function":"interpolated","zoom-function":true,"transition":true}},"transition":{"duration":{"type":"number","default":300,"minimum":0,"units":"milliseconds"},"delay":{"type":"number","default":0,"minimum":0,"units":"milliseconds"}}}
-},{}],337:[function(require,module,exports){
+},{}],338:[function(require,module,exports){
 'use strict';
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -59366,7 +60024,7 @@ function isWebGLSupported(failIfMajorPerformanceCaveat) {
     }
 }
 
-},{}],338:[function(require,module,exports){
+},{}],339:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -59462,7 +60120,7 @@ ArrayGroup.prototype.getTransferables = function(transferables) {
     }
 };
 
-},{"../util/util":455}],339:[function(require,module,exports){
+},{"../util/util":456}],340:[function(require,module,exports){
 'use strict';
 
 var featureFilter = require('feature-filter');
@@ -59980,7 +60638,7 @@ function createGetUniform(attribute, stopOffset) {
     };
 }
 
-},{"../util/struct_array":453,"../util/util":455,"./array_group":338,"./bucket/circle_bucket":340,"./bucket/fill_bucket":341,"./bucket/line_bucket":342,"./bucket/symbol_bucket":343,"./buffer_group":345,"assert":15,"feature-filter":237}],340:[function(require,module,exports){
+},{"../util/struct_array":454,"../util/util":456,"./array_group":339,"./bucket/circle_bucket":341,"./bucket/fill_bucket":342,"./bucket/line_bucket":343,"./bucket/symbol_bucket":344,"./buffer_group":346,"assert":15,"feature-filter":238}],341:[function(require,module,exports){
 'use strict';
 
 var Bucket = require('../bucket');
@@ -60102,7 +60760,7 @@ CircleBucket.prototype.addFeature = function(feature) {
     this.populatePaintArrays('circle', globalProperties, feature.properties, startGroup, startIndex);
 };
 
-},{"../../util/util":455,"../bucket":339,"../load_geometry":347}],341:[function(require,module,exports){
+},{"../../util/util":456,"../bucket":340,"../load_geometry":348}],342:[function(require,module,exports){
 'use strict';
 
 var Bucket = require('../bucket');
@@ -60213,7 +60871,7 @@ FillBucket.prototype.addPolygon = function(polygon) {
     }
 };
 
-},{"../../util/classify_rings":442,"../../util/util":455,"../bucket":339,"../load_geometry":347,"earcut":231}],342:[function(require,module,exports){
+},{"../../util/classify_rings":443,"../../util/util":456,"../bucket":340,"../load_geometry":348,"earcut":232}],343:[function(require,module,exports){
 'use strict';
 
 var Bucket = require('../bucket');
@@ -60658,7 +61316,7 @@ LineBucket.prototype.addPieSliceVertex = function(currentVertex, distance, extru
     }
 };
 
-},{"../../util/util":455,"../bucket":339,"../load_geometry":347}],343:[function(require,module,exports){
+},{"../../util/util":456,"../bucket":340,"../load_geometry":348}],344:[function(require,module,exports){
 'use strict';
 
 var Point = require('point-geometry');
@@ -61335,7 +61993,7 @@ SymbolBucket.prototype.addSymbolQuad = function(symbolQuad) {
         symbolQuad.minScale);
 };
 
-},{"../../symbol/anchor":402,"../../symbol/clip_line":404,"../../symbol/collision_feature":406,"../../symbol/get_anchors":408,"../../symbol/mergelines":411,"../../symbol/quads":412,"../../symbol/resolve_text":413,"../../symbol/shaping":414,"../../util/classify_rings":442,"../../util/find_pole_of_inaccessibility":447,"../../util/token":454,"../../util/util":455,"../bucket":339,"../load_geometry":347,"point-geometry":467}],344:[function(require,module,exports){
+},{"../../symbol/anchor":403,"../../symbol/clip_line":405,"../../symbol/collision_feature":407,"../../symbol/get_anchors":409,"../../symbol/mergelines":412,"../../symbol/quads":413,"../../symbol/resolve_text":414,"../../symbol/shaping":415,"../../util/classify_rings":443,"../../util/find_pole_of_inaccessibility":448,"../../util/token":455,"../../util/util":456,"../bucket":340,"../load_geometry":348,"point-geometry":468}],345:[function(require,module,exports){
 'use strict';
 
 module.exports = Buffer;
@@ -61436,7 +62094,7 @@ Buffer.BufferType = {
     ELEMENT: 'ELEMENT_ARRAY_BUFFER'
 };
 
-},{}],345:[function(require,module,exports){
+},{}],346:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -61491,7 +62149,7 @@ BufferGroup.prototype.destroy = function(gl) {
     }
 };
 
-},{"../render/vertex_array_object":368,"../util/util":455,"./buffer":344}],346:[function(require,module,exports){
+},{"../render/vertex_array_object":369,"../util/util":456,"./buffer":345}],347:[function(require,module,exports){
 'use strict';
 
 var Point = require('point-geometry');
@@ -61790,7 +62448,7 @@ function offsetLine(rings, offset) {
     return newRings;
 }
 
-},{"../util/dictionary_coder":444,"../util/intersection_tests":450,"../util/struct_array":453,"../util/util":455,"../util/vectortile_to_geojson":456,"./bucket":339,"./load_geometry":347,"feature-filter":237,"grid-index":261,"pbf":465,"point-geometry":467,"vector-tile":531}],347:[function(require,module,exports){
+},{"../util/dictionary_coder":445,"../util/intersection_tests":451,"../util/struct_array":454,"../util/util":456,"../util/vectortile_to_geojson":457,"./bucket":340,"./load_geometry":348,"feature-filter":238,"grid-index":262,"pbf":466,"point-geometry":468,"vector-tile":532}],348:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -61846,7 +62504,7 @@ module.exports = function loadGeometry(feature, bits) {
     return geometry;
 };
 
-},{"../util/util":455,"./bucket":339,"assert":15}],348:[function(require,module,exports){
+},{"../util/util":456,"./bucket":340,"assert":15}],349:[function(require,module,exports){
 'use strict';
 
 module.exports = Coordinate;
@@ -61925,7 +62583,7 @@ Coordinate.prototype = {
     }
 };
 
-},{}],349:[function(require,module,exports){
+},{}],350:[function(require,module,exports){
 'use strict';
 
 module.exports = LngLat;
@@ -62017,7 +62675,7 @@ LngLat.convert = function (input) {
     return input;
 };
 
-},{"../util/util":455}],350:[function(require,module,exports){
+},{"../util/util":456}],351:[function(require,module,exports){
 'use strict';
 
 module.exports = LngLatBounds;
@@ -62231,7 +62889,7 @@ LngLatBounds.convert = function (input) {
     return new LngLatBounds(input);
 };
 
-},{"./lng_lat":349}],351:[function(require,module,exports){
+},{"./lng_lat":350}],352:[function(require,module,exports){
 'use strict';
 
 var LngLat = require('./lng_lat'),
@@ -62705,7 +63363,7 @@ Transform.prototype = {
     }
 };
 
-},{"../data/bucket":339,"../source/tile_coord":380,"../util/interpolate":449,"../util/util":455,"./coordinate":348,"./lng_lat":349,"gl-matrix":251,"point-geometry":467}],352:[function(require,module,exports){
+},{"../data/bucket":340,"../source/tile_coord":381,"../util/interpolate":450,"../util/util":456,"./coordinate":349,"./lng_lat":350,"gl-matrix":252,"point-geometry":468}],353:[function(require,module,exports){
 'use strict';
 var WorkerPool = require('./util/worker_pool');
 
@@ -62723,7 +63381,7 @@ module.exports = function getGlobalWorkerPool () {
     return globalWorkerPool;
 };
 
-},{"./util/worker_pool":457}],353:[function(require,module,exports){
+},{"./util/worker_pool":458}],354:[function(require,module,exports){
 'use strict';
 
 // Font data From Hershey Simplex Font
@@ -62856,7 +63514,7 @@ module.exports = function textVertices(text, left, baseline, scale) {
     return strokes;
 };
 
-},{}],354:[function(require,module,exports){
+},{}],355:[function(require,module,exports){
 'use strict';
 
 var browser = require('./util/browser');
@@ -62928,7 +63586,7 @@ Object.defineProperty(mapboxgl, 'accessToken', {
  * mapboxgl.supported() // = true
  */
 
-},{"../package.json":458,"./geo/lng_lat":349,"./geo/lng_lat_bounds":350,"./style/style":389,"./ui/control/attribution":420,"./ui/control/control":421,"./ui/control/geolocate":422,"./ui/control/navigation":423,"./ui/control/scale":424,"./ui/map":433,"./ui/marker":434,"./ui/popup":435,"./util/ajax":437,"./util/browser":438,"./util/config":443,"./util/evented":446,"./util/util":455,"point-geometry":467}],355:[function(require,module,exports){
+},{"../package.json":459,"./geo/lng_lat":350,"./geo/lng_lat_bounds":351,"./style/style":390,"./ui/control/attribution":421,"./ui/control/control":422,"./ui/control/geolocate":423,"./ui/control/navigation":424,"./ui/control/scale":425,"./ui/map":434,"./ui/marker":435,"./ui/popup":436,"./util/ajax":438,"./util/browser":439,"./util/config":444,"./util/evented":447,"./util/util":456,"point-geometry":468}],356:[function(require,module,exports){
 'use strict';
 
 var assert = require('assert');
@@ -62948,7 +63606,7 @@ module.exports = function(uniforms) {
     return pragmas;
 };
 
-},{"assert":15}],356:[function(require,module,exports){
+},{"assert":15}],357:[function(require,module,exports){
 'use strict';
 
 var pixelsToTileUnits = require('../source/pixels_to_tile_units');
@@ -63041,7 +63699,7 @@ function drawBackground(painter, source, layer) {
     gl.stencilFunc(gl.EQUAL, 0x80, 0x80);
 }
 
-},{"../source/pixels_to_tile_units":374,"./create_uniform_pragmas":355}],357:[function(require,module,exports){
+},{"../source/pixels_to_tile_units":375,"./create_uniform_pragmas":356}],358:[function(require,module,exports){
 'use strict';
 
 var browser = require('../util/browser');
@@ -63106,7 +63764,7 @@ function drawCircles(painter, source, layer, coords) {
     }
 }
 
-},{"../util/browser":438}],358:[function(require,module,exports){
+},{"../util/browser":439}],359:[function(require,module,exports){
 'use strict';
 
 module.exports = drawCollisionDebug;
@@ -63141,7 +63799,7 @@ function drawCollisionDebug(painter, source, layer, coords) {
     }
 }
 
-},{}],359:[function(require,module,exports){
+},{}],360:[function(require,module,exports){
 'use strict';
 
 var textVertices = require('../lib/debugtext');
@@ -63202,7 +63860,7 @@ function drawDebugTile(painter, source, coord) {
     gl.drawArrays(gl.LINES, 0, debugTextBuffer.length);
 }
 
-},{"../data/bucket":339,"../data/buffer":344,"../lib/debugtext":353,"../util/browser":438,"./vertex_array_object":368,"gl-matrix":251}],360:[function(require,module,exports){
+},{"../data/bucket":340,"../data/buffer":345,"../lib/debugtext":354,"../util/browser":439,"./vertex_array_object":369,"gl-matrix":252}],361:[function(require,module,exports){
 'use strict';
 
 var pixelsToTileUnits = require('../source/pixels_to_tile_units');
@@ -63399,7 +64057,7 @@ function setPattern(image, opacity, tile, coord, painter, program) {
     painter.spriteAtlas.bind(gl, true);
 }
 
-},{"../source/pixels_to_tile_units":374}],361:[function(require,module,exports){
+},{"../source/pixels_to_tile_units":375}],362:[function(require,module,exports){
 'use strict';
 
 var browser = require('../util/browser');
@@ -63588,7 +64246,7 @@ function drawLineTile(painter, source, layer, coord) {
     }
 }
 
-},{"../source/pixels_to_tile_units":374,"../util/browser":438,"gl-matrix":251}],362:[function(require,module,exports){
+},{"../source/pixels_to_tile_units":375,"../util/browser":439,"gl-matrix":252}],363:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -63734,7 +64392,7 @@ function getOpacities(tile, parentTile, layer, transform) {
     return opacity;
 }
 
-},{"../util/struct_array":453,"../util/util":455}],363:[function(require,module,exports){
+},{"../util/struct_array":454,"../util/util":456}],364:[function(require,module,exports){
 'use strict';
 
 var browser = require('../util/browser');
@@ -63950,7 +64608,7 @@ function drawSymbol(painter, layer, posMatrix, tile, bucket, bufferGroups, isTex
     }
 }
 
-},{"../source/pixels_to_tile_units":374,"../util/browser":438,"./draw_collision_debug":358}],364:[function(require,module,exports){
+},{"../source/pixels_to_tile_units":375,"../util/browser":439,"./draw_collision_debug":359}],365:[function(require,module,exports){
 'use strict';
 
 module.exports = FrameHistory;
@@ -64022,7 +64680,7 @@ FrameHistory.prototype.bind = function(gl) {
     }
 };
 
-},{}],365:[function(require,module,exports){
+},{}],366:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -64169,7 +64827,7 @@ LineAtlas.prototype.bind = function(gl) {
     }
 };
 
-},{"../util/util":455}],366:[function(require,module,exports){
+},{"../util/util":456}],367:[function(require,module,exports){
 'use strict';
 
 var browser = require('../util/browser');
@@ -64513,7 +65171,7 @@ Painter.prototype.showOverdrawInspector = function(enabled) {
     }
 };
 
-},{"../data/bucket":339,"../data/buffer":344,"../source/pixels_to_tile_units":374,"../source/source_cache":378,"../util/browser":438,"../util/struct_array":453,"../util/util":455,"./create_uniform_pragmas":355,"./draw_background":356,"./draw_circle":357,"./draw_debug":359,"./draw_fill":360,"./draw_line":361,"./draw_raster":362,"./draw_symbol":363,"./frame_history":364,"./painter/use_program":367,"./vertex_array_object":368,"gl-matrix":251}],367:[function(require,module,exports){
+},{"../data/bucket":340,"../data/buffer":345,"../source/pixels_to_tile_units":375,"../source/source_cache":379,"../util/browser":439,"../util/struct_array":454,"../util/util":456,"./create_uniform_pragmas":356,"./draw_background":357,"./draw_circle":358,"./draw_debug":360,"./draw_fill":361,"./draw_line":362,"./draw_raster":363,"./draw_symbol":364,"./frame_history":365,"./painter/use_program":368,"./vertex_array_object":369,"gl-matrix":252}],368:[function(require,module,exports){
 'use strict';
 
 var assert = require('assert');
@@ -64610,7 +65268,7 @@ function applyPragmas(source, pragmas) {
     });
 }
 
-},{"../../util/util":455,"assert":15,"mapbox-gl-shaders":313}],368:[function(require,module,exports){
+},{"../../util/util":456,"assert":15,"mapbox-gl-shaders":314}],369:[function(require,module,exports){
 'use strict';
 
 var assert = require('assert');
@@ -64708,7 +65366,7 @@ VertexArrayObject.prototype.destroy = function(gl) {
     }
 };
 
-},{"assert":15}],369:[function(require,module,exports){
+},{"assert":15}],370:[function(require,module,exports){
 'use strict';
 
 var Evented = require('../util/evented');
@@ -64932,7 +65590,7 @@ GeoJSONSource.prototype = util.inherit(Evented, /** @lends GeoJSONSource.prototy
     }
 });
 
-},{"../data/bucket":339,"../util/evented":446,"../util/util":455,"resolve-url":486}],370:[function(require,module,exports){
+},{"../data/bucket":340,"../util/evented":447,"../util/util":456,"resolve-url":487}],371:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -65070,7 +65728,7 @@ GeoJSONWorkerSource.prototype = util.inherit(VectorTileWorkerSource, /** @lends 
     }
 });
 
-},{"../util/ajax":437,"../util/util":455,"./geojson_wrapper":371,"./vector_tile_worker_source":382,"geojson-rewind":242,"geojson-vt":246,"supercluster":514,"vt-pbf":536}],371:[function(require,module,exports){
+},{"../util/ajax":438,"../util/util":456,"./geojson_wrapper":372,"./vector_tile_worker_source":383,"geojson-rewind":243,"geojson-vt":247,"supercluster":515,"vt-pbf":537}],372:[function(require,module,exports){
 'use strict';
 
 var Point = require('point-geometry');
@@ -65146,7 +65804,7 @@ FeatureWrapper.prototype.bbox = function() {
 
 FeatureWrapper.prototype.toGeoJSON = VectorTileFeature.prototype.toGeoJSON;
 
-},{"../data/bucket":339,"point-geometry":467,"vector-tile":531}],372:[function(require,module,exports){
+},{"../data/bucket":340,"point-geometry":468,"vector-tile":532}],373:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -65325,7 +65983,7 @@ ImageSource.prototype = util.inherit(Evented, /** @lends ImageSource.prototype *
     }
 });
 
-},{"../data/bucket":339,"../data/buffer":344,"../geo/lng_lat":349,"../render/draw_raster":362,"../render/vertex_array_object":368,"../util/ajax":437,"../util/evented":446,"../util/util":455,"./tile_coord":380,"point-geometry":467}],373:[function(require,module,exports){
+},{"../data/bucket":340,"../data/buffer":345,"../geo/lng_lat":350,"../render/draw_raster":363,"../render/vertex_array_object":369,"../util/ajax":438,"../util/evented":447,"../util/util":456,"./tile_coord":381,"point-geometry":468}],374:[function(require,module,exports){
 'use strict';
 var util = require('../util/util');
 var ajax = require('../util/ajax');
@@ -65356,7 +66014,7 @@ module.exports = function(options, callback) {
 };
 
 
-},{"../util/ajax":437,"../util/browser":438,"../util/mapbox":452,"../util/util":455}],374:[function(require,module,exports){
+},{"../util/ajax":438,"../util/browser":439,"../util/mapbox":453,"../util/util":456}],375:[function(require,module,exports){
 'use strict';
 
 var Bucket = require('../data/bucket');
@@ -65381,7 +66039,7 @@ module.exports = function(tile, pixelValue, z) {
 };
 
 
-},{"../data/bucket":339}],375:[function(require,module,exports){
+},{"../data/bucket":340}],376:[function(require,module,exports){
 'use strict';
 var TileCoord = require('./tile_coord');
 
@@ -65452,7 +66110,7 @@ function mergeRenderedFeatureLayers(tiles) {
 }
 
 
-},{"./tile_coord":380}],376:[function(require,module,exports){
+},{"./tile_coord":381}],377:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -65549,7 +66207,7 @@ RasterTileSource.prototype = util.inherit(Evented, {
     }
 });
 
-},{"../util/ajax":437,"../util/evented":446,"../util/mapbox":452,"../util/util":455,"./load_tilejson":373}],377:[function(require,module,exports){
+},{"../util/ajax":438,"../util/evented":447,"../util/mapbox":453,"../util/util":456,"./load_tilejson":374}],378:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -65720,7 +66378,7 @@ exports.setType = function (name, type) {
  * @instance
  */
 
-},{"../source/geojson_source":369,"../source/image_source":372,"../source/raster_tile_source":376,"../source/vector_tile_source":381,"../source/video_source":383,"../util/util":455}],378:[function(require,module,exports){
+},{"../source/geojson_source":370,"../source/image_source":373,"../source/raster_tile_source":377,"../source/vector_tile_source":382,"../source/video_source":384,"../util/util":456}],379:[function(require,module,exports){
 'use strict';
 
 var Source = require('./source');
@@ -66258,7 +66916,7 @@ function compareKeyZoom(a, b) {
     return (a % 32) - (b % 32);
 }
 
-},{"../data/bucket":339,"../geo/coordinate":348,"../util/evented":446,"../util/lru_cache":451,"../util/util":455,"./source":377,"./tile":379,"./tile_coord":380}],379:[function(require,module,exports){
+},{"../data/bucket":340,"../geo/coordinate":349,"../util/evented":447,"../util/lru_cache":452,"../util/util":456,"./source":378,"./tile":380,"./tile_coord":381}],380:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -66460,7 +67118,7 @@ function unserializeBuckets(input, style) {
     return output;
 }
 
-},{"../data/bucket":339,"../data/feature_index":346,"../symbol/collision_box":405,"../symbol/collision_tile":407,"../symbol/symbol_instances":416,"../symbol/symbol_quads":417,"../util/util":455,"../util/vectortile_to_geojson":456,"feature-filter":237,"pbf":465,"vector-tile":531}],380:[function(require,module,exports){
+},{"../data/bucket":340,"../data/feature_index":347,"../symbol/collision_box":406,"../symbol/collision_tile":408,"../symbol/symbol_instances":417,"../symbol/symbol_quads":418,"../util/util":456,"../util/vectortile_to_geojson":457,"feature-filter":238,"pbf":466,"vector-tile":532}],381:[function(require,module,exports){
 'use strict';
 
 var assert = require('assert');
@@ -66654,7 +67312,7 @@ TileCoord.cover = function(z, bounds, actualZ) {
     });
 };
 
-},{"../geo/coordinate":348,"assert":15,"whoots-js":541}],381:[function(require,module,exports){
+},{"../geo/coordinate":349,"assert":15,"whoots-js":542}],382:[function(require,module,exports){
 'use strict';
 
 var Evented = require('../util/evented');
@@ -66761,7 +67419,7 @@ VectorTileSource.prototype = util.inherit(Evented, {
     }
 });
 
-},{"../util/evented":446,"../util/mapbox":452,"../util/util":455,"./load_tilejson":373}],382:[function(require,module,exports){
+},{"../util/evented":447,"../util/mapbox":453,"../util/util":456,"./load_tilejson":374}],383:[function(require,module,exports){
 'use strict';
 var ajax = require('../util/ajax');
 var vt = require('vector-tile');
@@ -66909,7 +67567,7 @@ VectorTileWorkerSource.prototype = {
     }
 };
 
-},{"../util/ajax":437,"./worker_tile":385,"pbf":465,"vector-tile":531}],383:[function(require,module,exports){
+},{"../util/ajax":438,"./worker_tile":386,"pbf":466,"vector-tile":532}],384:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -67113,7 +67771,7 @@ VideoSource.prototype = util.inherit(Evented, /** @lends VideoSource.prototype *
     }
 });
 
-},{"../data/bucket":339,"../data/buffer":344,"../geo/lng_lat":349,"../render/draw_raster":362,"../render/vertex_array_object":368,"../util/ajax":437,"../util/evented":446,"../util/util":455,"./tile_coord":380,"point-geometry":467}],384:[function(require,module,exports){
+},{"../data/bucket":340,"../data/buffer":345,"../geo/lng_lat":350,"../render/draw_raster":363,"../render/vertex_array_object":369,"../util/ajax":438,"../util/evented":447,"../util/util":456,"./tile_coord":381,"point-geometry":468}],385:[function(require,module,exports){
 'use strict';
 
 var Actor = require('../util/actor');
@@ -67292,7 +67950,7 @@ function createLayerFamilies(layers) {
     return families;
 }
 
-},{"../style/style_layer":392,"../util/actor":436,"../util/util":455,"./geojson_worker_source":370,"./vector_tile_worker_source":382}],385:[function(require,module,exports){
+},{"../style/style_layer":393,"../util/actor":437,"../util/util":456,"./geojson_worker_source":371,"./vector_tile_worker_source":383}],386:[function(require,module,exports){
 'use strict';
 
 var FeatureIndex = require('../data/feature_index');
@@ -67565,7 +68223,7 @@ function getLayerId(layer) {
     return layer.id;
 }
 
-},{"../data/bucket":339,"../data/feature_index":346,"../symbol/collision_box":405,"../symbol/collision_tile":407,"../symbol/symbol_instances":416,"../symbol/symbol_quads":417,"../util/dictionary_coder":444,"../util/util":455}],386:[function(require,module,exports){
+},{"../data/bucket":340,"../data/feature_index":347,"../symbol/collision_box":406,"../symbol/collision_tile":408,"../symbol/symbol_instances":417,"../symbol/symbol_quads":418,"../util/dictionary_coder":445,"../util/util":456}],387:[function(require,module,exports){
 'use strict';
 
 module.exports = AnimationLoop;
@@ -67597,7 +68255,7 @@ AnimationLoop.prototype.cancel = function(n) {
     });
 };
 
-},{}],387:[function(require,module,exports){
+},{}],388:[function(require,module,exports){
 'use strict';
 
 var Evented = require('../util/evented');
@@ -67678,7 +68336,7 @@ ImageSprite.prototype.getSpritePosition = function(name) {
     return new SpritePosition();
 };
 
-},{"../util/ajax":437,"../util/browser":438,"../util/evented":446,"../util/mapbox":452}],388:[function(require,module,exports){
+},{"../util/ajax":438,"../util/browser":439,"../util/evented":447,"../util/mapbox":453}],389:[function(require,module,exports){
 'use strict';
 
 var parseColorString = require('csscolorparser').parseCSSColor;
@@ -67720,7 +68378,7 @@ module.exports = function parseColor(input) {
     }
 };
 
-},{"../util/util":455,"./style_function":391,"csscolorparser":229}],389:[function(require,module,exports){
+},{"../util/util":456,"./style_function":392,"csscolorparser":229}],390:[function(require,module,exports){
 'use strict';
 
 var Evented = require('../util/evented');
@@ -68502,7 +69160,7 @@ Style.prototype = util.inherit(Evented, {
 });
 
 
-},{"../global_worker_pool":352,"../render/line_atlas":365,"../source/query_features":375,"../source/source":377,"../source/source_cache":378,"../symbol/glyph_source":410,"../symbol/sprite_atlas":415,"../util/ajax":437,"../util/browser":438,"../util/dispatcher":445,"../util/evented":446,"../util/mapbox":452,"../util/util":455,"./animation_loop":386,"./image_sprite":387,"./style_function":391,"./style_layer":392,"./style_spec":399,"./validate_style":401}],390:[function(require,module,exports){
+},{"../global_worker_pool":353,"../render/line_atlas":366,"../source/query_features":376,"../source/source":378,"../source/source_cache":379,"../symbol/glyph_source":411,"../symbol/sprite_atlas":416,"../util/ajax":438,"../util/browser":439,"../util/dispatcher":446,"../util/evented":447,"../util/mapbox":453,"../util/util":456,"./animation_loop":387,"./image_sprite":388,"./style_function":392,"./style_layer":393,"./style_spec":400,"./validate_style":402}],391:[function(require,module,exports){
 'use strict';
 
 var MapboxGLFunction = require('./style_function');
@@ -68586,7 +69244,7 @@ function transitioned(calculate) {
     };
 }
 
-},{"../util/util":455,"./parse_color":388,"./style_function":391}],391:[function(require,module,exports){
+},{"../util/util":456,"./parse_color":389,"./style_function":392}],392:[function(require,module,exports){
 'use strict';
 
 var MapboxGLFunction = require('mapbox-gl-function');
@@ -68613,7 +69271,7 @@ exports['piecewise-constant'] = function(parameters) {
 
 exports.isFunctionDefinition = MapboxGLFunction.isFunctionDefinition;
 
-},{"mapbox-gl-function":312}],392:[function(require,module,exports){
+},{"mapbox-gl-function":313}],393:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -68962,7 +69620,7 @@ function getDeclarationValue(declaration) {
     return declaration.value;
 }
 
-},{"../util/evented":446,"../util/util":455,"./parse_color":388,"./style_declaration":390,"./style_layer/background_style_layer":393,"./style_layer/circle_style_layer":394,"./style_layer/fill_style_layer":395,"./style_layer/line_style_layer":396,"./style_layer/raster_style_layer":397,"./style_layer/symbol_style_layer":398,"./style_spec":399,"./style_transition":400,"./validate_style":401}],393:[function(require,module,exports){
+},{"../util/evented":447,"../util/util":456,"./parse_color":389,"./style_declaration":391,"./style_layer/background_style_layer":394,"./style_layer/circle_style_layer":395,"./style_layer/fill_style_layer":396,"./style_layer/line_style_layer":397,"./style_layer/raster_style_layer":398,"./style_layer/symbol_style_layer":399,"./style_spec":400,"./style_transition":401,"./validate_style":402}],394:[function(require,module,exports){
 'use strict';
 
 var util = require('../../util/util');
@@ -68976,7 +69634,7 @@ module.exports = BackgroundStyleLayer;
 
 BackgroundStyleLayer.prototype = util.inherit(StyleLayer, {});
 
-},{"../../util/util":455,"../style_layer":392}],394:[function(require,module,exports){
+},{"../../util/util":456,"../style_layer":393}],395:[function(require,module,exports){
 'use strict';
 
 var util = require('../../util/util');
@@ -68990,7 +69648,7 @@ module.exports = CircleStyleLayer;
 
 CircleStyleLayer.prototype = util.inherit(StyleLayer, {});
 
-},{"../../util/util":455,"../style_layer":392}],395:[function(require,module,exports){
+},{"../../util/util":456,"../style_layer":393}],396:[function(require,module,exports){
 'use strict';
 
 var util = require('../../util/util');
@@ -69064,7 +69722,7 @@ FillStyleLayer.prototype = util.inherit(StyleLayer, {
 
 module.exports = FillStyleLayer;
 
-},{"../../util/util":455,"../style_layer":392}],396:[function(require,module,exports){
+},{"../../util/util":456,"../style_layer":393}],397:[function(require,module,exports){
 'use strict';
 
 var util = require('../../util/util');
@@ -69098,7 +69756,7 @@ LineStyleLayer.prototype = util.inherit(StyleLayer, {
     }
 });
 
-},{"../../util/util":455,"../style_layer":392}],397:[function(require,module,exports){
+},{"../../util/util":456,"../style_layer":393}],398:[function(require,module,exports){
 'use strict';
 
 var util = require('../../util/util');
@@ -69112,7 +69770,7 @@ module.exports = RasterStyleLayer;
 
 RasterStyleLayer.prototype = util.inherit(StyleLayer, {});
 
-},{"../../util/util":455,"../style_layer":392}],398:[function(require,module,exports){
+},{"../../util/util":456,"../style_layer":393}],399:[function(require,module,exports){
 'use strict';
 
 var util = require('../../util/util');
@@ -69155,12 +69813,12 @@ SymbolStyleLayer.prototype = util.inherit(StyleLayer, {
 
 });
 
-},{"../../util/util":455,"../style_layer":392}],399:[function(require,module,exports){
+},{"../../util/util":456,"../style_layer":393}],400:[function(require,module,exports){
 'use strict';
 
 module.exports = require('mapbox-gl-style-spec/reference/latest.min');
 
-},{"mapbox-gl-style-spec/reference/latest.min":335}],400:[function(require,module,exports){
+},{"mapbox-gl-style-spec/reference/latest.min":336}],401:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -69245,7 +69903,7 @@ function interpZoomTransitioned(from, to, t) {
     }
 }
 
-},{"../util/interpolate":449,"../util/util":455}],401:[function(require,module,exports){
+},{"../util/interpolate":450,"../util/util":456}],402:[function(require,module,exports){
 'use strict';
 
 module.exports = require('mapbox-gl-style-spec/lib/validate_style.min');
@@ -69269,7 +69927,7 @@ module.exports.throwErrors = function throwErrors(emitter, errors) {
     }
 };
 
-},{"mapbox-gl-style-spec/lib/validate_style.min":334}],402:[function(require,module,exports){
+},{"mapbox-gl-style-spec/lib/validate_style.min":335}],403:[function(require,module,exports){
 'use strict';
 
 var Point = require('point-geometry');
@@ -69292,7 +69950,7 @@ Anchor.prototype.clone = function() {
     return new Anchor(this.x, this.y, this.angle, this.segment);
 };
 
-},{"point-geometry":467}],403:[function(require,module,exports){
+},{"point-geometry":468}],404:[function(require,module,exports){
 'use strict';
 
 module.exports = checkMaxAngle;
@@ -69372,7 +70030,7 @@ function checkMaxAngle(line, anchor, labelLength, windowSize, maxAngle) {
     return true;
 }
 
-},{}],404:[function(require,module,exports){
+},{}],405:[function(require,module,exports){
 'use strict';
 
 var Point = require('point-geometry');
@@ -69446,7 +70104,7 @@ function clipLine(lines, x1, y1, x2, y2) {
     return clippedLines;
 }
 
-},{"point-geometry":467}],405:[function(require,module,exports){
+},{"point-geometry":468}],406:[function(require,module,exports){
 'use strict';
 
 var StructArrayType = require('../util/struct_array');
@@ -69527,7 +70185,7 @@ util.extendAll(CollisionBoxArray.prototype.StructType.prototype, {
     }
 });
 
-},{"../util/struct_array":453,"../util/util":455,"point-geometry":467}],406:[function(require,module,exports){
+},{"../util/struct_array":454,"../util/util":456,"point-geometry":468}],407:[function(require,module,exports){
 'use strict';
 
 module.exports = CollisionFeature;
@@ -69661,7 +70319,7 @@ CollisionFeature.prototype._addLineCollisionBoxes = function(collisionBoxArray, 
     return bboxes;
 };
 
-},{}],407:[function(require,module,exports){
+},{}],408:[function(require,module,exports){
 'use strict';
 
 var Point = require('point-geometry');
@@ -69962,7 +70620,7 @@ CollisionTile.prototype.insertCollisionFeature = function(collisionFeature, minP
     }
 };
 
-},{"../data/bucket":339,"grid-index":261,"point-geometry":467}],408:[function(require,module,exports){
+},{"../data/bucket":340,"grid-index":262,"point-geometry":468}],409:[function(require,module,exports){
 'use strict';
 
 var interpolate = require('../util/interpolate');
@@ -70066,7 +70724,7 @@ function resample(line, offset, spacing, angleWindowSize, maxAngle, labelLength,
     return anchors;
 }
 
-},{"../symbol/anchor":402,"../util/interpolate":449,"./check_max_angle":403}],409:[function(require,module,exports){
+},{"../symbol/anchor":403,"../util/interpolate":450,"./check_max_angle":404}],410:[function(require,module,exports){
 'use strict';
 
 var ShelfPack = require('shelf-pack');
@@ -70235,7 +70893,7 @@ GlyphAtlas.prototype.updateTexture = function(gl) {
     }
 };
 
-},{"../util/util":455,"shelf-pack":488}],410:[function(require,module,exports){
+},{"../util/util":456,"shelf-pack":489}],411:[function(require,module,exports){
 'use strict';
 
 var normalizeURL = require('../util/mapbox').normalizeGlyphsURL;
@@ -70376,7 +71034,7 @@ function glyphUrl(fontstack, range, url, subdomains) {
         .replace('{range}', range);
 }
 
-},{"../symbol/glyph_atlas":409,"../util/ajax":437,"../util/glyphs":448,"../util/mapbox":452,"pbf":465}],411:[function(require,module,exports){
+},{"../symbol/glyph_atlas":410,"../util/ajax":438,"../util/glyphs":449,"../util/mapbox":453,"pbf":466}],412:[function(require,module,exports){
 'use strict';
 
 module.exports = function (features, textFeatures, geometries) {
@@ -70467,7 +71125,7 @@ module.exports = function (features, textFeatures, geometries) {
     };
 };
 
-},{}],412:[function(require,module,exports){
+},{}],413:[function(require,module,exports){
 'use strict';
 
 var Point = require('point-geometry');
@@ -70750,7 +71408,7 @@ function getSegmentGlyphs(glyphs, anchor, offset, line, segment, forward) {
     return placementScale;
 }
 
-},{"point-geometry":467}],413:[function(require,module,exports){
+},{"point-geometry":468}],414:[function(require,module,exports){
 'use strict';
 
 var resolveTokens = require('../util/token');
@@ -70793,7 +71451,7 @@ function resolveText(features, layoutProperties, codepoints) {
     return textFeatures;
 }
 
-},{"../util/token":454}],414:[function(require,module,exports){
+},{"../util/token":455}],415:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -70974,7 +71632,7 @@ function PositionedIcon(image, top, bottom, left, right) {
     this.right = right;
 }
 
-},{}],415:[function(require,module,exports){
+},{}],416:[function(require,module,exports){
 'use strict';
 
 var ShelfPack = require('shelf-pack');
@@ -71207,7 +71865,7 @@ function AtlasImage(rect, width, height, sdf, pixelRatio) {
     this.pixelRatio = pixelRatio;
 }
 
-},{"../util/browser":438,"../util/util":455,"shelf-pack":488}],416:[function(require,module,exports){
+},{"../util/browser":439,"../util/util":456,"shelf-pack":489}],417:[function(require,module,exports){
 'use strict';
 
 var StructArrayType = require('../util/struct_array');
@@ -71252,7 +71910,7 @@ util.extendAll(SymbolInstancesArray.prototype.StructType.prototype, {
 
 
 
-},{"../util/struct_array":453,"../util/util":455,"point-geometry":467}],417:[function(require,module,exports){
+},{"../util/struct_array":454,"../util/util":456,"point-geometry":468}],418:[function(require,module,exports){
 'use strict';
 
 var StructArrayType = require('../util/struct_array');
@@ -71326,7 +71984,7 @@ util.extendAll(SymbolQuadsArray.prototype.StructType.prototype, {
 });
 
 
-},{"../util/struct_array":453,"../util/util":455,"./quads":412,"point-geometry":467}],418:[function(require,module,exports){
+},{"../util/struct_array":454,"../util/util":456,"./quads":413,"point-geometry":468}],419:[function(require,module,exports){
 'use strict';
 
 var DOM = require('../util/dom');
@@ -71501,7 +72159,7 @@ module.exports = function bindHandlers(map, options) {
  *   property.
  */
 
-},{"../util/dom":440,"./handler/box_zoom":425,"./handler/dblclick_zoom":426,"./handler/drag_pan":427,"./handler/drag_rotate":428,"./handler/keyboard":429,"./handler/scroll_zoom":430,"./handler/touch_zoom_rotate":431,"point-geometry":467}],419:[function(require,module,exports){
+},{"../util/dom":441,"./handler/box_zoom":426,"./handler/dblclick_zoom":427,"./handler/drag_pan":428,"./handler/drag_rotate":429,"./handler/keyboard":430,"./handler/scroll_zoom":431,"./handler/touch_zoom_rotate":432,"point-geometry":468}],420:[function(require,module,exports){
 'use strict';
 
 var util = require('../util/util');
@@ -72288,7 +72946,7 @@ util.extend(Camera.prototype, /** @lends Map.prototype */{
  * @property {MapEventData} data
  */
 
-},{"../geo/lng_lat":349,"../geo/lng_lat_bounds":350,"../util/browser":438,"../util/interpolate":449,"../util/util":455,"point-geometry":467}],420:[function(require,module,exports){
+},{"../geo/lng_lat":350,"../geo/lng_lat_bounds":351,"../util/browser":439,"../util/interpolate":450,"../util/util":456,"point-geometry":468}],421:[function(require,module,exports){
 'use strict';
 
 var Control = require('./control');
@@ -72371,7 +73029,7 @@ Attribution.prototype = util.inherit(Control, {
     }
 });
 
-},{"../../util/dom":440,"../../util/util":455,"./control":421}],421:[function(require,module,exports){
+},{"../../util/dom":441,"../../util/util":456,"./control":422}],422:[function(require,module,exports){
 'use strict';
 
 var util = require('../../util/util');
@@ -72426,7 +73084,7 @@ Control.prototype = {
 
 util.extend(Control.prototype, Evented);
 
-},{"../../util/evented":446,"../../util/util":455}],422:[function(require,module,exports){
+},{"../../util/evented":447,"../../util/util":456}],423:[function(require,module,exports){
 'use strict';
 
 var Control = require('./control');
@@ -72528,7 +73186,7 @@ Geolocate.prototype = util.inherit(Control, {
  *
  */
 
-},{"../../util/browser":438,"../../util/dom":440,"../../util/util":455,"./control":421}],423:[function(require,module,exports){
+},{"../../util/browser":439,"../../util/dom":441,"../../util/util":456,"./control":422}],424:[function(require,module,exports){
 'use strict';
 
 var Control = require('./control');
@@ -72649,7 +73307,7 @@ function copyMouseEvent(e) {
     });
 }
 
-},{"../../util/dom":440,"../../util/util":455,"./control":421}],424:[function(require,module,exports){
+},{"../../util/dom":441,"../../util/util":456,"./control":422}],425:[function(require,module,exports){
 'use strict';
 var util = require('../../util/util');
 var Control = require('./control');
@@ -72738,7 +73396,7 @@ function getRoundNum(num) {
     return pow10 * d;
 }
 
-},{"../../util/dom":440,"../../util/util":455,"./control":421}],425:[function(require,module,exports){
+},{"../../util/dom":441,"../../util/util":456,"./control":422}],426:[function(require,module,exports){
 'use strict';
 
 var DOM = require('../../util/dom'),
@@ -72925,7 +73583,7 @@ BoxZoomHandler.prototype = {
  * @property {MapBoxZoomEvent} data
  */
 
-},{"../../geo/lng_lat_bounds":350,"../../util/dom":440,"../../util/util":455}],426:[function(require,module,exports){
+},{"../../geo/lng_lat_bounds":351,"../../util/dom":441,"../../util/util":456}],427:[function(require,module,exports){
 'use strict';
 
 module.exports = DoubleClickZoomHandler;
@@ -72988,7 +73646,7 @@ DoubleClickZoomHandler.prototype = {
     }
 };
 
-},{}],427:[function(require,module,exports){
+},{}],428:[function(require,module,exports){
 'use strict';
 
 var DOM = require('../../util/dom'),
@@ -73224,7 +73882,7 @@ DragPanHandler.prototype = {
  * @property {MapMouseEvent | MapTouchEvent} data
  */
 
-},{"../../util/dom":440,"../../util/util":455}],428:[function(require,module,exports){
+},{"../../util/dom":441,"../../util/util":456}],429:[function(require,module,exports){
 'use strict';
 
 var DOM = require('../../util/dom'),
@@ -73478,7 +74136,7 @@ DragRotateHandler.prototype = {
  * @property {MapMouseEvent | MapTouchEvent} data
  */
 
-},{"../../util/dom":440,"../../util/util":455,"point-geometry":467}],429:[function(require,module,exports){
+},{"../../util/dom":441,"../../util/util":456,"point-geometry":468}],430:[function(require,module,exports){
 'use strict';
 
 module.exports = KeyboardHandler;
@@ -73610,7 +74268,7 @@ KeyboardHandler.prototype = {
     }
 };
 
-},{}],430:[function(require,module,exports){
+},{}],431:[function(require,module,exports){
 'use strict';
 
 var DOM = require('../../util/dom'),
@@ -73793,7 +74451,7 @@ ScrollZoomHandler.prototype = {
  * @property {MapMouseEvent | MapTouchEvent} data
  */
 
-},{"../../util/browser":438,"../../util/dom":440,"../../util/util":455}],431:[function(require,module,exports){
+},{"../../util/browser":439,"../../util/dom":441,"../../util/util":456}],432:[function(require,module,exports){
 'use strict';
 
 var DOM = require('../../util/dom'),
@@ -74008,7 +74666,7 @@ TouchZoomRotateHandler.prototype = {
     }
 };
 
-},{"../../util/dom":440,"../../util/util":455}],432:[function(require,module,exports){
+},{"../../util/dom":441,"../../util/util":456}],433:[function(require,module,exports){
 'use strict';
 
 /*
@@ -74083,7 +74741,7 @@ Hash.prototype = {
     }
 };
 
-},{"../util/util":455}],433:[function(require,module,exports){
+},{"../util/util":456}],434:[function(require,module,exports){
 'use strict';
 
 var Canvas = require('../util/canvas');
@@ -75516,7 +76174,7 @@ function removeNode(node) {
   * @property {{error: {message: string}}} data
   */
 
-},{"../geo/lng_lat":349,"../geo/lng_lat_bounds":350,"../geo/transform":351,"../render/painter":366,"../style/animation_loop":386,"../style/style":389,"../util/browser":438,"../util/canvas":439,"../util/dom":440,"../util/evented":446,"../util/util":455,"./bind_handlers":418,"./camera":419,"./control/attribution":420,"./hash":432,"point-geometry":467}],434:[function(require,module,exports){
+},{"../geo/lng_lat":350,"../geo/lng_lat_bounds":351,"../geo/transform":352,"../render/painter":367,"../style/animation_loop":387,"../style/style":390,"../util/browser":439,"../util/canvas":440,"../util/dom":441,"../util/evented":447,"../util/util":456,"./bind_handlers":419,"./camera":420,"./control/attribution":421,"./hash":433,"point-geometry":468}],435:[function(require,module,exports){
 /* eslint-disable */
 'use strict';
 
@@ -75686,7 +76344,7 @@ Marker.prototype = {
 };
 
 
-},{"../geo/lng_lat":349,"../util/dom":440,"../util/util":455,"./popup":435,"point-geometry":467}],435:[function(require,module,exports){
+},{"../geo/lng_lat":350,"../util/dom":441,"../util/util":456,"./popup":436,"point-geometry":468}],436:[function(require,module,exports){
 'use strict';
 
 module.exports = Popup;
@@ -76004,7 +76662,7 @@ function isPointLike(input) {
     return input instanceof Point || Array.isArray(input);
 }
 
-},{"../geo/lng_lat":349,"../util/dom":440,"../util/evented":446,"../util/util":455,"point-geometry":467}],436:[function(require,module,exports){
+},{"../geo/lng_lat":350,"../util/dom":441,"../util/evented":447,"../util/util":456,"point-geometry":468}],437:[function(require,module,exports){
 'use strict';
 
 module.exports = Actor;
@@ -76080,7 +76738,7 @@ Actor.prototype.postMessage = function(message, transferList) {
     this.target.postMessage(message, transferList);
 };
 
-},{}],437:[function(require,module,exports){
+},{}],438:[function(require,module,exports){
 'use strict';
 
 exports.getJSON = function(url, callback) {
@@ -76170,7 +76828,7 @@ exports.getVideo = function(urls, callback) {
     return video;
 };
 
-},{}],438:[function(require,module,exports){
+},{}],439:[function(require,module,exports){
 'use strict';
 
 /**
@@ -76265,7 +76923,7 @@ webpImgTest.src = 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAQAAAAfQ//
 
 exports.supportsGeolocation = !!navigator.geolocation;
 
-},{"mapbox-gl-supported":337}],439:[function(require,module,exports){
+},{"mapbox-gl-supported":338}],440:[function(require,module,exports){
 'use strict';
 
 var util = require('../util');
@@ -76309,7 +76967,7 @@ Canvas.prototype.getElement = function() {
     return this.canvas;
 };
 
-},{"../util":455,"mapbox-gl-supported":337}],440:[function(require,module,exports){
+},{"../util":456,"mapbox-gl-supported":338}],441:[function(require,module,exports){
 'use strict';
 
 var Point = require('point-geometry');
@@ -76384,7 +77042,7 @@ exports.touchPos = function (el, e) {
     return points;
 };
 
-},{"point-geometry":467}],441:[function(require,module,exports){
+},{"point-geometry":468}],442:[function(require,module,exports){
 'use strict';
 var WebWorkify = require('webworkify');
 
@@ -76392,7 +77050,7 @@ module.exports = function () {
     return new WebWorkify(require('../../source/worker'));
 };
 
-},{"../../source/worker":384,"webworkify":539}],442:[function(require,module,exports){
+},{"../../source/worker":385,"webworkify":540}],443:[function(require,module,exports){
 'use strict';
 
 var quickselect = require('quickselect');
@@ -76443,7 +77101,7 @@ function compareAreas(a, b) {
     return b.area - a.area;
 }
 
-},{"./util":455,"quickselect":468}],443:[function(require,module,exports){
+},{"./util":456,"quickselect":469}],444:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -76451,7 +77109,7 @@ module.exports = {
     REQUIRE_ACCESS_TOKEN: true
 };
 
-},{}],444:[function(require,module,exports){
+},{}],445:[function(require,module,exports){
 'use strict';
 
 var assert = require('assert');
@@ -76478,7 +77136,7 @@ DictionaryCoder.prototype.decode = function(n) {
     return this._numberToString[n];
 };
 
-},{"assert":15}],445:[function(require,module,exports){
+},{"assert":15}],446:[function(require,module,exports){
 'use strict';
 
 var util = require('./util');
@@ -76554,7 +77212,7 @@ Dispatcher.prototype = {
 };
 
 
-},{"./actor":436,"./util":455}],446:[function(require,module,exports){
+},{"./actor":437,"./util":456}],447:[function(require,module,exports){
 'use strict';
 
 var util = require('./util');
@@ -76677,7 +77335,7 @@ var Evented = {
 
 module.exports = Evented;
 
-},{"./util":455}],447:[function(require,module,exports){
+},{"./util":456}],448:[function(require,module,exports){
 'use strict';
 var Queue = require('tinyqueue');
 var Point = require('point-geometry');
@@ -76806,7 +77464,7 @@ function getCentroidCell(polygon) {
     return new Cell(x / area, y / area, 0, polygon);
 }
 
-},{"./intersection_tests":450,"point-geometry":467,"tinyqueue":515}],448:[function(require,module,exports){
+},{"./intersection_tests":451,"point-geometry":468,"tinyqueue":516}],449:[function(require,module,exports){
 'use strict';
 
 module.exports = Glyphs;
@@ -76841,7 +77499,7 @@ function readGlyph(tag, glyph, pbf) {
     else if (tag === 7) glyph.advance = pbf.readVarint();
 }
 
-},{}],449:[function(require,module,exports){
+},{}],450:[function(require,module,exports){
 'use strict';
 
 module.exports = interpolate;
@@ -76882,7 +77540,7 @@ interpolate.array = function(from, to, t) {
     });
 };
 
-},{}],450:[function(require,module,exports){
+},{}],451:[function(require,module,exports){
 'use strict';
 
 var isCounterClockwise = require('./util').isCounterClockwise;
@@ -77045,7 +77703,7 @@ function polygonContainsPoint(ring, p) {
     return c;
 }
 
-},{"./util":455}],451:[function(require,module,exports){
+},{"./util":456}],452:[function(require,module,exports){
 'use strict';
 
 module.exports = LRUCache;
@@ -77170,7 +77828,7 @@ LRUCache.prototype.setMaxSize = function(max) {
     return this;
 };
 
-},{}],452:[function(require,module,exports){
+},{}],453:[function(require,module,exports){
 'use strict';
 
 var config = require('./config');
@@ -77298,7 +77956,7 @@ function replaceTempAccessToken(query) {
     }
 }
 
-},{"./browser":438,"./config":443,"./util":455,"url":159}],453:[function(require,module,exports){
+},{"./browser":439,"./config":444,"./util":456,"url":159}],454:[function(require,module,exports){
 'use strict';
 
 // Note: all "sizes" are measured in bytes
@@ -77646,7 +78304,7 @@ StructArray.prototype.toArray = function(startIndex, endIndex) {
     return array;
 };
 
-},{"assert":15}],454:[function(require,module,exports){
+},{"assert":15}],455:[function(require,module,exports){
 'use strict';
 
 module.exports = resolveTokens;
@@ -77665,7 +78323,7 @@ function resolveTokens(properties, text) {
     });
 }
 
-},{}],455:[function(require,module,exports){
+},{}],456:[function(require,module,exports){
 'use strict';
 
 var UnitBezier = require('unitbezier');
@@ -78181,7 +78839,7 @@ exports.isClosedPolygon = function(points) {
     return (Math.abs(exports.calculateSignedArea(points)) > 0.01);
 };
 
-},{"../geo/coordinate":348,"unitbezier":525}],456:[function(require,module,exports){
+},{"../geo/coordinate":349,"unitbezier":526}],457:[function(require,module,exports){
 'use strict';
 
 module.exports = Feature;
@@ -78226,7 +78884,7 @@ Feature.prototype = {
     }
 };
 
-},{}],457:[function(require,module,exports){
+},{}],458:[function(require,module,exports){
 'use strict';
 
 var assert = require('assert');
@@ -78271,7 +78929,7 @@ WorkerPool.prototype = {
 };
 
 
-},{"../mapbox-gl":354,"./web_worker":441,"assert":15}],458:[function(require,module,exports){
+},{"../mapbox-gl":355,"./web_worker":442,"assert":15}],459:[function(require,module,exports){
 module.exports={
   "_args": [
     [
@@ -78284,7 +78942,7 @@ module.exports={
         "spec": ">=0.23.0 <0.24.0",
         "type": "range"
       },
-      "/home/nronnei/gis/node/pug-map"
+      "/home/nronnei/gis/node/pug-map-debug"
     ]
   ],
   "_from": "mapbox-gl@>=0.23.0 <0.24.0",
@@ -78319,7 +78977,7 @@ module.exports={
   "_shasum": "ded6f2d7057df480695ed5c5ebf53ed478938643",
   "_shrinkwrap": null,
   "_spec": "mapbox-gl@^0.23.0",
-  "_where": "/home/nronnei/gis/node/pug-map",
+  "_where": "/home/nronnei/gis/node/pug-map-debug",
   "browser": {
     "./js/util/ajax.js": "./js/util/browser/ajax.js",
     "./js/util/browser.js": "./js/util/browser/browser.js",
@@ -78615,7 +79273,7 @@ module.exports={
   "version": "0.23.0"
 }
 
-},{}],459:[function(require,module,exports){
+},{}],460:[function(require,module,exports){
 module.exports={
   "application/1d-interleaved-parityfec": {
     "source": "iana"
@@ -85244,7 +85902,7 @@ module.exports={
   }
 }
 
-},{}],460:[function(require,module,exports){
+},{}],461:[function(require,module,exports){
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong
@@ -85257,7 +85915,7 @@ module.exports={
 
 module.exports = require('./db.json')
 
-},{"./db.json":459}],461:[function(require,module,exports){
+},{"./db.json":460}],462:[function(require,module,exports){
 /*!
  * mime-types
  * Copyright(c) 2014 Jonathan Ong
@@ -85447,9 +86105,9 @@ function populateMaps(extensions, types) {
   })
 }
 
-},{"mime-db":460,"path":117}],462:[function(require,module,exports){
+},{"mime-db":461,"path":117}],463:[function(require,module,exports){
 //! moment.js
-//! version : 2.17.1
+//! version : 2.18.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
 //! license : MIT
 //! momentjs.com
@@ -85489,6 +86147,10 @@ function isObjectEmpty(obj) {
         return false;
     }
     return true;
+}
+
+function isUndefined(input) {
+    return input === void 0;
 }
 
 function isNumber(input) {
@@ -85547,7 +86209,9 @@ function defaultParsingFlags() {
         userInvalidated : false,
         iso             : false,
         parsedDateParts : [],
-        meridiem        : null
+        meridiem        : null,
+        rfc2822         : false,
+        weekdayMismatch : false
     };
 }
 
@@ -85623,10 +86287,6 @@ function createInvalid (flags) {
     return m;
 }
 
-function isUndefined(input) {
-    return input === void 0;
-}
-
 // Plugins that add properties should also add the key here (null value),
 // so we can properly clone ourselves.
 var momentProperties = hooks.momentProperties = [];
@@ -85666,7 +86326,7 @@ function copyConfig(to, from) {
     }
 
     if (momentProperties.length > 0) {
-        for (i in momentProperties) {
+        for (i = 0; i < momentProperties.length; i++) {
             prop = momentProperties[i];
             val = from[prop];
             if (!isUndefined(val)) {
@@ -85803,8 +86463,11 @@ function set (config) {
     }
     this._config = config;
     // Lenient ordinal parsing accepts just a number in addition to
-    // number + (possibly) stuff coming from _ordinalParseLenient.
-    this._ordinalParseLenient = new RegExp(this._ordinalParse.source + '|' + (/\d{1,2}/).source);
+    // number + (possibly) stuff coming from _dayOfMonthOrdinalParse.
+    // TODO: Remove "ordinalParse" fallback in next major release.
+    this._dayOfMonthOrdinalParseLenient = new RegExp(
+        (this._dayOfMonthOrdinalParse.source || this._ordinalParse.source) +
+            '|' + (/\d{1,2}/).source);
 }
 
 function mergeConfigs(parentConfig, childConfig) {
@@ -85902,7 +86565,7 @@ function invalidDate () {
 }
 
 var defaultOrdinal = '%d';
-var defaultOrdinalParse = /\d{1,2}/;
+var defaultDayOfMonthOrdinalParse = /\d{1,2}/;
 
 function ordinal (number) {
     return this._ordinal.replace('%d', number);
@@ -85912,6 +86575,7 @@ var defaultRelativeTime = {
     future : 'in %s',
     past   : '%s ago',
     s  : 'a few seconds',
+    ss : '%d seconds',
     m  : 'a minute',
     mm : '%d minutes',
     h  : 'an hour',
@@ -86094,7 +86758,7 @@ function makeFormatFunction(format) {
     return function (mom) {
         var output = '', i;
         for (i = 0; i < length; i++) {
-            output += array[i] instanceof Function ? array[i].call(mom, format) : array[i];
+            output += isFunction(array[i]) ? array[i].call(mom, format) : array[i];
         }
         return output;
     };
@@ -86297,7 +86961,8 @@ var MONTHS_IN_FORMAT = /D[oD]?(\[[^\[\]]*\]|\s)+MMMM?/;
 var defaultLocaleMonths = 'January_February_March_April_May_June_July_August_September_October_November_December'.split('_');
 function localeMonths (m, format) {
     if (!m) {
-        return this._months;
+        return isArray(this._months) ? this._months :
+            this._months['standalone'];
     }
     return isArray(this._months) ? this._months[m.month()] :
         this._months[(this._months.isFormat || MONTHS_IN_FORMAT).test(format) ? 'format' : 'standalone'][m.month()];
@@ -86306,7 +86971,8 @@ function localeMonths (m, format) {
 var defaultLocaleMonthsShort = 'Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec'.split('_');
 function localeMonthsShort (m, format) {
     if (!m) {
-        return this._monthsShort;
+        return isArray(this._monthsShort) ? this._monthsShort :
+            this._monthsShort['standalone'];
     }
     return isArray(this._monthsShort) ? this._monthsShort[m.month()] :
         this._monthsShort[MONTHS_IN_FORMAT.test(format) ? 'format' : 'standalone'][m.month()];
@@ -86573,11 +87239,11 @@ function getIsLeapYear () {
 }
 
 function createDate (y, m, d, h, M, s, ms) {
-    //can't just apply() to create a date:
-    //http://stackoverflow.com/questions/181348/instantiating-a-javascript-object-by-calling-prototype-constructor-apply
+    // can't just apply() to create a date:
+    // https://stackoverflow.com/q/181348
     var date = new Date(y, m, d, h, M, s, ms);
 
-    //the date constructor remaps years 0-99 to 1900-1999
+    // the date constructor remaps years 0-99 to 1900-1999
     if (y < 100 && y >= 0 && isFinite(date.getFullYear())) {
         date.setFullYear(y);
     }
@@ -86587,7 +87253,7 @@ function createDate (y, m, d, h, M, s, ms) {
 function createUTCDate (y) {
     var date = new Date(Date.UTC.apply(null, arguments));
 
-    //the Date.UTC function remaps years 0-99 to 1900-1999
+    // the Date.UTC function remaps years 0-99 to 1900-1999
     if (y < 100 && y >= 0 && isFinite(date.getUTCFullYear())) {
         date.setUTCFullYear(y);
     }
@@ -86604,7 +87270,7 @@ function firstWeekOffset(year, dow, doy) {
     return -fwdlw + fwd - 1;
 }
 
-//http://en.wikipedia.org/wiki/ISO_week_date#Calculating_a_date_given_the_year.2C_week_number_and_weekday
+// https://en.wikipedia.org/wiki/ISO_week_date#Calculating_a_date_given_the_year.2C_week_number_and_weekday
 function dayOfYearFromWeeks(year, week, weekday, dow, doy) {
     var localWeekday = (7 + weekday - dow) % 7,
         weekOffset = firstWeekOffset(year, dow, doy),
@@ -86805,7 +87471,8 @@ function parseIsoWeekday(input, locale) {
 var defaultLocaleWeekdays = 'Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday'.split('_');
 function localeWeekdays (m, format) {
     if (!m) {
-        return this._weekdays;
+        return isArray(this._weekdays) ? this._weekdays :
+            this._weekdays['standalone'];
     }
     return isArray(this._weekdays) ? this._weekdays[m.day()] :
         this._weekdays[this._weekdays.isFormat.test(format) ? 'format' : 'standalone'][m.day()];
@@ -87125,8 +87792,10 @@ addRegexToken('a',  matchMeridiem);
 addRegexToken('A',  matchMeridiem);
 addRegexToken('H',  match1to2);
 addRegexToken('h',  match1to2);
+addRegexToken('k',  match1to2);
 addRegexToken('HH', match1to2, match2);
 addRegexToken('hh', match1to2, match2);
+addRegexToken('kk', match1to2, match2);
 
 addRegexToken('hmm', match3to4);
 addRegexToken('hmmss', match5to6);
@@ -87134,6 +87803,10 @@ addRegexToken('Hmm', match3to4);
 addRegexToken('Hmmss', match5to6);
 
 addParseToken(['H', 'HH'], HOUR);
+addParseToken(['k', 'kk'], function (input, array, config) {
+    var kInput = toInt(input);
+    array[HOUR] = kInput === 24 ? 0 : kInput;
+});
 addParseToken(['a', 'A'], function (input, array, config) {
     config._isPm = config._locale.isPM(input);
     config._meridiem = input;
@@ -87204,7 +87877,7 @@ var baseConfig = {
     longDateFormat: defaultLongDateFormat,
     invalidDate: defaultInvalidDate,
     ordinal: defaultOrdinal,
-    ordinalParse: defaultOrdinalParse,
+    dayOfMonthOrdinalParse: defaultDayOfMonthOrdinalParse,
     relativeTime: defaultRelativeTime,
 
     months: defaultLocaleMonths,
@@ -87515,6 +88188,77 @@ function configFromISO(config) {
     }
 }
 
+// RFC 2822 regex: For details see https://tools.ietf.org/html/rfc2822#section-3.3
+var basicRfcRegex = /^((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s)?(\d?\d\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(?:\d\d)?\d\d\s)(\d\d:\d\d)(\:\d\d)?(\s(?:UT|GMT|[ECMP][SD]T|[A-IK-Za-ik-z]|[+-]\d{4}))$/;
+
+// date and time from ref 2822 format
+function configFromRFC2822(config) {
+    var string, match, dayFormat,
+        dateFormat, timeFormat, tzFormat;
+    var timezones = {
+        ' GMT': ' +0000',
+        ' EDT': ' -0400',
+        ' EST': ' -0500',
+        ' CDT': ' -0500',
+        ' CST': ' -0600',
+        ' MDT': ' -0600',
+        ' MST': ' -0700',
+        ' PDT': ' -0700',
+        ' PST': ' -0800'
+    };
+    var military = 'YXWVUTSRQPONZABCDEFGHIKLM';
+    var timezone, timezoneIndex;
+
+    string = config._i
+        .replace(/\([^\)]*\)|[\n\t]/g, ' ') // Remove comments and folding whitespace
+        .replace(/(\s\s+)/g, ' ') // Replace multiple-spaces with a single space
+        .replace(/^\s|\s$/g, ''); // Remove leading and trailing spaces
+    match = basicRfcRegex.exec(string);
+
+    if (match) {
+        dayFormat = match[1] ? 'ddd' + ((match[1].length === 5) ? ', ' : ' ') : '';
+        dateFormat = 'D MMM ' + ((match[2].length > 10) ? 'YYYY ' : 'YY ');
+        timeFormat = 'HH:mm' + (match[4] ? ':ss' : '');
+
+        // TODO: Replace the vanilla JS Date object with an indepentent day-of-week check.
+        if (match[1]) { // day of week given
+            var momentDate = new Date(match[2]);
+            var momentDay = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][momentDate.getDay()];
+
+            if (match[1].substr(0,3) !== momentDay) {
+                getParsingFlags(config).weekdayMismatch = true;
+                config._isValid = false;
+                return;
+            }
+        }
+
+        switch (match[5].length) {
+            case 2: // military
+                if (timezoneIndex === 0) {
+                    timezone = ' +0000';
+                } else {
+                    timezoneIndex = military.indexOf(match[5][1].toUpperCase()) - 12;
+                    timezone = ((timezoneIndex < 0) ? ' -' : ' +') +
+                        (('' + timezoneIndex).replace(/^-?/, '0')).match(/..$/)[0] + '00';
+                }
+                break;
+            case 4: // Zone
+                timezone = timezones[match[5]];
+                break;
+            default: // UT or +/-9999
+                timezone = timezones[' GMT'];
+        }
+        match[5] = timezone;
+        config._i = match.splice(1).join('');
+        tzFormat = ' ZZ';
+        config._f = dayFormat + dateFormat + timeFormat + tzFormat;
+        configFromStringAndFormat(config);
+        getParsingFlags(config).rfc2822 = true;
+    } else {
+        config._isValid = false;
+    }
+}
+
 // date from iso format or fallback
 function configFromString(config) {
     var matched = aspNetJsonRegex.exec(config._i);
@@ -87527,13 +88271,24 @@ function configFromString(config) {
     configFromISO(config);
     if (config._isValid === false) {
         delete config._isValid;
-        hooks.createFromInputFallback(config);
+    } else {
+        return;
     }
+
+    configFromRFC2822(config);
+    if (config._isValid === false) {
+        delete config._isValid;
+    } else {
+        return;
+    }
+
+    // Final attempt, use Input Fallback
+    hooks.createFromInputFallback(config);
 }
 
 hooks.createFromInputFallback = deprecate(
-    'value provided is not in a recognized ISO format. moment construction falls back to js Date(), ' +
-    'which is not reliable across all browsers and versions. Non ISO date formats are ' +
+    'value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), ' +
+    'which is not reliable across all browsers and versions. Non RFC2822/ISO date formats are ' +
     'discouraged and will be removed in an upcoming major release. Please refer to ' +
     'http://momentjs.com/guides/#/warnings/js-date/ for more info.',
     function (config) {
@@ -87580,10 +88335,10 @@ function configFromArray (config) {
     }
 
     //if the day of the year is set, figure out what it is
-    if (config._dayOfYear) {
+    if (config._dayOfYear != null) {
         yearToUse = defaults(config._a[YEAR], currentDate[YEAR]);
 
-        if (config._dayOfYear > daysInYear(yearToUse)) {
+        if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
             getParsingFlags(config)._overflowDayOfYear = true;
         }
 
@@ -87687,6 +88442,9 @@ function dayOfYearFromWeekInfo(config) {
 // constant that refers to the ISO standard
 hooks.ISO_8601 = function () {};
 
+// constant that refers to the RFC 2822 form
+hooks.RFC_2822 = function () {};
+
 // date from string and format string
 function configFromStringAndFormat(config) {
     // TODO: Move this to another part of the creation flow to prevent circular deps
@@ -87694,7 +88452,10 @@ function configFromStringAndFormat(config) {
         configFromISO(config);
         return;
     }
-
+    if (config._f === hooks.RFC_2822) {
+        configFromRFC2822(config);
+        return;
+    }
     config._a = [];
     getParsingFlags(config).empty = true;
 
@@ -87886,7 +88647,7 @@ function prepareConfig (config) {
 
 function configFromInput(config) {
     var input = config._i;
-    if (input === undefined) {
+    if (isUndefined(input)) {
         config._d = new Date(hooks.now());
     } else if (isDate(input)) {
         config._d = new Date(input.valueOf());
@@ -87897,7 +88658,7 @@ function configFromInput(config) {
             return parseInt(obj, 10);
         });
         configFromArray(config);
-    } else if (typeof(input) === 'object') {
+    } else if (isObject(input)) {
         configFromObject(config);
     } else if (isNumber(input)) {
         // from milliseconds
@@ -87998,6 +88759,38 @@ var now = function () {
     return Date.now ? Date.now() : +(new Date());
 };
 
+var ordering = ['year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond'];
+
+function isDurationValid(m) {
+    for (var key in m) {
+        if (!(ordering.indexOf(key) !== -1 && (m[key] == null || !isNaN(m[key])))) {
+            return false;
+        }
+    }
+
+    var unitHasDecimal = false;
+    for (var i = 0; i < ordering.length; ++i) {
+        if (m[ordering[i]]) {
+            if (unitHasDecimal) {
+                return false; // only allow non-integers for smallest unit
+            }
+            if (parseFloat(m[ordering[i]]) !== toInt(m[ordering[i]])) {
+                unitHasDecimal = true;
+            }
+        }
+    }
+
+    return true;
+}
+
+function isValid$1() {
+    return this._isValid;
+}
+
+function createInvalid$1() {
+    return createDuration(NaN);
+}
+
 function Duration (duration) {
     var normalizedInput = normalizeObjectUnits(duration),
         years = normalizedInput.year || 0,
@@ -88009,6 +88802,8 @@ function Duration (duration) {
         minutes = normalizedInput.minute || 0,
         seconds = normalizedInput.second || 0,
         milliseconds = normalizedInput.millisecond || 0;
+
+    this._isValid = isDurationValid(normalizedInput);
 
     // representation for dateAddRemove
     this._milliseconds = +milliseconds +
@@ -88133,7 +88928,7 @@ hooks.updateOffset = function () {};
 // a second time. In case it wants us to change the offset again
 // _changeInProgress == true case, then we have to adjust, because
 // there is no such time in the given timezone.
-function getSetOffset (input, keepLocalTime) {
+function getSetOffset (input, keepLocalTime, keepMinutes) {
     var offset = this._offset || 0,
         localAdjust;
     if (!this.isValid()) {
@@ -88145,7 +88940,7 @@ function getSetOffset (input, keepLocalTime) {
             if (input === null) {
                 return this;
             }
-        } else if (Math.abs(input) < 16) {
+        } else if (Math.abs(input) < 16 && !keepMinutes) {
             input = input * 60;
         }
         if (!this._isUTC && keepLocalTime) {
@@ -88203,7 +88998,7 @@ function setOffsetToLocal (keepLocalTime) {
 
 function setOffsetToParsedOffset () {
     if (this._tzm != null) {
-        this.utcOffset(this._tzm);
+        this.utcOffset(this._tzm, false, true);
     } else if (typeof this._i === 'string') {
         var tZone = offsetFromString(matchOffset, this._i);
         if (tZone != null) {
@@ -88335,6 +89130,7 @@ function createDuration (input, key) {
 }
 
 createDuration.fn = Duration.prototype;
+createDuration.invalid = createInvalid$1;
 
 function parseIso (inp, sign) {
     // We'd normally use ~~inp for this, but unfortunately it also
@@ -88571,18 +89367,19 @@ function toString () {
     return this.clone().locale('en').format('ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
 }
 
-function toISOString () {
+function toISOString() {
+    if (!this.isValid()) {
+        return null;
+    }
     var m = this.clone().utc();
-    if (0 < m.year() && m.year() <= 9999) {
-        if (isFunction(Date.prototype.toISOString)) {
-            // native implementation is ~50x faster, use it when we can
-            return this.toDate().toISOString();
-        } else {
-            return formatMoment(m, 'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]');
-        }
-    } else {
+    if (m.year() < 0 || m.year() > 9999) {
         return formatMoment(m, 'YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]');
     }
+    if (isFunction(Date.prototype.toISOString)) {
+        // native implementation is ~50x faster, use it when we can
+        return this.toDate().toISOString();
+    }
+    return formatMoment(m, 'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]');
 }
 
 /**
@@ -88602,7 +89399,7 @@ function inspect () {
         zone = 'Z';
     }
     var prefix = '[' + func + '("]';
-    var year = (0 < this.year() && this.year() <= 9999) ? 'YYYY' : 'YYYYYY';
+    var year = (0 <= this.year() && this.year() <= 9999) ? 'YYYY' : 'YYYYYY';
     var datetime = '-MM-DD[T]HH:mm:ss.SSS';
     var suffix = zone + '[")]';
 
@@ -88770,7 +89567,7 @@ function toJSON () {
     return this.isValid() ? this.toISOString() : null;
 }
 
-function isValid$1 () {
+function isValid$2 () {
     return isValid(this);
 }
 
@@ -88930,7 +89727,10 @@ addUnitPriority('date', 9);
 addRegexToken('D',  match1to2);
 addRegexToken('DD', match1to2, match2);
 addRegexToken('Do', function (isStrict, locale) {
-    return isStrict ? locale._ordinalParse : locale._ordinalParseLenient;
+    // TODO: Remove "ordinalParse" fallback in next major release.
+    return isStrict ?
+      (locale._dayOfMonthOrdinalParse || locale._ordinalParse) :
+      locale._dayOfMonthOrdinalParseLenient;
 });
 
 addParseToken(['D', 'DD'], DATE);
@@ -89110,7 +89910,7 @@ proto.isBetween         = isBetween;
 proto.isSame            = isSame;
 proto.isSameOrAfter     = isSameOrAfter;
 proto.isSameOrBefore    = isSameOrBefore;
-proto.isValid           = isValid$1;
+proto.isValid           = isValid$2;
 proto.lang              = lang;
 proto.locale            = locale;
 proto.localeData        = localeData;
@@ -89335,7 +90135,7 @@ function listWeekdaysMin (localeSorted, format, index) {
 }
 
 getSetGlobalLocale('en', {
-    ordinalParse: /\d{1,2}(th|st|nd|rd)/,
+    dayOfMonthOrdinalParse: /\d{1,2}(th|st|nd|rd)/,
     ordinal : function (number) {
         var b = number % 10,
             output = (toInt(number % 100 / 10) === 1) ? 'th' :
@@ -89456,6 +90256,9 @@ function monthsToDays (months) {
 }
 
 function as (units) {
+    if (!this.isValid()) {
+        return NaN;
+    }
     var days;
     var months;
     var milliseconds = this._milliseconds;
@@ -89484,6 +90287,9 @@ function as (units) {
 
 // TODO: Use this.as('ms')?
 function valueOf$1 () {
+    if (!this.isValid()) {
+        return NaN;
+    }
     return (
         this._milliseconds +
         this._days * 864e5 +
@@ -89509,12 +90315,12 @@ var asYears        = makeAs('y');
 
 function get$2 (units) {
     units = normalizeUnits(units);
-    return this[units + 's']();
+    return this.isValid() ? this[units + 's']() : NaN;
 }
 
 function makeGetter(name) {
     return function () {
-        return this._data[name];
+        return this.isValid() ? this._data[name] : NaN;
     };
 }
 
@@ -89532,11 +90338,12 @@ function weeks () {
 
 var round = Math.round;
 var thresholds = {
-    s: 45,  // seconds to minute
-    m: 45,  // minutes to hour
-    h: 22,  // hours to day
-    d: 26,  // days to month
-    M: 11   // months to year
+    ss: 44,         // a few seconds to seconds
+    s : 45,         // seconds to minute
+    m : 45,         // minutes to hour
+    h : 22,         // hours to day
+    d : 26,         // days to month
+    M : 11          // months to year
 };
 
 // helper function for moment.fn.from, moment.fn.fromNow, and moment.duration.fn.humanize
@@ -89553,16 +90360,17 @@ function relativeTime$1 (posNegDuration, withoutSuffix, locale) {
     var months   = round(duration.as('M'));
     var years    = round(duration.as('y'));
 
-    var a = seconds < thresholds.s && ['s', seconds]  ||
-            minutes <= 1           && ['m']           ||
-            minutes < thresholds.m && ['mm', minutes] ||
-            hours   <= 1           && ['h']           ||
-            hours   < thresholds.h && ['hh', hours]   ||
-            days    <= 1           && ['d']           ||
-            days    < thresholds.d && ['dd', days]    ||
-            months  <= 1           && ['M']           ||
-            months  < thresholds.M && ['MM', months]  ||
-            years   <= 1           && ['y']           || ['yy', years];
+    var a = seconds <= thresholds.ss && ['s', seconds]  ||
+            seconds < thresholds.s   && ['ss', seconds] ||
+            minutes <= 1             && ['m']           ||
+            minutes < thresholds.m   && ['mm', minutes] ||
+            hours   <= 1             && ['h']           ||
+            hours   < thresholds.h   && ['hh', hours]   ||
+            days    <= 1             && ['d']           ||
+            days    < thresholds.d   && ['dd', days]    ||
+            months  <= 1             && ['M']           ||
+            months  < thresholds.M   && ['MM', months]  ||
+            years   <= 1             && ['y']           || ['yy', years];
 
     a[2] = withoutSuffix;
     a[3] = +posNegDuration > 0;
@@ -89591,10 +90399,17 @@ function getSetRelativeTimeThreshold (threshold, limit) {
         return thresholds[threshold];
     }
     thresholds[threshold] = limit;
+    if (threshold === 's') {
+        thresholds.ss = limit - 1;
+    }
     return true;
 }
 
 function humanize (withSuffix) {
+    if (!this.isValid()) {
+        return this.localeData().invalidDate();
+    }
+
     var locale = this.localeData();
     var output = relativeTime$1(this, !withSuffix, locale);
 
@@ -89615,6 +90430,10 @@ function toISOString$1() {
     // This is because there is no context-free conversion between hours and days
     // (think of clock changes)
     // and also not between days and months (28-31 days per month)
+    if (!this.isValid()) {
+        return this.localeData().invalidDate();
+    }
+
     var seconds = abs$1(this._milliseconds) / 1000;
     var days         = abs$1(this._days);
     var months       = abs$1(this._months);
@@ -89659,6 +90478,7 @@ function toISOString$1() {
 
 var proto$2 = Duration.prototype;
 
+proto$2.isValid        = isValid$1;
 proto$2.abs            = abs;
 proto$2.add            = add$1;
 proto$2.subtract       = subtract$1;
@@ -89714,7 +90534,7 @@ addParseToken('x', function (input, array, config) {
 // Side effect imports
 
 
-hooks.version = '2.17.1';
+hooks.version = '2.18.1';
 
 setHookCallback(createLocal);
 
@@ -89750,7 +90570,7 @@ return hooks;
 
 })));
 
-},{}],463:[function(require,module,exports){
+},{}],464:[function(require,module,exports){
 var crypto = require('crypto')
   , qs = require('querystring')
   ;
@@ -89888,7 +90708,7 @@ exports.rfc3986 = rfc3986
 exports.generateBase = generateBase
 
 
-},{"crypto":58,"querystring":130}],464:[function(require,module,exports){
+},{"crypto":58,"querystring":130}],465:[function(require,module,exports){
 'use strict';
 
 // lightweight Buffer shim for pbf browser build
@@ -90049,7 +90869,7 @@ function encodeString(str) {
     return bytes;
 }
 
-},{"ieee754":289}],465:[function(require,module,exports){
+},{"ieee754":290}],466:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -90475,7 +91295,7 @@ function writePackedFixed64(arr, pbf)  { for (var i = 0; i < arr.length; i++) pb
 function writePackedSFixed64(arr, pbf) { for (var i = 0; i < arr.length; i++) pbf.writeSFixed64(arr[i]); }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./buffer":464}],466:[function(require,module,exports){
+},{"./buffer":465}],467:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.7.1
 (function() {
@@ -90511,7 +91331,7 @@ function writePackedSFixed64(arr, pbf) { for (var i = 0; i < arr.length; i++) pb
 }).call(this);
 
 }).call(this,require('_process'))
-},{"_process":120}],467:[function(require,module,exports){
+},{"_process":120}],468:[function(require,module,exports){
 'use strict';
 
 module.exports = Point;
@@ -90644,7 +91464,7 @@ Point.convert = function (a) {
     return a;
 };
 
-},{}],468:[function(require,module,exports){
+},{}],469:[function(require,module,exports){
 'use strict';
 
 module.exports = partialSort;
@@ -90706,7 +91526,7 @@ function defaultCompare(a, b) {
     return a < b ? -1 : a > b ? 1 : 0;
 }
 
-},{}],469:[function(require,module,exports){
+},{}],470:[function(require,module,exports){
 // Copyright 2010-2012 Mikeal Rogers
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
@@ -90864,7 +91684,7 @@ Object.defineProperty(request, 'debug', {
   }
 })
 
-},{"./lib/cookies":471,"./lib/helpers":474,"./request":485,"extend":235}],470:[function(require,module,exports){
+},{"./lib/cookies":472,"./lib/helpers":475,"./request":486,"extend":236}],471:[function(require,module,exports){
 'use strict'
 
 var caseless = require('caseless')
@@ -91034,7 +91854,7 @@ Auth.prototype.onResponse = function (response) {
 
 exports.Auth = Auth
 
-},{"./helpers":474,"caseless":226,"uuid":526}],471:[function(require,module,exports){
+},{"./helpers":475,"caseless":226,"uuid":527}],472:[function(require,module,exports){
 'use strict'
 
 var tough = require('tough-cookie')
@@ -91075,7 +91895,7 @@ exports.jar = function(store) {
   return new RequestJar(store)
 }
 
-},{"tough-cookie":516}],472:[function(require,module,exports){
+},{"tough-cookie":517}],473:[function(require,module,exports){
 (function (process){
 'use strict'
 
@@ -91158,7 +91978,7 @@ function getProxyFromURI(uri) {
 module.exports = getProxyFromURI
 
 }).call(this,require('_process'))
-},{"_process":120}],473:[function(require,module,exports){
+},{"_process":120}],474:[function(require,module,exports){
 'use strict'
 
 var fs = require('fs')
@@ -91375,7 +92195,7 @@ Har.prototype.options = function (options) {
 
 exports.Har = Har
 
-},{"extend":235,"fs":46,"har-validator":282,"querystring":130}],474:[function(require,module,exports){
+},{"extend":236,"fs":46,"har-validator":283,"querystring":130}],475:[function(require,module,exports){
 (function (process){
 'use strict'
 
@@ -91445,7 +92265,7 @@ exports.version               = version
 exports.defer                 = defer
 
 }).call(this,require('_process'))
-},{"_process":120,"crypto":58,"json-stringify-safe":301,"safe-buffer":487}],475:[function(require,module,exports){
+},{"_process":120,"crypto":58,"json-stringify-safe":302,"safe-buffer":488}],476:[function(require,module,exports){
 'use strict'
 
 var uuid = require('uuid')
@@ -91560,7 +92380,7 @@ Multipart.prototype.onRequest = function (options) {
 
 exports.Multipart = Multipart
 
-},{"combined-stream":228,"isstream":291,"safe-buffer":487,"uuid":526}],476:[function(require,module,exports){
+},{"combined-stream":228,"isstream":292,"safe-buffer":488,"uuid":527}],477:[function(require,module,exports){
 'use strict'
 
 var url = require('url')
@@ -91710,7 +92530,7 @@ OAuth.prototype.onRequest = function (_oauth) {
 
 exports.OAuth = OAuth
 
-},{"caseless":226,"crypto":58,"oauth-sign":463,"qs":481,"safe-buffer":487,"url":159,"uuid":526}],477:[function(require,module,exports){
+},{"caseless":226,"crypto":58,"oauth-sign":464,"qs":482,"safe-buffer":488,"url":159,"uuid":527}],478:[function(require,module,exports){
 'use strict'
 
 var qs = require('qs')
@@ -91763,7 +92583,7 @@ Querystring.prototype.unescape = querystring.unescape
 
 exports.Querystring = Querystring
 
-},{"qs":481,"querystring":130}],478:[function(require,module,exports){
+},{"qs":482,"querystring":130}],479:[function(require,module,exports){
 'use strict'
 
 var url = require('url')
@@ -91922,7 +92742,7 @@ Redirect.prototype.onResponse = function (response) {
 
 exports.Redirect = Redirect
 
-},{"url":159}],479:[function(require,module,exports){
+},{"url":159}],480:[function(require,module,exports){
 'use strict'
 
 var url = require('url')
@@ -92100,7 +92920,7 @@ Tunnel.defaultProxyHeaderWhiteList = defaultProxyHeaderWhiteList
 Tunnel.defaultProxyHeaderExclusiveList = defaultProxyHeaderExclusiveList
 exports.Tunnel = Tunnel
 
-},{"tunnel-agent":523,"url":159}],480:[function(require,module,exports){
+},{"tunnel-agent":524,"url":159}],481:[function(require,module,exports){
 'use strict';
 
 var replace = String.prototype.replace;
@@ -92120,7 +92940,7 @@ module.exports = {
     RFC3986: 'RFC3986'
 };
 
-},{}],481:[function(require,module,exports){
+},{}],482:[function(require,module,exports){
 'use strict';
 
 var stringify = require('./stringify');
@@ -92133,7 +92953,7 @@ module.exports = {
     stringify: stringify
 };
 
-},{"./formats":480,"./parse":482,"./stringify":483}],482:[function(require,module,exports){
+},{"./formats":481,"./parse":483,"./stringify":484}],483:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -92302,7 +93122,7 @@ module.exports = function (str, opts) {
     return utils.compact(obj);
 };
 
-},{"./utils":484}],483:[function(require,module,exports){
+},{"./utils":485}],484:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -92511,7 +93331,7 @@ module.exports = function (object, opts) {
     return keys.join(delimiter);
 };
 
-},{"./formats":480,"./utils":484}],484:[function(require,module,exports){
+},{"./formats":481,"./utils":485}],485:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty;
@@ -92695,7 +93515,7 @@ exports.isBuffer = function (obj) {
     return !!(obj.constructor && obj.constructor.isBuffer && obj.constructor.isBuffer(obj));
 };
 
-},{}],485:[function(require,module,exports){
+},{}],486:[function(require,module,exports){
 (function (process){
 'use strict'
 
@@ -94264,7 +95084,7 @@ Request.prototype.toJSON = requestToJSON
 module.exports = Request
 
 }).call(this,require('_process'))
-},{"./lib/auth":470,"./lib/cookies":471,"./lib/getProxyFromURI":472,"./lib/har":473,"./lib/helpers":474,"./lib/multipart":475,"./lib/oauth":476,"./lib/querystring":477,"./lib/redirect":478,"./lib/tunnel":479,"_process":120,"aws-sign2":222,"aws4":223,"caseless":226,"extend":235,"forever-agent":238,"form-data":239,"hawk":283,"http":153,"http-signature":284,"https":94,"is-typedarray":290,"isstream":291,"mime-types":461,"performance-now":466,"safe-buffer":487,"stream":152,"stringstream":513,"url":159,"util":164,"zlib":45}],486:[function(require,module,exports){
+},{"./lib/auth":471,"./lib/cookies":472,"./lib/getProxyFromURI":473,"./lib/har":474,"./lib/helpers":475,"./lib/multipart":476,"./lib/oauth":477,"./lib/querystring":478,"./lib/redirect":479,"./lib/tunnel":480,"_process":120,"aws-sign2":222,"aws4":223,"caseless":226,"extend":236,"forever-agent":239,"form-data":240,"hawk":284,"http":153,"http-signature":285,"https":94,"is-typedarray":291,"isstream":292,"mime-types":462,"performance-now":467,"safe-buffer":488,"stream":152,"stringstream":514,"url":159,"util":164,"zlib":45}],487:[function(require,module,exports){
 // Copyright 2014 Simon Lydell
 // X11 (“MIT”) Licensed. (See LICENSE.)
 
@@ -94313,10 +95133,10 @@ void (function(root, factory) {
 
 }));
 
-},{}],487:[function(require,module,exports){
+},{}],488:[function(require,module,exports){
 module.exports = require('buffer')
 
-},{"buffer":49}],488:[function(require,module,exports){
+},{"buffer":49}],489:[function(require,module,exports){
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
@@ -94571,7 +95391,7 @@ Shelf.prototype.resize = function(w) {
 return ShelfPack;
 
 }));
-},{}],489:[function(require,module,exports){
+},{}],490:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -94743,7 +95563,7 @@ module.exports = {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":49}],490:[function(require,module,exports){
+},{"buffer":49}],491:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2016 Joyent, Inc.
 
@@ -95124,7 +95944,7 @@ Certificate._oldVersionDetect = function (obj) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./algs":489,"./errors":493,"./fingerprint":494,"./formats/openssh-cert":496,"./formats/x509":504,"./formats/x509-pem":503,"./identity":505,"./key":507,"./private-key":508,"./signature":509,"./utils":511,"assert-plus":512,"buffer":49,"crypto":58,"util":164}],491:[function(require,module,exports){
+},{"./algs":490,"./errors":494,"./fingerprint":495,"./formats/openssh-cert":497,"./formats/x509":505,"./formats/x509-pem":504,"./identity":506,"./key":508,"./private-key":509,"./signature":510,"./utils":512,"assert-plus":513,"buffer":49,"crypto":58,"util":164}],492:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -95439,7 +96259,7 @@ ECPrivate.prototype.deriveSharedSecret = function (pubKey) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./algs":489,"./key":507,"./private-key":508,"./utils":511,"assert-plus":512,"buffer":49,"crypto":58,"ecc-jsbn":232,"ecc-jsbn/lib/ec":233,"jodid25519":292,"jsbn":298}],492:[function(require,module,exports){
+},{"./algs":490,"./key":508,"./private-key":509,"./utils":512,"assert-plus":513,"buffer":49,"crypto":58,"ecc-jsbn":233,"ecc-jsbn/lib/ec":234,"jodid25519":293,"jsbn":299}],493:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -95539,7 +96359,7 @@ Signer.prototype.sign = function () {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./signature":509,"assert-plus":512,"buffer":49,"stream":152,"tweetnacl":524,"util":164}],493:[function(require,module,exports){
+},{"./signature":510,"assert-plus":513,"buffer":49,"stream":152,"tweetnacl":525,"util":164}],494:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var assert = require('assert-plus');
@@ -95625,7 +96445,7 @@ module.exports = {
 	CertificateParseError: CertificateParseError
 };
 
-},{"assert-plus":512,"util":164}],494:[function(require,module,exports){
+},{"assert-plus":513,"util":164}],495:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -95790,7 +96610,7 @@ Fingerprint._oldVersionDetect = function (obj) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./algs":489,"./certificate":490,"./errors":493,"./key":507,"./utils":511,"assert-plus":512,"buffer":49,"crypto":58}],495:[function(require,module,exports){
+},{"./algs":490,"./certificate":491,"./errors":494,"./key":508,"./utils":512,"assert-plus":513,"buffer":49,"crypto":58}],496:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -95867,7 +96687,7 @@ function write(key, options) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../key":507,"../private-key":508,"../utils":511,"./pem":497,"./rfc4253":500,"./ssh":502,"assert-plus":512,"buffer":49}],496:[function(require,module,exports){
+},{"../key":508,"../private-key":509,"../utils":512,"./pem":498,"./rfc4253":501,"./ssh":503,"assert-plus":513,"buffer":49}],497:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2016 Joyent, Inc.
 
@@ -96160,7 +96980,7 @@ function getCertType(key) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../algs":489,"../certificate":490,"../identity":505,"../key":507,"../private-key":508,"../signature":509,"../ssh-buffer":510,"../utils":511,"./rfc4253":500,"assert-plus":512,"buffer":49,"crypto":58}],497:[function(require,module,exports){
+},{"../algs":490,"../certificate":491,"../identity":506,"../key":508,"../private-key":509,"../signature":510,"../ssh-buffer":511,"../utils":512,"./rfc4253":501,"assert-plus":513,"buffer":49,"crypto":58}],498:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -96350,7 +97170,7 @@ function write(key, options, type) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../algs":489,"../errors":493,"../key":507,"../private-key":508,"../utils":511,"./pkcs1":498,"./pkcs8":499,"./rfc4253":500,"./ssh-private":501,"asn1":220,"assert-plus":512,"buffer":49,"crypto":58}],498:[function(require,module,exports){
+},{"../algs":490,"../errors":494,"../key":508,"../private-key":509,"../utils":512,"./pkcs1":499,"./pkcs8":500,"./rfc4253":501,"./ssh-private":502,"asn1":220,"assert-plus":513,"buffer":49,"crypto":58}],499:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -96674,7 +97494,7 @@ function writePkcs1ECDSAPrivate(der, key) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../algs":489,"../key":507,"../private-key":508,"../utils":511,"./pem":497,"./pkcs8":499,"asn1":220,"assert-plus":512,"buffer":49}],499:[function(require,module,exports){
+},{"../algs":490,"../key":508,"../private-key":509,"../utils":512,"./pem":498,"./pkcs8":500,"asn1":220,"assert-plus":513,"buffer":49}],500:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -97183,7 +98003,7 @@ function writePkcs8ECDSAPrivate(key, der) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../algs":489,"../key":507,"../private-key":508,"../utils":511,"./pem":497,"asn1":220,"assert-plus":512,"buffer":49}],500:[function(require,module,exports){
+},{"../algs":490,"../key":508,"../private-key":509,"../utils":512,"./pem":498,"asn1":220,"assert-plus":513,"buffer":49}],501:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -97333,7 +98153,7 @@ function write(key, options) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../algs":489,"../key":507,"../private-key":508,"../ssh-buffer":510,"../utils":511,"assert-plus":512,"buffer":49}],501:[function(require,module,exports){
+},{"../algs":490,"../key":508,"../private-key":509,"../ssh-buffer":511,"../utils":512,"assert-plus":513,"buffer":49}],502:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -97598,7 +98418,7 @@ function write(key, options) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../algs":489,"../errors":493,"../key":507,"../private-key":508,"../ssh-buffer":510,"../utils":511,"./pem":497,"./rfc4253":500,"asn1":220,"assert-plus":512,"bcrypt-pbkdf":225,"buffer":49,"crypto":58}],502:[function(require,module,exports){
+},{"../algs":490,"../errors":494,"../key":508,"../private-key":509,"../ssh-buffer":511,"../utils":512,"./pem":498,"./rfc4253":501,"asn1":220,"assert-plus":513,"bcrypt-pbkdf":225,"buffer":49,"crypto":58}],503:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -97716,7 +98536,7 @@ function write(key, options) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../key":507,"../private-key":508,"../utils":511,"./rfc4253":500,"./ssh-private":501,"assert-plus":512,"buffer":49}],503:[function(require,module,exports){
+},{"../key":508,"../private-key":509,"../utils":512,"./rfc4253":501,"./ssh-private":502,"assert-plus":513,"buffer":49}],504:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2016 Joyent, Inc.
 
@@ -97797,7 +98617,7 @@ function write(cert, options) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../algs":489,"../certificate":490,"../identity":505,"../key":507,"../private-key":508,"../signature":509,"../utils":511,"./pem":497,"./x509":504,"asn1":220,"assert-plus":512,"buffer":49}],504:[function(require,module,exports){
+},{"../algs":490,"../certificate":491,"../identity":506,"../key":508,"../private-key":509,"../signature":510,"../utils":512,"./pem":498,"./x509":505,"asn1":220,"assert-plus":513,"buffer":49}],505:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2016 Joyent, Inc.
 
@@ -98500,7 +99320,7 @@ function writeBitField(setBits, bitIndex) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"../algs":489,"../certificate":490,"../identity":505,"../key":507,"../private-key":508,"../signature":509,"../utils":511,"./pem":497,"./pkcs8":499,"asn1":220,"assert-plus":512,"buffer":49}],505:[function(require,module,exports){
+},{"../algs":490,"../certificate":491,"../identity":506,"../key":508,"../private-key":509,"../signature":510,"../utils":512,"./pem":498,"./pkcs8":500,"asn1":220,"assert-plus":513,"buffer":49}],506:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2016 Joyent, Inc.
 
@@ -98781,7 +99601,7 @@ Identity._oldVersionDetect = function (obj) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./algs":489,"./errors":493,"./fingerprint":494,"./signature":509,"./utils":511,"asn1":220,"assert-plus":512,"buffer":49,"crypto":58,"util":164}],506:[function(require,module,exports){
+},{"./algs":490,"./errors":494,"./fingerprint":495,"./signature":510,"./utils":512,"asn1":220,"assert-plus":513,"buffer":49,"crypto":58,"util":164}],507:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var Key = require('./key');
@@ -98821,7 +99641,7 @@ module.exports = {
 	CertificateParseError: errs.CertificateParseError
 };
 
-},{"./certificate":490,"./errors":493,"./fingerprint":494,"./identity":505,"./key":507,"./private-key":508,"./signature":509}],507:[function(require,module,exports){
+},{"./certificate":491,"./errors":494,"./fingerprint":495,"./identity":506,"./key":508,"./private-key":509,"./signature":510}],508:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -99095,7 +99915,7 @@ Key._oldVersionDetect = function (obj) {
 };
 
 }).call(this,{"isBuffer":require("../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js")})
-},{"../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"./algs":489,"./dhe":491,"./ed-compat":492,"./errors":493,"./fingerprint":494,"./formats/auto":495,"./formats/pem":497,"./formats/pkcs1":498,"./formats/pkcs8":499,"./formats/rfc4253":500,"./formats/ssh":502,"./formats/ssh-private":501,"./private-key":508,"./signature":509,"./utils":511,"assert-plus":512,"crypto":58}],508:[function(require,module,exports){
+},{"../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"./algs":490,"./dhe":492,"./ed-compat":493,"./errors":494,"./fingerprint":495,"./formats/auto":496,"./formats/pem":498,"./formats/pkcs1":499,"./formats/pkcs8":500,"./formats/rfc4253":501,"./formats/ssh":503,"./formats/ssh-private":502,"./private-key":509,"./signature":510,"./utils":512,"assert-plus":513,"crypto":58}],509:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -99330,7 +100150,7 @@ PrivateKey._oldVersionDetect = function (obj) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./algs":489,"./ed-compat":492,"./errors":493,"./fingerprint":494,"./formats/auto":495,"./formats/pem":497,"./formats/pkcs1":498,"./formats/pkcs8":499,"./formats/rfc4253":500,"./formats/ssh-private":501,"./key":507,"./signature":509,"./utils":511,"assert-plus":512,"buffer":49,"crypto":58,"jodid25519":292,"util":164}],509:[function(require,module,exports){
+},{"./algs":490,"./ed-compat":493,"./errors":494,"./fingerprint":495,"./formats/auto":496,"./formats/pem":498,"./formats/pkcs1":499,"./formats/pkcs8":500,"./formats/rfc4253":501,"./formats/ssh-private":502,"./key":508,"./signature":510,"./utils":512,"assert-plus":513,"buffer":49,"crypto":58,"jodid25519":293,"util":164}],510:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -99579,7 +100399,7 @@ Signature._oldVersionDetect = function (obj) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./algs":489,"./errors":493,"./ssh-buffer":510,"./utils":511,"asn1":220,"assert-plus":512,"buffer":49,"crypto":58}],510:[function(require,module,exports){
+},{"./algs":490,"./errors":494,"./ssh-buffer":511,"./utils":512,"asn1":220,"assert-plus":513,"buffer":49,"crypto":58}],511:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -99731,7 +100551,7 @@ SSHBuffer.prototype.write = function (buf) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"assert-plus":512,"buffer":49}],511:[function(require,module,exports){
+},{"assert-plus":513,"buffer":49}],512:[function(require,module,exports){
 (function (Buffer){
 // Copyright 2015 Joyent, Inc.
 
@@ -100023,9 +100843,9 @@ function opensshCipherInfo(cipher) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./private-key":508,"assert-plus":512,"buffer":49,"crypto":58,"jsbn":298}],512:[function(require,module,exports){
-arguments[4][306][0].apply(exports,arguments)
-},{"../../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"_process":120,"assert":15,"dup":306,"stream":152,"util":164}],513:[function(require,module,exports){
+},{"./private-key":509,"assert-plus":513,"buffer":49,"crypto":58,"jsbn":299}],513:[function(require,module,exports){
+arguments[4][307][0].apply(exports,arguments)
+},{"../../../../../../../.nvm/v6.5.0/lib/node_modules/watchify/node_modules/is-buffer/index.js":98,"_process":120,"assert":15,"dup":307,"stream":152,"util":164}],514:[function(require,module,exports){
 (function (Buffer){
 var util = require('util')
 var Stream = require('stream')
@@ -100131,7 +100951,7 @@ function alignedWrite(buffer) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":49,"stream":152,"string_decoder":157,"util":164}],514:[function(require,module,exports){
+},{"buffer":49,"stream":152,"string_decoder":157,"util":164}],515:[function(require,module,exports){
 'use strict';
 
 var kdbush = require('kdbush');
@@ -100465,7 +101285,7 @@ function getY(p) {
     return p.y;
 }
 
-},{"kdbush":308}],515:[function(require,module,exports){
+},{"kdbush":309}],516:[function(require,module,exports){
 'use strict';
 
 module.exports = TinyQueue;
@@ -100477,7 +101297,7 @@ function TinyQueue(data, compare) {
     this.length = this.data.length;
     this.compare = compare || defaultCompare;
 
-    if (data) {
+    if (this.length > 0) {
         for (var i = (this.length >> 1); i >= 0; i--) this._down(i);
     }
 }
@@ -100495,11 +101315,14 @@ TinyQueue.prototype = {
     },
 
     pop: function () {
+        if (this.length === 0) return undefined;
         var top = this.data[0];
-        this.data[0] = this.data[this.length - 1];
         this.length--;
+        if (this.length > 0) {
+            this.data[0] = this.data[this.length];
+            this._down(0);
+        }
         this.data.pop();
-        this._down(0);
         return top;
     },
 
@@ -100549,7 +101372,7 @@ TinyQueue.prototype = {
     }
 };
 
-},{}],516:[function(require,module,exports){
+},{}],517:[function(require,module,exports){
 /*!
  * Copyright (c) 2015, Salesforce.com, Inc.
  * All rights reserved.
@@ -101887,7 +102710,7 @@ module.exports = {
   canonicalDomain: canonicalDomain
 };
 
-},{"../package.json":522,"./memstore":517,"./pathMatch":518,"./permuteDomain":519,"./pubsuffix":520,"./store":521,"net":46,"punycode":127,"url":159}],517:[function(require,module,exports){
+},{"../package.json":523,"./memstore":518,"./pathMatch":519,"./permuteDomain":520,"./pubsuffix":521,"./store":522,"net":46,"punycode":127,"url":159}],518:[function(require,module,exports){
 /*!
  * Copyright (c) 2015, Salesforce.com, Inc.
  * All rights reserved.
@@ -102059,7 +102882,7 @@ MemoryCookieStore.prototype.getAllCookies = function(cb) {
   cb(null, cookies);
 };
 
-},{"./pathMatch":518,"./permuteDomain":519,"./store":521,"util":164}],518:[function(require,module,exports){
+},{"./pathMatch":519,"./permuteDomain":520,"./store":522,"util":164}],519:[function(require,module,exports){
 /*!
  * Copyright (c) 2015, Salesforce.com, Inc.
  * All rights reserved.
@@ -102122,7 +102945,7 @@ function pathMatch (reqPath, cookiePath) {
 
 exports.pathMatch = pathMatch;
 
-},{}],519:[function(require,module,exports){
+},{}],520:[function(require,module,exports){
 /*!
  * Copyright (c) 2015, Salesforce.com, Inc.
  * All rights reserved.
@@ -102180,7 +103003,7 @@ function permuteDomain (domain) {
 
 exports.permuteDomain = permuteDomain;
 
-},{"./pubsuffix":520}],520:[function(require,module,exports){
+},{"./pubsuffix":521}],521:[function(require,module,exports){
 /****************************************************
  * AUTOMATICALLY GENERATED by generate-pubsuffix.js *
  *                  DO NOT EDIT!                    *
@@ -102280,7 +103103,7 @@ var index = module.exports.index = Object.freeze(
 
 // END of automatically generated file
 
-},{"punycode":127}],521:[function(require,module,exports){
+},{"punycode":127}],522:[function(require,module,exports){
 /*!
  * Copyright (c) 2015, Salesforce.com, Inc.
  * All rights reserved.
@@ -102353,7 +103176,7 @@ Store.prototype.getAllCookies = function(cb) {
   throw new Error('getAllCookies is not implemented (therefore jar cannot be serialized)');
 };
 
-},{}],522:[function(require,module,exports){
+},{}],523:[function(require,module,exports){
 module.exports={
   "_args": [
     [
@@ -102366,7 +103189,7 @@ module.exports={
         "spec": ">=2.3.0 <2.4.0",
         "type": "range"
       },
-      "/home/nronnei/gis/node/pug-map/node_modules/request"
+      "/home/nronnei/gis/node/pug-map-debug/node_modules/request"
     ]
   ],
   "_from": "tough-cookie@>=2.3.0 <2.4.0",
@@ -102395,13 +103218,14 @@ module.exports={
     "type": "range"
   },
   "_requiredBy": [
+    "/localtunnel/request",
     "/request"
   ],
   "_resolved": "https://registry.npmjs.org/tough-cookie/-/tough-cookie-2.3.2.tgz",
   "_shasum": "f081f76e4c85720e6c37a5faced737150d84072a",
   "_shrinkwrap": null,
   "_spec": "tough-cookie@~2.3.0",
-  "_where": "/home/nronnei/gis/node/pug-map/node_modules/request",
+  "_where": "/home/nronnei/gis/node/pug-map-debug/node_modules/request",
   "author": {
     "name": "Jeremy Stashewsky",
     "email": "jstashewsky@salesforce.com"
@@ -102491,7 +103315,7 @@ module.exports={
   "version": "2.3.2"
 }
 
-},{}],523:[function(require,module,exports){
+},{}],524:[function(require,module,exports){
 (function (process){
 'use strict'
 
@@ -102739,7 +103563,7 @@ if (process.env.NODE_DEBUG && /\btunnel\b/.test(process.env.NODE_DEBUG)) {
 exports.debug = debug // for test
 
 }).call(this,require('_process'))
-},{"_process":120,"assert":15,"events":86,"http":153,"https":94,"net":46,"safe-buffer":487,"tls":46,"util":164}],524:[function(require,module,exports){
+},{"_process":120,"assert":15,"events":86,"http":153,"https":94,"net":46,"safe-buffer":488,"tls":46,"util":164}],525:[function(require,module,exports){
 (function(nacl) {
 'use strict';
 
@@ -105129,7 +105953,7 @@ nacl.setPRNG = function(fn) {
 
 })(typeof module !== 'undefined' && module.exports ? module.exports : (self.nacl = self.nacl || {}));
 
-},{"crypto":19}],525:[function(require,module,exports){
+},{"crypto":19}],526:[function(require,module,exports){
 /*
  * Copyright (C) 2008 Apple Inc. All Rights Reserved.
  *
@@ -105236,7 +106060,7 @@ UnitBezier.prototype.solve = function(x, epsilon) {
     return this.sampleCurveY(this.solveCurveX(x, epsilon));
 };
 
-},{}],526:[function(require,module,exports){
+},{}],527:[function(require,module,exports){
 var v1 = require('./v1');
 var v4 = require('./v4');
 
@@ -105246,7 +106070,7 @@ uuid.v4 = v4;
 
 module.exports = uuid;
 
-},{"./v1":529,"./v4":530}],527:[function(require,module,exports){
+},{"./v1":530,"./v4":531}],528:[function(require,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -105271,7 +106095,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],528:[function(require,module,exports){
+},{}],529:[function(require,module,exports){
 (function (global){
 // Unique ID creation requires a high quality random # generator.  In the
 // browser this is a little complicated due to unknown quality of Math.random()
@@ -105308,7 +106132,7 @@ if (!rng) {
 module.exports = rng;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],529:[function(require,module,exports){
+},{}],530:[function(require,module,exports){
 // Unique ID creation requires a high quality random # generator.  We feature
 // detect to determine the best RNG source, normalizing to a function that
 // returns 128-bits of randomness, since that's what's usually required
@@ -105413,7 +106237,7 @@ function v1(options, buf, offset) {
 
 module.exports = v1;
 
-},{"./lib/bytesToUuid":527,"./lib/rng":528}],530:[function(require,module,exports){
+},{"./lib/bytesToUuid":528,"./lib/rng":529}],531:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -105444,12 +106268,12 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":527,"./lib/rng":528}],531:[function(require,module,exports){
+},{"./lib/bytesToUuid":528,"./lib/rng":529}],532:[function(require,module,exports){
 module.exports.VectorTile = require('./lib/vectortile.js');
 module.exports.VectorTileFeature = require('./lib/vectortilefeature.js');
 module.exports.VectorTileLayer = require('./lib/vectortilelayer.js');
 
-},{"./lib/vectortile.js":532,"./lib/vectortilefeature.js":533,"./lib/vectortilelayer.js":534}],532:[function(require,module,exports){
+},{"./lib/vectortile.js":533,"./lib/vectortilefeature.js":534,"./lib/vectortilelayer.js":535}],533:[function(require,module,exports){
 'use strict';
 
 var VectorTileLayer = require('./vectortilelayer');
@@ -105468,7 +106292,7 @@ function readTile(tag, layers, pbf) {
 }
 
 
-},{"./vectortilelayer":534}],533:[function(require,module,exports){
+},{"./vectortilelayer":535}],534:[function(require,module,exports){
 'use strict';
 
 var Point = require('point-geometry');
@@ -105703,7 +106527,7 @@ function signedArea(ring) {
     return sum;
 }
 
-},{"point-geometry":467}],534:[function(require,module,exports){
+},{"point-geometry":468}],535:[function(require,module,exports){
 'use strict';
 
 var VectorTileFeature = require('./vectortilefeature.js');
@@ -105766,7 +106590,7 @@ VectorTileLayer.prototype.feature = function(i) {
     return new VectorTileFeature(this._pbf, end, this.extent, this._keys, this._values);
 };
 
-},{"./vectortilefeature.js":533}],535:[function(require,module,exports){
+},{"./vectortilefeature.js":534}],536:[function(require,module,exports){
 /*
  * verror.js: richer JavaScript errors
  */
@@ -105925,7 +106749,7 @@ WError.prototype.cause = function we_cause(c)
 	return (this.we_cause);
 };
 
-},{"assert":15,"extsprintf":236,"util":164}],536:[function(require,module,exports){
+},{"assert":15,"extsprintf":237,"util":164}],537:[function(require,module,exports){
 var Pbf = require('pbf')
 var vtpb = require('./vector-tile-pb')
 var GeoJSONWrapper = require('./lib/geojson_wrapper')
@@ -106081,7 +106905,7 @@ function wrapValue (value) {
   return result
 }
 
-},{"./lib/geojson_wrapper":537,"./vector-tile-pb":538,"pbf":465}],537:[function(require,module,exports){
+},{"./lib/geojson_wrapper":538,"./vector-tile-pb":539,"pbf":466}],538:[function(require,module,exports){
 'use strict'
 
 var Point = require('point-geometry')
@@ -106149,7 +106973,7 @@ FeatureWrapper.prototype.bbox = function () {
 
 FeatureWrapper.prototype.toGeoJSON = VectorTileFeature.prototype.toGeoJSON
 
-},{"point-geometry":467,"vector-tile":531}],538:[function(require,module,exports){
+},{"point-geometry":468,"vector-tile":532}],539:[function(require,module,exports){
 'use strict';
 
 // tile ========================================
@@ -106255,7 +107079,7 @@ function writeLayer(layer, pbf) {
     if (layer.extent !== undefined) pbf.writeVarintField(5, layer.extent);
 }
 
-},{}],539:[function(require,module,exports){
+},{}],540:[function(require,module,exports){
 var bundleFn = arguments[3];
 var sources = arguments[4];
 var cache = arguments[5];
@@ -106338,12 +107162,12 @@ module.exports = function (fn, options) {
     return worker;
 };
 
-},{}],540:[function(require,module,exports){
+},{}],541:[function(require,module,exports){
 module.exports.RADIUS = 6378137;
 module.exports.FLATTENING = 1/298.257223563;
 module.exports.POLAR_RADIUS = 6356752.3142;
 
-},{}],541:[function(require,module,exports){
+},{}],542:[function(require,module,exports){
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -106433,7 +107257,7 @@ exports.getMercCoords = getMercCoords;
 Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
-},{}],542:[function(require,module,exports){
+},{}],543:[function(require,module,exports){
 // Copyright (c) 2017 Nicholas Ronnei
 //
 // MIT License
@@ -106469,6 +107293,7 @@ const moment = require('moment');
 const buffer = require("@turf/buffer");
 const envelope = require("@turf/envelope");
 const getExtent = require("@turf/bbox");
+const dpf = require("dialog-polyfill");
 
 
 mgl.accessToken = "pk.eyJ1IjoibnJvbm5laSIsImEiOiJ2emt3WUY4In0.cRYAp7rDFZvRUBkExD5kqQ"
@@ -106484,6 +107309,14 @@ const mapContainer = document.getElementById("map");
 const panelContainer = document.getElementById("container-panel");
 const sidebarToggleBtn = document.getElementById("sidebar-toggle-btn");
 const sidebarToggles = Array.from(document.getElementsByClassName("sidebar-toggle"));
+
+// Geolocation Error handling
+const snackbarContainer = document.getElementById("geo-snack");
+const modal = document.getElementById("geo-error-modal");
+dpf.registerDialog(modal);
+const modalTitle = document.getElementById("geo-error-title");
+const modalMessage = document.getElementById("geo-error-message");
+const modalActionButton = document.getElementById("modal-action");
 
 // Panel Anchors
 const welcomePanelLinks = Array.from(document.getElementsByClassName("panel-welcome-link"));
@@ -106607,6 +107440,12 @@ if (mgl.supported()) {
   }
 
 
+  // Enable modal action button for geo error handling
+modalActionButton.addEventListener("click", () => {
+  modal.close();
+})
+
+
   // Initialize our map object
   const map = new mgl.Map({
     container: "map",
@@ -106645,8 +107484,11 @@ if (mgl.supported()) {
     geolocator.on("geolocate", (data) => {
       geolocateSuccess(data);
     });
-    // On geolocation success
-    // geolocator.on("geolocate", geolocateSuccess(data));
+
+    // On geolocation failure
+    geolocator.on("error", (err) => {
+      geolocateFailure(err);
+    });
 
     // Get new GeoJSON on value change
     bssDropDown.addEventListener("change", () => {
@@ -107342,8 +108184,78 @@ if (mgl.supported()) {
   }
 
 
+  const snAction = () => {
+  modal.showModal();
+  }
+
+
+  const geolocateFailure = (posErrorObj) => {
+
+
+    // Snackbar content
+    let snackData = {
+      message: 'Your location is unavailable.',
+      timeout: 5000,
+      actionHandler: snAction,
+      actionText: 'More'
+    }
+
+    // Case switch for custom error handling
+    switch (posErrorObj.code) {
+
+      // User denied request
+      case 1:
+        modalTitle.innerHTML = "Access Denied!"
+        modalMessage.innerHTML =
+          "<p>" +
+            "You've decided not to share your location. That's perfectly fine!" +
+          "</p>" +
+          "<p>" +
+            "To plot yourself on the map, however, you'll need to change that setting. Here is how to do so in " +
+            "<a href='https://support.google.com/chrome/answer/142065?hl=en', target='_blank'>Chrome,</a> " +
+            "<a href='https://www.mozilla.org/en-US/firefox/geolocation/', target='_blank'>Firefox,</a> and " +
+            "<a href='https://support.apple.com/en-us/HT204690', target='_blank'>Safari.</a>" +
+          "</p>";
+        break;
+
+      // Unknown internal error
+      case 2:
+      modalTitle.innerHTML = "Barnacles!"
+      modalMessage.innerHTML =
+        "<p>" +
+          "Your sensors are on the fritz! There was some internal error while finding your position." +
+        "</p>" +
+        "<p>" +
+          "If you are on a mobile device, this is probably because your location services are turned off." +
+        "</p>"
+        ;
+        break;
+
+      // Request timed out
+      case 3:
+      modalTitle.innerHTML = "Rats!"
+      modalMessage.innerHTML =
+        "<p>" +
+          "Your location request timed out." +
+        "</p>";
+        break;
+
+      // Generic error fallback, just in case
+      default:
+      modalTitle.innerHTML = "Shucks!"
+      modalMessage.innerHTML = "<p>" +
+        "We're having some trouble locating you. We're not sure what went wrong. Consider refreshing the page and trying again." +
+        "</p>";
+
+    }
+
+    snackbarContainer.MaterialSnackbar.showSnackbar(snackData);
+
+  }
+
+
 } else {
   alert("Your browser doesn't support Mapbx GL JS. This app won't work for you. Please download a modern browser like Chrome, Firefox, or Edge.")
 }
 
-},{"@turf/bbox":169,"@turf/buffer":170,"@turf/envelope":171,"gbfs2gjfc":240,"mapbox-gl":354,"moment":462}]},{},[542]);
+},{"@turf/bbox":169,"@turf/buffer":170,"@turf/envelope":171,"dialog-polyfill":231,"gbfs2gjfc":241,"mapbox-gl":355,"moment":463}]},{},[543]);
