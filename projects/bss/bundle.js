@@ -43391,10 +43391,13 @@ const setGBFS = (url, callback, failure) => {
 
       // Set feed urls in meta
       for (feed of data.data[meta.feedLanaguage].feeds) {
-        if (feed.url.substring(0, 4) == 'http:') {
+
+        if (feed.url.substring(0, 5) == 'http:') {
           feed.url = feed.url.replace('http', 'https');
         }
+
         meta[feed.name] = feed.url;
+
       }
 
       callback();
@@ -43602,6 +43605,7 @@ const buildFeatureCollection = (callback) => {
 
 // Export all the functions
 module.exports = {
+  meta: meta,
   setGBFS: setGBFS,
   Feature: Feature,
   FeatureCollection: FeatureCollection,
