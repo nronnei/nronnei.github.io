@@ -107496,80 +107496,9 @@ modalActionButton.addEventListener("click", () => {
 
     // Get new GeoJSON on value change
     bssDropDown.addEventListener("change", () => {
-
-      // Hide old System Information
-      currentStationIndex = undefined;
-      clearSystemInfo();
-      clearStationInfo();
-
-      // Clear map listeners and data refresh interval for old data
-      window.clearInterval();
-      map.off("mousemove", (e) => {
-        mmChangeCursor(e);
-      });
-      map.off("mousedown", (e) => {
-        mdStationPanel(e);
-      });
-
-      // After the data are loaded, move the map.
-      // TRY to get GBFS Auto-discovery, on failure, reset panel.
-      setNewBSS(bssDropDown.value, ()=> {
-
-        // Add map listeners and data refresh interval for new data
-        // Auto-refresh station status at specified interval
-        window.setInterval(() => {
-          g2g.updateStationStatus(bss, () => {
-
-            // Set update time
-            lastUpdate = new Date();
-
-            // Map the data
-            map.getSource("bikeshare").setData(bss);
-
-            // If there is a station selected, update the panel info
-            if (currentStationIndex) {
-              console.log("Station status updated.");
-              setCurrentStation(currentStationIndex, (selectedStation) => {
-                setStationInfo(selectedStation, false);
-              });
-            }
-          });
-        }, ttlInterval);
-
-        // Change cursor on mouseover
-        map.on("mousemove", (e) => {
-          mmChangeCursor(e);
-        });
-
-        // Update panel on mousedown
-        map.on("mousedown", (e) => {
-          mdStationPanel(e);
-        });
-
-        // Get the bounds of the bss, fit the map to (bounds + 1 mile buffer)
-        bssBounds = getBSSBounds(bss, 1);
-        map.fitBounds(bssBounds, {}, {newBounds: true});
-
-        map.on("moveend", (e) => {
-          if (e.newBounds) {
-            // Update the panel HTML
-            setSystemInfo(bss, () => {
-              // Hide loading spinner, show button after the data are loaded
-              spinnerOff();
-
-              // Reveal welcomeTabContent
-              for (let el of welcomePanelContent) {
-                el.classList.remove("hidden");
-              }
-              // Show Station Instructions
-              stationInstructions.classList.remove("hidden");
-            });
-          }
-        });
-        // END setNewBSS callback
-      });
-      // END bssDropDown("change") listener callback
+      setNewSystem(bssDropDown.value);
     });
+
     // END map("load") callback
   });
 
@@ -107632,7 +107561,7 @@ modalActionButton.addEventListener("click", () => {
   }
 
 
-  const setNewBSS = (url, callback) => {
+  const getNewSystem = (url, callback) => {
     // Note that this function depends on `bss` and `map` already being declared
 
     // Show loading spinner
@@ -107770,6 +107699,82 @@ modalActionButton.addEventListener("click", () => {
       badGBFS();
     });
 
+  }
+
+
+  // Set a new bikeshare system
+  const setNewSystem = (autoURL) => {
+    // Hide old System Information
+    currentStationIndex = undefined;
+    clearSystemInfo();
+    clearStationInfo();
+
+    // Clear map listeners and data refresh interval for old data
+    window.clearInterval();
+    map.off("mousemove", (e) => {
+      mmChangeCursor(e);
+    });
+    map.off("mousedown", (e) => {
+      mdStationPanel(e);
+    });
+
+    // After the data are loaded, move the map.
+    // TRY to get GBFS Auto-discovery, on failure, reset panel.
+    getNewSystem(autoURL, ()=> {
+
+      // Add map listeners and data refresh interval for new data
+      // Auto-refresh station status at specified interval
+      window.setInterval(() => {
+        g2g.updateStationStatus(bss, () => {
+
+          // Set update time
+          lastUpdate = new Date();
+
+          // Map the data
+          map.getSource("bikeshare").setData(bss);
+
+          // If there is a station selected, update the panel info
+          if (currentStationIndex) {
+            console.log("Station status updated.");
+            setCurrentStation(currentStationIndex, (selectedStation) => {
+              setStationInfo(selectedStation, false);
+            });
+          }
+        });
+      }, ttlInterval);
+
+      // Change cursor on mouseover
+      map.on("mousemove", (e) => {
+        mmChangeCursor(e);
+      });
+
+      // Update panel on mousedown
+      map.on("mousedown", (e) => {
+        mdStationPanel(e);
+      });
+
+      // Get the bounds of the bss, fit the map to (bounds + 1 mile buffer)
+      bssBounds = getBSSBounds(bss, 1);
+      map.fitBounds(bssBounds, {}, {newBounds: true});
+
+      map.on("moveend", (e) => {
+        if (e.newBounds) {
+          // Update the panel HTML
+          setSystemInfo(bss, () => {
+            // Hide loading spinner, show button after the data are loaded
+            spinnerOff();
+
+            // Reveal welcomeTabContent
+            for (let el of welcomePanelContent) {
+              el.classList.remove("hidden");
+            }
+            // Show Station Instructions
+            stationInstructions.classList.remove("hidden");
+          });
+        }
+      });
+      // END getNewSystem callback
+    });
   }
 
 
@@ -108218,7 +108223,10 @@ modalActionButton.addEventListener("click", () => {
             "To plot yourself on the map, however, you'll need to change that setting. Here is how to do so in " +
             "<a href='https://support.google.com/chrome/answer/142065?hl=en', target='_blank'>Chrome,</a> " +
             "<a href='https://www.mozilla.org/en-US/firefox/geolocation/', target='_blank'>Firefox,</a> and " +
-            "<a href='https://support.apple.com/en-us/HT204690', target='_blank'>Safari.</a>" +
+            "<a href='https://support.apple.com/en-us/HT204690', target='_blank'>Safari.</a> " +
+          "</p>" +
+          "<p>" +
+            "On mobile, make sure your location services are turned on and that your browser has access to them." +
           "</p>";
         break;
 
@@ -108230,7 +108238,7 @@ modalActionButton.addEventListener("click", () => {
           "Your sensors are on the fritz! There was some internal error while finding your position." +
         "</p>" +
         "<p>" +
-          "If you are on a mobile device, this is probably because your location services are turned off." +
+          "If you are on a mobile device, this is may be because your location services are turned off." +
         "</p>"
         ;
         break;

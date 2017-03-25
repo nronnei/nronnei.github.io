@@ -121,6 +121,30 @@
 
 
 /*
+
+LEGEND
+
+*/
+.legend-circles{
+  border-radius: 50%;
+  width: 80%;
+  padding-top: 80%;
+  margin: auto;
+  opacity: .8;
+}
+#no-bikes {
+  background: #2807ff;
+}
+#half-and-half {
+  background: #93007f;
+}
+#no-docks {
+  background: #ff0000;
+}
+
+
+
+/*
     MISC
 */
 #map {
@@ -160,12 +184,17 @@ a {
   font-weight: bold;
   font-family: 'Lato', sans-serif;
 }
+.sub-title {
+  margin-top: -1.25em;
+}
 .subheading {
   text-align: center;
   font-family: 'Lato', sans-serif;
 }
-.sub-title {
-  line-height: 0.25em;
+.paragraph-icon {
+  position: relative;
+  top: 4px;
+  padding-left: .25em;
 }
 .center-map {
   margin-top: 2em;
@@ -224,6 +253,9 @@ body {
 .mdl-tabs__tab-bar {
   padding-top: 10px;
   width: 100%;
+}
+.help-panel-content {
+  padding: 8px;
 }
 #sidebar-toggle-btn {
   position: absolute;

@@ -18,7 +18,7 @@
     <div id="container-panel">
       <!-- MDL Tabs-->
       <div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
-        <div class="mdl-tabs__tab-bar"><a class="mdl-tabs__tab sidebar-toggle" id="panel-menu-a" href="#panel-menu"><i class="material-icons">menu</i></a><a class="mdl-tabs__tab is-active" id="panel-welcome-a" href="#panel-welcome"><i class="material-icons">location_city</i></a><a class="mdl-tabs__tab" id="panel-station-a" href="#panel-station"><i class="material-icons">directions_bike</i></a><a class="mdl-tabs__tab" id="panel-help-a" href="#panel-help"><i class="material-icons">help</i></a></div>
+        <div class="mdl-tabs__tab-bar"><a class="mdl-tabs__tab sidebar-toggle" id="panel-menu-a" href="#panel-menu"><i class="material-icons">map</i></a><a class="mdl-tabs__tab is-active" id="panel-welcome-a" href="#panel-welcome"><i class="material-icons">location_city</i></a><a class="mdl-tabs__tab" id="panel-station-a" href="#panel-station"><i class="material-icons">directions_bike</i></a><a class="mdl-tabs__tab" id="panel-help-a" href="#panel-help"><i class="material-icons">help</i></a></div>
         <!-- Panel Grid-->
         <div class="mdl-grid mdl-grid--no-spacing center-items">
           <!-- Menu Panel-->
@@ -100,19 +100,19 @@
                     <h5 class="subheading mdl-typography--text-center" id="system-operator">BestCo, LLC</h5>
                   </div>
                   <div class="basic-info">
-                    <h6 class="sub-heading mdl-typography--text-center" id="system-website-h6">Website</h6>
+                    <h6 class="subheading mdl-typography--text-center" id="system-website-h6">Website</h6>
                     <p class="sub-title mdl-typography--text-center" id="system-website-p"><a id="system-website-a" href="#" target="_blank">https://www.awesomesauce.com/</a></p>
                   </div>
                   <div class="basic-info">
-                    <h6 class="sub-heading mdl-typography--text-center" id="system-email-h6">Email</h6>
+                    <h6 class="subheading mdl-typography--text-center" id="system-email-h6">Email</h6>
                     <p class="sub-title mdl-typography--text-center" id="system-email-p"><a id="system-email-a" href="#" target="_blank">info@bestsystem.com</a></p>
                   </div>
                   <div class="basic-info">
-                    <h6 class="sub-heading mdl-typography--text-center" id="system-phone-h6">Contact Phone</h6>
+                    <h6 class="subheading mdl-typography--text-center" id="system-phone-h6">Contact Phone</h6>
                     <p class="sub-title mdl-typography--text-center" id="system-phone-p"><a id="system-phone-a" href="#" target="_blank">1-800-BIKE4DAYZ</a></p>
                   </div>
                   <div class="basic-info">
-                    <h6 class="sub-heading mdl-typography--text-center" id="system-size-h6">Number of Stations</h6>
+                    <h6 class="subheading mdl-typography--text-center" id="system-size-h6">Number of Stations</h6>
                     <p class="sub-title mdl-typography--text-center" id="system-size-p">OVER 9000!!!</p>
                   </div><br>
                   <h3 class="welcome-panel-content hidden mdl-typography--text-center title" id="pricing-content-header">Pricing Options</h3>
@@ -128,9 +128,9 @@
               <div class="mdl-grid">
                 <div class="station-panel-content mdl-cell mdl-cell--12-col mdl-cell--stretch" id="station-instructions">
                   <h3 class="title mdl-typography--text-center">Your Data Await!</h3>
-                  <p class="sub-heading"><a class="panel-welcome-link" href="#">Select a Bike Share System.</a></p>
-                  <p class="sub-heading">Click on a station marker.</p>
-                  <p class="sub-heading">Get a status update!</p>
+                  <p class="subheading"><a class="panel-welcome-link" href="#">Select a Bike Share System.</a></p>
+                  <p class="subheading">Click on a station marker.</p>
+                  <p class="subheading">Get a status update!</p>
                 </div>
                 <div class="mdl-cell mdl-cell--12-col loading hidden">
                   <div class="mdl-grid mdl-grid--no-spacing center-items">
@@ -216,13 +216,82 @@
             <div class="panel-content-wrapper" id="help-panel-wrapper">
               <div class="mdl-grid">
                 <div id="panel-help-top"></div>
+                <!-- Panel Header-->
                 <div class="help-panel-content mdl-cell mdl-cell--12-col mdl-cell--stretch">
-                  <h2>Help!</h2>
-                  <p>Feeling a little confused? You're in the right place.</p>
+                  <h2 class="title">Help!</h2>
+                  <p class="sub-title">Feeling a little confused? You're in the right place.</p>
+                </div>
+                <!-- Help Content-->
+                <!-- What is this?-->
+                <div class="help-panel-content mdl-cell mdl-cell--12-col mdl-cell--stretch">
+                  <h4 class="title">What is this app for?</h4>
+                  <p>
+                    This app is a personal project I created to get better at using some of
+                    the new technologies I've learned of late. I've always had an interest
+                    in bike share systems, and this app is meant to help people who share
+                    my fascination/curiousity/need to find a bike ASAP in whatever city.
+                  </p><br>
+                </div>
+                <!-- Selecting a system-->
+                <div class="help-panel-content mdl-cell mdl-cell--12-col mdl-cell--stretch">
+                  <h4 class="title">How do I use it?</h4>
+                  <p>Select a system from the drop down menu on the System Info panel.
+                    <ol>
+                      <li>Navigate to the system panel. Tap/click <i class="material-icons paragraph-icon">location_city</i></li>
+                      <li>Tap on the drop down menu.</li>
+                      <li>Select a system from the list. The data will begin loading immediately.</li>
+                    </ol>
+                  </p><br>
+                </div>
+                <!-- Show/hide map-->
+                <div class="help-panel-content mdl-cell mdl-cell--12-col mdl-cell--stretch">
+                  <h4 class="title">Where's the map?</h4>
+                  <p>
+                    If you're on mobile, you might be a little confused as to where this
+                    alleged map actually is. On other devices, you may just want to make the
+                    map full screen.
+                  </p>
+                  <p>To show the full map on any device, click/tap <i class="material-icons paragraph-icon">map</i></p>
+                  <p>
+                    On mobile, if you display the map immediately after selecting a system,
+                    you can watch the map fly to its new position. You can always do so on
+                    other devices.
+                  </p><br>
+                </div>
+                <!-- Show/hide map-->
+                <div class="help-panel-content mdl-cell mdl-cell--12-col mdl-cell--stretch">
+                  <h4 class="title">What do the symbols mean?</h4>
+                  <p>
+                    The symbol size represents the size of the station. The symbol color
+                    represents the ratio of bikes to docks at the station.
+                  </p>
                 </div>
                 <div class="help-panel-content mdl-cell mdl-cell--12-col mdl-cell--stretch">
-                  <h3>Using the Map</h3>
-                  <p>Here is how you use the map.</p>
+                  <div class="mdl-grid mdl-grid--no-spacing">
+                    <div class="mdl-cell mdl-cell--4">
+                      <p class="tile-font">No Bikes</p>
+                      <div class="legend-circles" id="no-bikes"></div><br>
+                    </div>
+                    <div class="mdl-cell mdl-cell--4">
+                      <p class="tile-font">50 / 50</p>
+                      <div class="legend-circles" id="half-and-half"></div><br>
+                    </div>
+                    <div class="mdl-cell mdl-cell--4">
+                      <p class="tile-font">No Docks</p>
+                      <div class="legend-circles" id="no-docks"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Finding your location-->
+                <div class="help-panel-content mdl-cell mdl-cell--12-col mdl-cell--stretch">
+                  <h4 class="title">Finding your location.</h4>
+                  <p>In the bottom right corner of the map click/tap <i class="material-icons paragraph-icon">gps_fixed</i></p>
+                  <p>
+                    This application does feature user geolocation, but it is of strictly
+                    limited utility. Finding your location does not mean that there are
+                    bike share systems near you, nor does it limit the selection of a system
+                    to explore in any way.
+                  </p>
                 </div>
               </div>
             </div>
