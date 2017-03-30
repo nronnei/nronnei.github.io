@@ -10,7 +10,7 @@
 
     <!--Description-->
     
-        <meta name="description" content="Our only goal in this post is to make sure we have installed PostgreSQL&#39;s PL/V8.">
+        <meta name="description" content="In this post, we&#39;ll learn how to create a multi-band raster from scratch using PostGIS 2.1.">
     
 
     <!--Author-->
@@ -20,7 +20,7 @@
 
     <!--Open Graph Title-->
     
-        <meta property="og:title" content="Installing PL/V8 in PostgreSQL 9.6"/>
+        <meta property="og:title" content="Creating Rasters from Scratch in PostGIS, Part 2"/>
     
 
     <!--Open Graph Description-->
@@ -46,7 +46,7 @@
 
     <!-- Title -->
     
-    <title>Installing PL/V8 in PostgreSQL 9.6 - Nick&#39;s GeoJournal</title>
+    <title>Creating Rasters from Scratch in PostGIS, Part 2 - Nick&#39;s GeoJournal</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
@@ -77,7 +77,7 @@
     
 
     <!-- canonical link -->
-    <link rel="canonical" href="https:/nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/"/>
+    <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt2/"/>
 
 </head>
 
@@ -175,13 +175,13 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
-                    <h1>Installing PL/V8 in PostgreSQL 9.6</h1>
+                    <h1>Creating Rasters from Scratch in PostGIS, Part 2</h1>
                     
                     
                       <span class="meta">
                           <!-- Date and Author -->
                           
-                          2016-10-30
+                          2017-03-24
                       </span>
                     
                 </div>
@@ -202,7 +202,7 @@
                         
 
 
-<a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/postgresql/">#postgresql</a> <a href="/blog/tags/pl-v8/">#pl/v8</a>
+<a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a>
 
 
                     
@@ -222,28 +222,13 @@
 
             <!-- Post Main Content -->
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal:"></a>Goal:</h2><p>This is a very straightforward entry. Our only goal in this post is to make sure we have installed PostgreSQL’s <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a>.</p>
-<p><strong>Full Disclosure:</strong> Most of this is straight off the <a href="https://github.com/plv8/plv8" target="_blank" rel="external">GitHub page</a>.</p>
-<img src="/blog/2016/10/install-postgres-9-5-plv8/v8.png" alt="V8 - Google's lightning fast JavaScript engine." title="V8 - Google's lightning fast JavaScript engine.">
-<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose:"></a>Purpose:</h2><p>Install <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a> so that we can use JavaScript to write functions for Postgres and PostGIS. This entry assumes you have a working PostgreSQL v9.2+ installation. If you don’t, check out <a href="http://tecadmin.net/install-postgresql-server-on-ubuntu/#" target="_blank" rel="external">this tutorial</a>.</p>
-<h2 id="Solution"><a href="#Solution" class="headerlink" title="Solution:"></a>Solution:</h2><h4 id="System-Info"><a href="#System-Info" class="headerlink" title="System Info"></a>System Info</h4><p>I’m using…</p>
-<ul>
-<li>OS: Ubuntu 16.04</li>
-<li>PostgreSQL Server 9.5</li>
-<li>PSQL Client 9.6</li>
-<li>PostGIS 2.1 (Not relevant for this process, as long as your version supports PL/v8)</li>
-</ul>
-<h4 id="Process"><a href="#Process" class="headerlink" title="Process"></a>Process</h4><p>Thanks to <code>apt</code> this installation is very easy! Just run:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install postgresql-9.5-plv8</div></pre></td></tr></table></figure></p>
-<p><a href="https://github.com/plv8/plv8#requirement" target="_blank" rel="external">Check GitHub</a> to see if your PostgreSQL version works with PL/V8. I was able to successfully install PL/V8 for PostgreSQL 9.6 by simply tweaking the version number:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install postgresql-9.6-plv8</div></pre></td></tr></table></figure></p>
-<p>After a successful installation, we’ll need to add the language to your database:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">psql <span class="_">-d</span> &lt;database name&gt; -c <span class="string">'CREATE EXTENSION plv8'</span></div></pre></td></tr></table></figure></p>
-<p>If you use <a href="https://github.com/jashkenas/coffeescript" target="_blank" rel="external">CoffeeScript</a> and <a href="http://livescript.net/" target="_blank" rel="external">LiveScript</a>, you can use <code>plcoffee</code> and <code>plls</code> respectively in place of <code>plv8</code>.</p>
-<p>Okay. PL/V8 installed? Check! Language added to the database? Check. Let’s move on to making sure it works.</p>
-<p>GitHub says you can use <code>psql -c &#39;SELECT plv8_version()&#39;</code> to check your version with PL/V8 as of 2.0.0. This did not work for me because at the time of writing the the version in the apt repo is <code>1:1.4.6.ds-1</code>.</p>
-<p>Another method, and perhaps a more direct one, is to 1.) define a simple function and 2.) pass it some dummy data.</p>
-<p><strong>First</strong> we define a test function:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">CREATE OR REPLACE FUNCTION plv8_test(keys text[], vals text[])</div><div class="line">RETURNS text AS $$</div><div class="line">  var o = &#123;&#125;;</div><div class="line">  for(var i=0; i&lt;keys.length; i++)&#123;</div><div class="line">    o[keys[i]] = vals[i];</div><div class="line">  &#125;</div><div class="line">  return JSON.stringify(o);</div><div class="line">$$ LANGUAGE plv8 IMMUTABLE STRICT;</div></pre></td></tr></table></figure></p>
-<p><strong>Second</strong> we pass it some dummy data:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> plv8_test(<span class="built_in">ARRAY</span>[<span class="string">'name'</span>, <span class="string">'age'</span>], <span class="built_in">ARRAY</span>[<span class="string">'Tom'</span>, <span class="string">'29'</span>]);</div></pre></td></tr></table></figure></p>
-<p><strong>If successful,</strong> you should see this response:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">         plv8_test</div><div class="line">---------------------------</div><div class="line"> &#123;"name":"Tom","age":"29"&#125;</div><div class="line">(1 row)</div></pre></td></tr></table></figure></p>
-<h2 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions:"></a>Conclusions:</h2><p>According to <a href="http://www.postgresonline.com/journal/archives/326-Writing-PostGIS-raster-Map-Algebra-Callback-Functions-in-PLV8.html" target="_blank" rel="external">this post from Regina Obe</a>, PL/V8 is great for Map Algebra. Unfortunately, as with most posts I’ve found about the PostGIS Raster Module, fails to use a geographically relevant example of raster analysis. I attempt to remedy that with <a href="/geojournal/tags/raster-math-series/">this series of posts on writing ST_MapAlgebra callback functions with PL/V8.</a></p>
+                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal"></a>Goal</h2><p>In this post, we’ll learn how to create a multi-band raster from scratch using PostGIS 2.1. This ability will be particularly useful as we begin exploring the relatively uncharted waters of the PostGIS Raster Module.</p>
+<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose:"></a>Purpose:</h2><p>This is a companion article for <a href="blog/2017/03/creating-rasters-from-scratch-in-postgis/">Creating Rasters from Scratch in PostGIS</a>. I recommend reading it if you haven’t already to learn why you might want to do this as well as for a more detailed explanation of the parameters.</p>
+<h2 id="Getting-Started"><a href="#Getting-Started" class="headerlink" title="Getting Started"></a>Getting Started</h2><p>Let’s look at the code from our last post:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Insert into our newly created table</span></div><div class="line"><span class="comment">-- Insert into that table</span></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> public.test_250(rast)</div><div class="line"><span class="keyword">SELECT</span> ST_AddBand(</div><div class="line">  <span class="comment">-- Make empty raster</span></div><div class="line">  ST_MakeEmptyRaster(</div><div class="line">      <span class="number">1500</span>, <span class="comment">-- Raster width x (in pixels)</span></div><div class="line">      <span class="number">1500</span>, <span class="comment">-- Raster width y (in pixels)</span></div><div class="line">      <span class="number">-105.4330444336</span>, <span class="comment">-- Upper left X coordinate</span></div><div class="line">      <span class="number">40.7170785158</span>, <span class="comment">-- Upper left Y coordinate</span></div><div class="line">      <span class="number">0.00208333</span>, <span class="comment">-- X Cell Resolution (in degrees) (~250m)</span></div><div class="line">      <span class="number">0.00208333</span>, <span class="comment">-- Y Cell Resolution (in degrees) (~250m)</span></div><div class="line">      <span class="number">0</span>, <span class="comment">-- X skew</span></div><div class="line">      <span class="number">0</span>, <span class="comment">-- Y skew</span></div><div class="line">      <span class="number">4326</span> <span class="comment">-- SRID (WGS 84)</span></div><div class="line">    ),</div><div class="line">    <span class="comment">-- We're making a single band raster, but you can add</span></div><div class="line">    <span class="comment">-- as many bands as you like by adding additional rows</span></div><div class="line">    <span class="comment">-- to the array.</span></div><div class="line">    <span class="built_in">ARRAY</span> [</div><div class="line">      <span class="keyword">ROW</span>(</div><div class="line">        <span class="number">1</span>,  <span class="comment">-- Band index: sets this as the first band</span></div><div class="line">        <span class="string">'8BUI'</span>::<span class="built_in">text</span>,  <span class="comment">-- Pixel Type (string rep of ST_BandPixelType types)</span></div><div class="line">        <span class="number">5</span>,  <span class="comment">-- Initialized pixel value</span></div><div class="line">        <span class="number">255</span>  <span class="comment">-- Nodata Value</span></div><div class="line">      )</div><div class="line">    ]::addbandarg[]</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>In order to add additional bands, all we have to do is add another row to our <code>rasterbandarg[]</code>:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> public.test_250(rast)</div><div class="line"><span class="keyword">SELECT</span> ST_AddBand( ST_MakeEmptyRaster(<span class="number">1500</span>, <span class="number">1500</span>, <span class="number">-105.4330444336</span>, <span class="number">40.7170785158</span>, <span class="number">0.00208333</span>, <span class="number">0.00208333</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">4326</span> ),</div><div class="line">    <span class="built_in">ARRAY</span> [</div><div class="line">      <span class="keyword">ROW</span>(<span class="number">1</span>, <span class="string">'8BUI'</span>::<span class="built_in">text</span>, <span class="number">5</span>, <span class="number">255</span>),</div><div class="line">      <span class="keyword">ROW</span>(<span class="number">1</span>, <span class="string">'8BUI'</span>::<span class="built_in">text</span>, <span class="number">10</span>, <span class="number">255</span>)</div><div class="line">    ]::addbandarg[]</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>Yep. It’s really that easy!</p>
 
 
                 
@@ -258,8 +243,8 @@
     <div id="disqus_thread"></div>
     <script type="text/javascript">
         var disqus_config = function () {
-        this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/"/>
-        this.page.identifier = https:/nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/
+        this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt2/"/>
+        this.page.identifier = https:/nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt2/
         };
 
         (function(){

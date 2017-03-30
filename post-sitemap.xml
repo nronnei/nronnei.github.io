@@ -7,8 +7,40 @@
     </url>
 
     <url>
-        <loc>https://nronnei.github.io/blog/2017/03/what-happened-to-uncertweb/</loc>
-        <lastmod>2017-03-12T15:53:22.327Z</lastmod>
+        <loc>https://nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis/</loc>
+        <lastmod>2017-03-30T17:22:35.622Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis-pt2/</loc>
+        <lastmod>2017-03-30T17:22:21.666Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt3/</loc>
+        <lastmod>2017-03-30T17:22:05.921Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis/</loc>
+        <lastmod>2017-03-29T01:51:21.800Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt2/</loc>
+        <lastmod>2017-03-29T01:51:20.324Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 
@@ -16,15 +48,15 @@
 
     <url>
         <loc>https://nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/</loc>
-        <lastmod>2017-01-29T21:06:29.488Z</lastmod>
+        <lastmod>2017-03-28T00:26:42.179Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 
     </url>
 
     <url>
-        <loc>https://nronnei.github.io/blog/2016/10/raster-math-in-postgis-pt1/</loc>
-        <lastmod>2017-01-26T22:32:30.623Z</lastmod>
+        <loc>https://nronnei.github.io/blog/2017/03/what-happened-to-uncertweb/</loc>
+        <lastmod>2017-03-12T15:53:22.327Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 

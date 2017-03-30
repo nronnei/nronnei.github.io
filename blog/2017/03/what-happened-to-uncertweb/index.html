@@ -250,8 +250,6 @@
     <h3>Comments:</h3>
     <div id="disqus_thread"></div>
     <script type="text/javascript">
-        var disqus_shortname = 'geojournal';
-
         var disqus_config = function () {
         this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/what-happened-to-uncertweb/"/>
         this.page.identifier = https:/nronnei.github.io/blog/2017/03/what-happened-to-uncertweb/
@@ -261,7 +259,7 @@
             var dsq = document.createElement('script');
             dsq.type = 'text/javascript';
             dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            dsq.src = '//' + theme.comments.disqus_shortname + '.disqus.com/embed.js';
             dsq.setAttribute('data-timestamp', new Date());
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
         }());
@@ -345,34 +343,6 @@
 
 <!-- Gallery -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
-
-<!-- Comments -->
-
-    <hr />
-    <h3>Comments:</h3>
-    <div id="disqus_thread"></div>
-    <script type="text/javascript">
-        var disqus_shortname = 'geojournal';
-
-        var disqus_config = function () {
-        this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/what-happened-to-uncertweb/"/>
-        this.page.identifier = https:/nronnei.github.io/blog/2017/03/what-happened-to-uncertweb/
-        };
-
-        (function(){
-            var dsq = document.createElement('script');
-            dsq.type = 'text/javascript';
-            dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            dsq.setAttribute('data-timestamp', new Date());
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        }());
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-
-
-
-
 
 
 </body>

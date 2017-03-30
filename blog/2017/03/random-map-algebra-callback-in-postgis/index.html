@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!--Description-->
+    
+        <meta name="description" content="In this post we&#39;ll try to get a better understanding of the structure of ST_MapAlgebra callback functions.">
+    
+
+    <!--Author-->
+    
+        <meta name="author" content="Nick Ronnei">
+    
+
+    <!--Open Graph Title-->
+    
+        <meta property="og:title" content="A Totally Random Map Algebra Callback in PostGIS 2.1"/>
+    
+
+    <!--Open Graph Description-->
+    
+        <meta property="og:description" content="Thoughts, experiments, and advice for FOSS GIScience" />
+    
+
+    <!--Open Graph Site Name-->
+    <meta property="og:site_name" content="Nick&#39;s GeoJournal"/>
+
+    <!--Type page-->
+    
+        <meta property="og:type" content="article" />
+    
+
+    <!--Page Cover-->
+    
+
+        <meta name="twitter:card" content="summary" />
+    
+        <meta name="twitter:site" content="nronnei>" />
+    
+
+    <!-- Title -->
+    
+    <title>A Totally Random Map Algebra Callback in PostGIS 2.1 - Nick&#39;s GeoJournal</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+
+    <!-- Custom Fonts -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="//oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Gallery -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.css" type="text/css" rel="stylesheet" />
+
+    <!-- Google Analytics -->
+    
+
+
+    <!-- favicon -->
+    
+
+    <!-- canonical link -->
+    <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis/"/>
+
+</head>
+
+
+<body>
+
+    <!-- Menu -->
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">GeoJournal</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                
+                    <li>
+                        <a href="/">
+                            
+                                Home
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/about">
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/apps">
+                            
+                                Apps
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog">
+                            
+                                Blog
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog/archives">
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://github.com/nronnei/">
+                            
+                                <i class="fa fa-github fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://twitter.com/nronnei/">
+                            
+                                <i class="fa fa-twitter fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+    <!-- Main Content -->
+    <!-- Page Header -->
+<!-- Set your background image for this header in your post front-matter: cover -->
+
+<header class="intro-header" style="background-image: url('/img/home-bg.jpg')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>A Totally Random Map Algebra Callback in PostGIS 2.1</h1>
+                    
+                    
+                      <span class="meta">
+                          <!-- Date and Author -->
+                          
+                          2017-03-25
+                      </span>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Tags and categories -->
+           
+                <div class="col-lg-4 col-lg-offset-2 col-md-5 col-md-offset-1 post-tags">
+                    
+                        
+
+
+<a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/raster-math-series/">#raster math series</a> <a href="/blog/tags/pl-pgsql/">#pl/pgsql</a>
+
+
+                    
+                </div>
+                <div class="col-lg-4 col-md-5 post-categories">
+                    
+                        
+
+<a href="/blog/categories/database/">database</a>
+
+                    
+                </div>
+            
+
+            <!-- Gallery -->
+            
+
+            <!-- Post Main Content -->
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal"></a>Goal</h2><p>In this post we’ll try to get a better understanding of the structure of plpgsql <code>ST_MapAlgebra</code> callback functions. Specifically, we’ll learn how to write a callback that works on one raster with one band.</p>
+<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose"></a>Purpose</h2><p>There are a few posts about how to do this. <a href="http://blog.mackerron.com/2013/07/21/map-algebra-callbacks-postgis-2-1/" target="_blank" rel="external">This one</a> from George MacKerron’s blog gives a much better example of how MA callbacks work in PostGIS 2.1, and serves as a model of what I’ll attempt here. As Mr. MacKerron points out, the callback function in the <a href="http://postgis.net/docs/manual-dev/RT_ST_MapAlgebra.html" target="_blank" rel="external">documentation</a> is pretty useless, but it’s also totally uninformative.</p>
+<p>Basically, <strong>we’ll write a totally useless function which illustrates how we can manipulate raster values using</strong> <code>ST_MapAlgebra</code>.</p>
+<h2 id="Getting-Started"><a href="#Getting-Started" class="headerlink" title="Getting Started"></a>Getting Started</h2><p>If you’re working with some real data, great! If you’re trying to learn more about <code>ST_MapAlgebra</code> but don’t have a dataset, go check out my post on <a href="/blog/2017/03/creating-rasters-from-scratch-in-postgis/">creating rasters from scratch.</a>. This type of stuff is exactly what I had in mind when I wrote it.</p>
+<p>One thing worth noting, is that there are two versions of <code>ST_MapAlgebra</code>: the <a href="http://postgis.net/docs/manual-dev/RT_ST_MapAlgebra_expr.html" target="_blank" rel="external">Expression Version</a> and the <a href="http://postgis.net/docs/manual-dev/RT_ST_MapAlgebra.html" target="_blank" rel="external">Callback Version</a>. Obviously, we’ll be working with the latter in this post. Both are great to be familiar with, but the <a href="http://postgis.net/docs/manual-dev/RT_ST_MapAlgebra.html" target="_blank" rel="external">Callback Version</a> let’s us do much more complicated stuff, including working with cell neighbors (post coming soon). Here however, we’ll be doing a pretty basic operation. Still, it’s one that you couldn’t perform with the <a href="http://postgis.net/docs/manual-dev/RT_ST_MapAlgebra_expr.html" target="_blank" rel="external">Expression Version</a> (as far as I know, anyway)!</p>
+<p>Using <a href="http://blog.mackerron.com/2013/07/21/map-algebra-callbacks-postgis-2-1/" target="_blank" rel="external">MacKerron’s post</a> as a guide, I’ve laid out a basic structure that our callback has to follow.</p>
+<p>We need three arguments:</p>
+<ol>
+<li>A 3 dimensional array of a type double precision <code>pixel double precision[][][]</code></li>
+<li>A 2 dimensional integer array <code>pos integer[][]</code></li>
+<li>A 1 dimensional variadic array to accept any additional user arguments <code>variadic userargs text[]</code></li>
+</ol>
+<p>In our case, we’re working with integer data so we’ll plan our <code>RETURNS</code> statement accordingly:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- The basic structure of an ST_MapAlgebra() callback</span></div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">OR</span> <span class="keyword">REPLACE</span> <span class="keyword">FUNCTION</span></div><div class="line"></div><div class="line">totally_random_callback(pixel <span class="keyword">double</span> <span class="keyword">precision</span>[][][], pos <span class="built_in">integer</span>[][], VARIADIC userargs <span class="built_in">text</span>[])</div><div class="line">  <span class="keyword">RETURNS</span> <span class="built_in">integer</span></div><div class="line">  <span class="keyword">LANGUAGE</span> plpgsql</div><div class="line">  IMMUTABLE  <span class="comment">-- careful: this function is immutable, yours may not be</span></div><div class="line"></div><div class="line">  <span class="keyword">AS</span> $$</div><div class="line">    <span class="keyword">DECLARE</span></div><div class="line">      pixval <span class="built_in">integer</span>;</div><div class="line">    <span class="keyword">BEGIN</span></div><div class="line">      <span class="comment">-- Do Something</span></div><div class="line">    <span class="keyword">END</span>;</div><div class="line">  $$;</div></pre></td></tr></table></figure>
+<h4 id="A-note-of-caution"><a href="#A-note-of-caution" class="headerlink" title="A note of caution:"></a>A note of caution:</h4><p>I’ve seen several tutorials, including MacKerron’s and <a href="http://www.postgresonline.com/journal/archives/326-Writing-PostGIS-raster-Map-Algebra-Callback-Functions-in-PLV8.html" target="_blank" rel="external">this one</a> from Regina Obe, that use an array of a different type for the pixel value. I tried this, and it never worked for me with <code>integer</code>. So, I’m sticking to <code>double precision</code> here even though we’ll convert back to <code>integer</code> at the end (as you can see from <code>RETURNS integer</code>).</p>
+<h2 id="Let’s-“Do-Something”"><a href="#Let’s-“Do-Something”" class="headerlink" title="Let’s “Do Something”"></a>Let’s “Do Something”</h2><p>We’ve initialized our raster with a value of 10 for all cells. As you can see from this picture, it’s pretty boring to look at. Let’s throw some chaos in there!</p>
+<img src="/blog/2017/03/random-map-algebra-callback-in-postgis/initial-raster.png" alt="Our initial raster." title="Our initial raster.">
+<p>Since we are creating a random raster, but not entirely random. After all, it would be nice to learn a little bit about how to interact with our raster data since that’s the primary goal of this post. Bearing that in mind, let’s perform our operations using the values of our initial raster.</p>
+<p>Let’s just get a random integer between 1 and 10 (inclusive) for each cell/pixel. We’ll multiply this by <code>pixval</code>, our initial raster value.</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">CREATE OR REPLACE FUNCTION</div><div class="line">totally_random_callback(pixel double precision[][][], pos integer[][], VARIADIC userargs text[])</div><div class="line">  RETURNS integer</div><div class="line">  LANGUAGE plpgsql</div><div class="line">  IMMUTABLE  -- careful: this function is immutable, yours may not be</div><div class="line"></div><div class="line">  AS $$</div><div class="line">    DECLARE</div><div class="line">      pixval integer;</div><div class="line">      rando integer;</div><div class="line">      result integer;</div><div class="line">    BEGIN</div><div class="line">      SELECT floor(random() * 9 + 1)::int INTO rando;  -- Get a random value between 1 &amp; 11, convert to int</div><div class="line">      pixval := value[1][1][1]::int                    -- pixel indices: [raster #][xdistance][ydistance]</div><div class="line">      result :=  pixval * rando;                       -- Notice we cast the pixel value back to integer</div><div class="line"></div><div class="line">      RETURN result;</div><div class="line">    END;</div><div class="line">  $$;</div></pre></td></tr></table></figure>
+<p>Okay, so we run that, and we get <code>FUNCTION CREATED</code> back. Time to test it out!</p>
+<p>Here we’ll call the function on a dummy raster we saw above. We’ll take the result and stuff it in the empty table we created for the purpose.</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Create a table for our new raster to live in</span></div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> public.totally_random(</div><div class="line">  rid <span class="built_in">SERIAL</span> primary <span class="keyword">key</span>, rast raster</div><div class="line">);</div><div class="line"></div><div class="line"><span class="comment">-- Inster into the new table</span></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> public.totally_random(rast)</div><div class="line"><span class="comment">-- Call MapAlgebra</span></div><div class="line"><span class="keyword">SELECT</span> ST_MapAlgebra(</div><div class="line">  rast,  <span class="comment">-- Raster data column</span></div><div class="line">  <span class="number">1</span>,  <span class="comment">-- Which band to use (1-based index)</span></div><div class="line">  <span class="string">'totally_random_callback(double precision[][][], integer[][], text[])'</span>::regprocedure)</div><div class="line">  <span class="comment">-- ^^ Our callback function in a string cast as a regprocedure ^^</span></div><div class="line">  <span class="comment">-- Notice that we don't use the names of the inputs here</span></div><div class="line"><span class="keyword">FROM</span> public.test_250;  <span class="comment">-- The table containing our initial raster</span></div></pre></td></tr></table></figure>
+<p>Popping on over to QGIS, we can check out our results using the DBManager plugin. You can also use whatever tools you like, but I think those ones are great and they work very well together.</p>
+<img src="/blog/2017/03/random-map-algebra-callback-in-postgis/final-raster.png" alt="Our final raster." title="Our final raster.">
+<p>Wow, look at all that uniform noise! It seems like we achieved our objective. For a look at how to do write a callback that works with multiple bands, check out <a href="/blog/2017/03/random-map-algebra-callback-in-postgis-pt2/">the next post in this series.</a></p>
+
+
+                
+            </div>
+
+            <!-- Comments -->
+            
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
+    <hr />
+    <h3>Comments:</h3>
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_config = function () {
+        this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis/"/>
+        this.page.identifier = https:/nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis/
+        };
+
+        (function(){
+            var dsq = document.createElement('script');
+            dsq.type = 'text/javascript';
+            dsq.async = true;
+            dsq.src = '//' + theme.comments.disqus_shortname + '.disqus.com/embed.js';
+            dsq.setAttribute('data-timestamp', new Date());
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }());
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+                </div>
+            
+        </div>
+    </div>
+</article>
+
+
+    <!-- Footer -->
+    <hr />
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                        <li>
+                            <a href="https://twitter.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="https://github.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="mailto:nronnei@gmail.com" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-envelope-o fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+                </ul>
+                <p class="copyright text-muted">&copy; 2017 Nick Ronnei<br></p>
+                <p class="copyright text-muted">Original Theme <a target="_blank" href="http://startbootstrap.com/template-overviews/clean-blog/">Clean Blog</a> from <a href="http://startbootstrap.com/" target="_blank">Start Bootstrap</a></p>
+                <p class="copyright text-muted">Adapted for <a target="_blank" href="https://hexo.io/">Hexo</a> by <a href="http://www.codeblocq.com/" target="_blank">Jonathan Klughertz</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+    <!-- After footer scripts -->
+    
+<!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<!-- Bootstrap -->
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+<!-- Gallery -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+
+
+</body>
+
+</html>

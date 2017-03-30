@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!--Description-->
+    
+        <meta name="description" content="In this post, we&#39;ll learn how to create a single-band raster from scratch using PostGIS 2.1.">
+    
+
+    <!--Author-->
+    
+        <meta name="author" content="Nick Ronnei">
+    
+
+    <!--Open Graph Title-->
+    
+        <meta property="og:title" content="Creating Rasters from Scratch in PostGIS, Part 1"/>
+    
+
+    <!--Open Graph Description-->
+    
+        <meta property="og:description" content="Thoughts, experiments, and advice for FOSS GIScience" />
+    
+
+    <!--Open Graph Site Name-->
+    <meta property="og:site_name" content="Nick&#39;s GeoJournal"/>
+
+    <!--Type page-->
+    
+        <meta property="og:type" content="article" />
+    
+
+    <!--Page Cover-->
+    
+
+        <meta name="twitter:card" content="summary" />
+    
+        <meta name="twitter:site" content="nronnei>" />
+    
+
+    <!-- Title -->
+    
+    <title>Creating Rasters from Scratch in PostGIS, Part 1 - Nick&#39;s GeoJournal</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+
+    <!-- Custom Fonts -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="//oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Gallery -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.css" type="text/css" rel="stylesheet" />
+
+    <!-- Google Analytics -->
+    
+
+
+    <!-- favicon -->
+    
+
+    <!-- canonical link -->
+    <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis/"/>
+
+</head>
+
+
+<body>
+
+    <!-- Menu -->
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">GeoJournal</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                
+                    <li>
+                        <a href="/">
+                            
+                                Home
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/about">
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/apps">
+                            
+                                Apps
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog">
+                            
+                                Blog
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog/archives">
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://github.com/nronnei/">
+                            
+                                <i class="fa fa-github fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://twitter.com/nronnei/">
+                            
+                                <i class="fa fa-twitter fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+    <!-- Main Content -->
+    <!-- Page Header -->
+<!-- Set your background image for this header in your post front-matter: cover -->
+
+<header class="intro-header" style="background-image: url('/img/home-bg.jpg')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Creating Rasters from Scratch in PostGIS, Part 1</h1>
+                    
+                    
+                      <span class="meta">
+                          <!-- Date and Author -->
+                          
+                          2017-03-23
+                      </span>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Tags and categories -->
+           
+                <div class="col-lg-4 col-lg-offset-2 col-md-5 col-md-offset-1 post-tags">
+                    
+                        
+
+
+<a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a>
+
+
+                    
+                </div>
+                <div class="col-lg-4 col-md-5 post-categories">
+                    
+                        
+
+<a href="/blog/categories/database/">database</a>
+
+                    
+                </div>
+            
+
+            <!-- Gallery -->
+            
+
+            <!-- Post Main Content -->
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal"></a>Goal</h2><p>In this post, we’ll learn how to create a single-band raster from scratch using PostGIS 2.1. This ability will be particularly useful as we begin exploring the relatively uncharted waters of the PostGIS Raster Module.</p>
+<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose"></a>Purpose</h2><p>Using <a href="http://postgis.net/docs/manual-2.1/RT_ST_AddBand.html" target="_blank" rel="external"><code>ST_AddBand</code></a> and <a href="http://postgis.net/docs/manual-2.1/RT_ST_MakeEmptyRaster.html" target="_blank" rel="external"><code>ST_MakeEmptyRaster</code></a>, we’ll create a single band, 8 bit unsigned integer raster. While it’s nothing fancy, it will help us better understand the mechanics of the Raster Module and it will also prove useful as a source of training data for the posts in the Raster Math Series.</p>
+<p>Here, I’ll create a 250m resolution raster with a constant value. This method can easily create any other size and at whatever starting value the user may like. See the “All Together Now” section for some other common resolutions translated to decimal degrees.</p>
+<h2 id="Getting-Started"><a href="#Getting-Started" class="headerlink" title="Getting Started"></a>Getting Started</h2><p>First, lets create a table to hold the results of our operations.</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Create a table for our new raster to live in</span></div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> public.test_250(</div><div class="line">  rid <span class="built_in">SERIAL</span> primary <span class="keyword">key</span>, rast raster</div><div class="line">);</div></pre></td></tr></table></figure>
+<h2 id="Creating-a-Raster"><a href="#Creating-a-Raster" class="headerlink" title="Creating a Raster"></a>Creating a Raster</h2><p>Now, let’s go about constructing our raster. I’m creating my raster starting somewhere in the Colorado Rockies. You don’t need to do the same place or size, it’s completely up to you.</p>
+<p>You can adjust where and how big your raster is by changing the upper left coordinates and the number of pixels wide and tall your raster should be. The upper left coordinate is the origin, so no raster cells will appear “upper” or “lefter” of it.</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Insert into our newly created table</span></div><div class="line"><span class="comment">-- Insert into that table</span></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> public.test_250(rast)</div><div class="line"><span class="keyword">SELECT</span> ST_AddBand(</div><div class="line">  <span class="comment">-- Make empty raster</span></div><div class="line">  ST_MakeEmptyRaster(</div><div class="line">      <span class="number">1500</span>, <span class="comment">-- Raster width x (in pixels)</span></div><div class="line">      <span class="number">1500</span>, <span class="comment">-- Raster width y (in pixels)</span></div><div class="line">      <span class="number">-105.4330444336</span>, <span class="comment">-- Upper left X coordinate</span></div><div class="line">      <span class="number">40.7170785158</span>, <span class="comment">-- Upper left Y coordinate</span></div><div class="line">      <span class="number">0.00208333</span>, <span class="comment">-- X Cell Resolution (in degrees) (~250m)</span></div><div class="line">      <span class="number">0.00208333</span>, <span class="comment">-- Y Cell Resolution (in degrees) (~250m)</span></div><div class="line">      <span class="number">0</span>, <span class="comment">-- X skew</span></div><div class="line">      <span class="number">0</span>, <span class="comment">-- Y skew</span></div><div class="line">      <span class="number">4326</span> <span class="comment">-- SRID (WGS 84)</span></div><div class="line">    ),</div><div class="line">    <span class="comment">-- We're making a single band raster, but you can add</span></div><div class="line">    <span class="comment">-- as many bands as you like by adding additional rows</span></div><div class="line">    <span class="comment">-- to the array.</span></div><div class="line">    <span class="built_in">ARRAY</span> [</div><div class="line">      <span class="keyword">ROW</span>(</div><div class="line">        <span class="number">1</span>,  <span class="comment">-- Band index: sets this as the first band</span></div><div class="line">        <span class="string">'8BUI'</span>::<span class="built_in">text</span>,  <span class="comment">-- Pixel Type (string rep of ST_BandPixelType types)</span></div><div class="line">        <span class="number">5</span>,  <span class="comment">-- Initialized pixel value</span></div><div class="line">        <span class="number">255</span>  <span class="comment">-- Nodata Value</span></div><div class="line">      )</div><div class="line">    ]::addbandarg[]</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>Et voilà! There you have it - a raster from scratch in PostGIS.</p>
+<p>Now, If you did like me and left yourself with a massive raster, you may want to go ahead and tile it out to improve your query times. Additionally, this is a very common operation to perform on large rasers and it’s a good thing to be familiar with.</p>
+<p>If you don’t want to tile your raster, you can go ahead and skip to the Adding Constraints section.</p>
+<h2 id="Tiling-our-New-Raster"><a href="#Tiling-our-New-Raster" class="headerlink" title="Tiling our New Raster"></a>Tiling our New Raster</h2><p>Tiling is a very common operation on large rasters. It allows you to build extremely fast spatial indexes on the data, vastly improving query times. For example, when I tried to load untiled large rasters into QGIS from PostGIS, it often crashes unless the data are tiled and indexed.</p>
+<p>To tile your rasters, just do this:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Create a new table to hold our tiled raster</span></div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> public.test_250_tiled(</div><div class="line">  rid <span class="built_in">SERIAL</span> primary <span class="keyword">key</span>, rast raster</div><div class="line">);</div><div class="line"></div><div class="line"><span class="comment">-- Tile it out</span></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> public.test_250_tiled(rast)</div><div class="line">  <span class="keyword">SELECT</span> ST_Tile(rast, <span class="number">1</span>, <span class="number">100</span>, <span class="number">100</span>, <span class="literal">TRUE</span>, <span class="number">0</span>)</div><div class="line">  <span class="keyword">FROM</span> public.test_250;</div></pre></td></tr></table></figure></p>
+<h2 id="Adding-Constraints"><a href="#Adding-Constraints" class="headerlink" title="Adding Constraints"></a>Adding Constraints</h2><p>There are a couple main reasons to add constraints to your raster tables after you’ve populated them. First, it improves query time by allowing the software to make certain assumptions about the geometry of your data. Second, it ensures that your data meet the standards PostGIS requires for various operations, such as alignment.</p>
+<p>Add constraints by using the <a href="http://postgis.net/docs/manual-2.2/RT_AddRasterConstraints.html" target="_blank" rel="external"><code>AddRasterConstraints</code></a> function. See the <a href="http://postgis.net/docs/manual-2.2/RT_AddRasterConstraints.html" target="_blank" rel="external">documentation</a> for more details on which constraints you can add and what they do.<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> AddRasterConstraints(</div><div class="line">  <span class="string">'test_250_tiled'</span>::<span class="keyword">name</span>,</div><div class="line">  <span class="string">'rast'</span>::<span class="keyword">name</span>,</div><div class="line">  <span class="string">'regular_blocking'</span>,</div><div class="line">  <span class="string">'blocksize'</span>,</div><div class="line">  <span class="string">'same_alignment'</span>,</div><div class="line">  <span class="string">'srid'</span></div><div class="line">);</div></pre></td></tr></table></figure></p>
+<h2 id="All-Together-Now"><a href="#All-Together-Now" class="headerlink" title="All Together Now"></a>All Together Now</h2><p>So, putting it all together, here’s what we’ve got:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Some common raster cell sizes:</span></div><div class="line"><span class="comment">-- 3 (90m) arcseconds = 0.000833333 degrees</span></div><div class="line"><span class="comment">-- 7.5 (250m) arcseconds = 0.00208333 degrees</span></div><div class="line"><span class="comment">-- 15 (500m) arcseconds = 0.00416667 degrees</span></div><div class="line"></div><div class="line"><span class="comment">-- Create a table for our new raster to live in</span></div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> public.test_250(</div><div class="line">  rid <span class="built_in">SERIAL</span> primary <span class="keyword">key</span>, rast raster</div><div class="line">);</div><div class="line"></div><div class="line"><span class="comment">-- Insert into that table</span></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> public.test_250(rast)</div><div class="line"><span class="keyword">SELECT</span></div><div class="line">  <span class="comment">-- We're making a single band raster,</span></div><div class="line">  <span class="comment">-- though these can be chained together</span></div><div class="line">  ST_AddBand(</div><div class="line">    <span class="comment">-- Make empty raster</span></div><div class="line">    ST_MakeEmptyRaster(</div><div class="line">      <span class="number">1500</span>, <span class="comment">-- Raster width x (in pixels)</span></div><div class="line">      <span class="number">1500</span>, <span class="comment">-- Raster width y (in pixels)</span></div><div class="line">      <span class="number">-105.4330444336</span>, <span class="comment">-- Upper left X coordinate</span></div><div class="line">      <span class="number">40.7170785158</span>, <span class="comment">-- Upper left Y coordinate</span></div><div class="line">      <span class="number">0.00208333</span>, <span class="comment">-- X Cell Resolution (in degrees) (~250m)</span></div><div class="line">      <span class="number">0.00208333</span>, <span class="comment">-- Y Cell Resolution (in degrees) (~250m)</span></div><div class="line">      <span class="number">0</span>, <span class="comment">-- X skew</span></div><div class="line">      <span class="number">0</span>, <span class="comment">-- Y skew</span></div><div class="line">      <span class="number">4326</span> <span class="comment">-- SRID (WGS 84)</span></div><div class="line">    ),</div><div class="line">    <span class="string">'8BUI'</span>::<span class="built_in">text</span> <span class="comment">-- Pixel Type (string rep of ST_BandPixelType types)</span></div><div class="line">    ,<span class="number">5</span> <span class="comment">-- Initialized pixel value</span></div><div class="line">    ,<span class="number">0</span> <span class="comment">-- Nodata Value</span></div><div class="line">  ) <span class="keyword">AS</span> rast;</div><div class="line"></div><div class="line"><span class="comment">-- Create a new table to hold our tiled raster</span></div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> public.test_250_tiled(</div><div class="line">  rid <span class="built_in">SERIAL</span> primary <span class="keyword">key</span>, rast raster</div><div class="line">);</div><div class="line"></div><div class="line"><span class="comment">-- Tile it out</span></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> public.test_250_tiled(rast)</div><div class="line">  <span class="keyword">SELECT</span> ST_Tile(rast, <span class="number">1</span>, <span class="number">100</span>, <span class="number">100</span>, <span class="literal">TRUE</span>, <span class="number">0</span>)</div><div class="line">  <span class="keyword">FROM</span> public.test_250;</div><div class="line"></div><div class="line"><span class="keyword">SELECT</span> AddRasterConstraints(</div><div class="line">  <span class="string">'test_250_tiled'</span>::<span class="keyword">name</span>,</div><div class="line">  <span class="string">'rast'</span>::<span class="keyword">name</span>,</div><div class="line">  <span class="string">'regular_blocking'</span>,</div><div class="line">  <span class="string">'blocksize'</span>,</div><div class="line">  <span class="string">'same_alignment'</span>,</div><div class="line">  <span class="string">'srid'</span></div><div class="line">);</div></pre></td></tr></table></figure></p>
+<h2 id="There-you-have-it"><a href="#There-you-have-it" class="headerlink" title="There you have it!"></a>There you have it!</h2><p>Enjoy your new raster powers! I hope this was helpful to you.</p>
+
+
+                
+            </div>
+
+            <!-- Comments -->
+            
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
+    <hr />
+    <h3>Comments:</h3>
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_config = function () {
+        this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis/"/>
+        this.page.identifier = https:/nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis/
+        };
+
+        (function(){
+            var dsq = document.createElement('script');
+            dsq.type = 'text/javascript';
+            dsq.async = true;
+            dsq.src = '//' + theme.comments.disqus_shortname + '.disqus.com/embed.js';
+            dsq.setAttribute('data-timestamp', new Date());
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }());
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+                </div>
+            
+        </div>
+    </div>
+</article>
+
+
+    <!-- Footer -->
+    <hr />
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                        <li>
+                            <a href="https://twitter.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="https://github.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="mailto:nronnei@gmail.com" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-envelope-o fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+                </ul>
+                <p class="copyright text-muted">&copy; 2017 Nick Ronnei<br></p>
+                <p class="copyright text-muted">Original Theme <a target="_blank" href="http://startbootstrap.com/template-overviews/clean-blog/">Clean Blog</a> from <a href="http://startbootstrap.com/" target="_blank">Start Bootstrap</a></p>
+                <p class="copyright text-muted">Adapted for <a target="_blank" href="https://hexo.io/">Hexo</a> by <a href="http://www.codeblocq.com/" target="_blank">Jonathan Klughertz</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+    <!-- After footer scripts -->
+    
+<!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<!-- Bootstrap -->
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+<!-- Gallery -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+
+
+</body>
+
+</html>

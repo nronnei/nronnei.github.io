@@ -10,7 +10,7 @@
 
     <!--Description-->
     
-        <meta name="description" content="Our only goal in this post is to make sure we have installed PostgreSQL&#39;s PL/V8.">
+        <meta name="description" content="In this post we&#39;ll learn how to write multi-band callback functions for ST_MapAlgebra.">
     
 
     <!--Author-->
@@ -20,7 +20,7 @@
 
     <!--Open Graph Title-->
     
-        <meta property="og:title" content="Installing PL/V8 in PostgreSQL 9.6"/>
+        <meta property="og:title" content="A Totally Random Map Algebra Callback in PostGIS 2.1, Part 2"/>
     
 
     <!--Open Graph Description-->
@@ -46,7 +46,7 @@
 
     <!-- Title -->
     
-    <title>Installing PL/V8 in PostgreSQL 9.6 - Nick&#39;s GeoJournal</title>
+    <title>A Totally Random Map Algebra Callback in PostGIS 2.1, Part 2 - Nick&#39;s GeoJournal</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
@@ -77,7 +77,7 @@
     
 
     <!-- canonical link -->
-    <link rel="canonical" href="https:/nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/"/>
+    <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis-pt2/"/>
 
 </head>
 
@@ -175,13 +175,13 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
-                    <h1>Installing PL/V8 in PostgreSQL 9.6</h1>
+                    <h1>A Totally Random Map Algebra Callback in PostGIS 2.1, Part 2</h1>
                     
                     
                       <span class="meta">
                           <!-- Date and Author -->
                           
-                          2016-10-30
+                          2017-03-26
                       </span>
                     
                 </div>
@@ -202,7 +202,7 @@
                         
 
 
-<a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/postgresql/">#postgresql</a> <a href="/blog/tags/pl-v8/">#pl/v8</a>
+<a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/raster-math-series/">#raster math series</a> <a href="/blog/tags/pl-pgsql/">#pl/pgsql</a>
 
 
                     
@@ -222,28 +222,24 @@
 
             <!-- Post Main Content -->
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal:"></a>Goal:</h2><p>This is a very straightforward entry. Our only goal in this post is to make sure we have installed PostgreSQL’s <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a>.</p>
-<p><strong>Full Disclosure:</strong> Most of this is straight off the <a href="https://github.com/plv8/plv8" target="_blank" rel="external">GitHub page</a>.</p>
-<img src="/blog/2016/10/install-postgres-9-5-plv8/v8.png" alt="V8 - Google's lightning fast JavaScript engine." title="V8 - Google's lightning fast JavaScript engine.">
-<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose:"></a>Purpose:</h2><p>Install <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a> so that we can use JavaScript to write functions for Postgres and PostGIS. This entry assumes you have a working PostgreSQL v9.2+ installation. If you don’t, check out <a href="http://tecadmin.net/install-postgresql-server-on-ubuntu/#" target="_blank" rel="external">this tutorial</a>.</p>
-<h2 id="Solution"><a href="#Solution" class="headerlink" title="Solution:"></a>Solution:</h2><h4 id="System-Info"><a href="#System-Info" class="headerlink" title="System Info"></a>System Info</h4><p>I’m using…</p>
-<ul>
-<li>OS: Ubuntu 16.04</li>
-<li>PostgreSQL Server 9.5</li>
-<li>PSQL Client 9.6</li>
-<li>PostGIS 2.1 (Not relevant for this process, as long as your version supports PL/v8)</li>
-</ul>
-<h4 id="Process"><a href="#Process" class="headerlink" title="Process"></a>Process</h4><p>Thanks to <code>apt</code> this installation is very easy! Just run:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install postgresql-9.5-plv8</div></pre></td></tr></table></figure></p>
-<p><a href="https://github.com/plv8/plv8#requirement" target="_blank" rel="external">Check GitHub</a> to see if your PostgreSQL version works with PL/V8. I was able to successfully install PL/V8 for PostgreSQL 9.6 by simply tweaking the version number:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install postgresql-9.6-plv8</div></pre></td></tr></table></figure></p>
-<p>After a successful installation, we’ll need to add the language to your database:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">psql <span class="_">-d</span> &lt;database name&gt; -c <span class="string">'CREATE EXTENSION plv8'</span></div></pre></td></tr></table></figure></p>
-<p>If you use <a href="https://github.com/jashkenas/coffeescript" target="_blank" rel="external">CoffeeScript</a> and <a href="http://livescript.net/" target="_blank" rel="external">LiveScript</a>, you can use <code>plcoffee</code> and <code>plls</code> respectively in place of <code>plv8</code>.</p>
-<p>Okay. PL/V8 installed? Check! Language added to the database? Check. Let’s move on to making sure it works.</p>
-<p>GitHub says you can use <code>psql -c &#39;SELECT plv8_version()&#39;</code> to check your version with PL/V8 as of 2.0.0. This did not work for me because at the time of writing the the version in the apt repo is <code>1:1.4.6.ds-1</code>.</p>
-<p>Another method, and perhaps a more direct one, is to 1.) define a simple function and 2.) pass it some dummy data.</p>
-<p><strong>First</strong> we define a test function:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">CREATE OR REPLACE FUNCTION plv8_test(keys text[], vals text[])</div><div class="line">RETURNS text AS $$</div><div class="line">  var o = &#123;&#125;;</div><div class="line">  for(var i=0; i&lt;keys.length; i++)&#123;</div><div class="line">    o[keys[i]] = vals[i];</div><div class="line">  &#125;</div><div class="line">  return JSON.stringify(o);</div><div class="line">$$ LANGUAGE plv8 IMMUTABLE STRICT;</div></pre></td></tr></table></figure></p>
-<p><strong>Second</strong> we pass it some dummy data:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> plv8_test(<span class="built_in">ARRAY</span>[<span class="string">'name'</span>, <span class="string">'age'</span>], <span class="built_in">ARRAY</span>[<span class="string">'Tom'</span>, <span class="string">'29'</span>]);</div></pre></td></tr></table></figure></p>
-<p><strong>If successful,</strong> you should see this response:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">         plv8_test</div><div class="line">---------------------------</div><div class="line"> &#123;"name":"Tom","age":"29"&#125;</div><div class="line">(1 row)</div></pre></td></tr></table></figure></p>
-<h2 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions:"></a>Conclusions:</h2><p>According to <a href="http://www.postgresonline.com/journal/archives/326-Writing-PostGIS-raster-Map-Algebra-Callback-Functions-in-PLV8.html" target="_blank" rel="external">this post from Regina Obe</a>, PL/V8 is great for Map Algebra. Unfortunately, as with most posts I’ve found about the PostGIS Raster Module, fails to use a geographically relevant example of raster analysis. I attempt to remedy that with <a href="/geojournal/tags/raster-math-series/">this series of posts on writing ST_MapAlgebra callback functions with PL/V8.</a></p>
+                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal"></a>Goal</h2><p>In this post we’ll try to get a better understanding of the structure of plpgsql <code>ST_MapAlgebra</code> callback functions. Specifically, we’ll learn how to write a callback that works on one raster with many bands.</p>
+<p>This is the second post in this series, and I encourage you to go back and <a href="/blog/2017/03/random-map-algebra-callback-in-postgis/">read the first</a> if you haven’t already. It gives a much more detailed account of what the parameters mean and why I’m doing things the way I am.</p>
+<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose"></a>Purpose</h2><p>It’s pretty common to operate on more than one band of a raster when performing MapAlgebra calculations. If you’re doing any serious image processing, it’s a fact of life. While the last example was bordering on overkill, we approach the limits of the <a href="http://postgis.net/docs/manual-dev/RT_ST_MapAlgebra_expr.html" target="_blank" rel="external">Expression Version</a> of <code>ST_MapAlgebra</code> very quickly.</p>
+<p>Here we’ll provide another fairly basic example of a plpgsql callback function for <code>ST_MapAlgebra</code> that elucidates how one can interact with the data. This example works one-cell-at-a-time, but you can also operate on neighboring cells using this same callback format (post coming soon).</p>
+<h2 id="Getting-Started"><a href="#Getting-Started" class="headerlink" title="Getting Started"></a>Getting Started</h2><p>If you’re working with real data, carry on! If you’re worried about damaging your dataset or simply don’t want to find one, try simulating some data like I do in my post on <a href="/blog/2017/03/creating-rasters-from-scratch-in-postgis/">creating rasters from scratch.</a>.</p>
+<p>We’ll start off with our same basic structure as last time, but notice that we declare 2 variables that will hold our pixel values.</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- The basic structure of an ST_MapAlgebra() callback</span></div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">OR</span> <span class="keyword">REPLACE</span> <span class="keyword">FUNCTION</span></div><div class="line"></div><div class="line">totally_random_2band_callback(pixel <span class="keyword">double</span> <span class="keyword">precision</span>[][][], pos <span class="built_in">integer</span>[][], VARIADIC userargs <span class="built_in">text</span>[])</div><div class="line">  <span class="keyword">RETURNS</span> <span class="built_in">integer</span></div><div class="line">  <span class="keyword">LANGUAGE</span> plpgsql</div><div class="line">  IMMUTABLE  <span class="comment">-- careful: this function is immutable, yours may not be</span></div><div class="line"></div><div class="line">  <span class="keyword">AS</span> $$</div><div class="line">    <span class="keyword">DECLARE</span></div><div class="line">      r1_val <span class="built_in">integer</span>;</div><div class="line">      r2_val integer;</div><div class="line">    <span class="keyword">BEGIN</span></div><div class="line">      <span class="comment">-- Do Something</span></div><div class="line">    <span class="keyword">END</span>;</div><div class="line">  $$;</div></pre></td></tr></table></figure>
+<p>Of course, you don’t really need to declare variables to hold your pixel values. They just help with clarity for this example.</p>
+<h2 id="Let’s-“Do-Something”"><a href="#Let’s-“Do-Something”" class="headerlink" title="Let’s “Do Something”"></a>Let’s “Do Something”</h2><p>For this example, I’ll use a dummy raster I <a href="/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt3/">created</a> whose first band is initialized with all values set to 5. The second band of the raster contains random integers from 1 to 3 (inclusive). Our callback will generate a random integer between 1 and 10 (inclusive), multiply it by the first band, and divide the product by the second band.</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">-- The basic structure of an ST_MapAlgebra() callback</div><div class="line">CREATE OR REPLACE FUNCTION</div><div class="line"></div><div class="line">totally_random_2band_callback(pixel double precision[][][], pos integer[][], VARIADIC userargs text[])</div><div class="line">  RETURNS integer</div><div class="line">  LANGUAGE plpgsql</div><div class="line">  IMMUTABLE  -- careful: this function is immutable, yours may not be</div><div class="line"></div><div class="line">  AS $$</div><div class="line">    DECLARE</div><div class="line">      r1_val integer;</div><div class="line">      r2_val integer;</div><div class="line">      rando integer;</div><div class="line">      result integer;</div><div class="line">    BEGIN</div><div class="line">      SELECT trunc(random() * 10 + 1)::int INTO rando;  -- Get a random value between 1 &amp; 11, convert to int</div><div class="line">      r1_val := value[1][1][1]::int;</div><div class="line">      r2_val := value[2][1][1]::int;</div><div class="line">      result :=  (r1_val * rando) / r2_val;</div><div class="line"></div><div class="line">      RETURN result;</div><div class="line">    END;</div><div class="line">  $$;</div></pre></td></tr></table></figure>
+<p>Run that.</p>
+<p>Get <code>FUNCTION CREATED</code> back.</p>
+<p>Let’s play ball.</p>
+<p>We’ll call the function and insert the result into an empty table we’ve already created.</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- Inster into the new table</span></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> public.two_band_random(rast)</div><div class="line"><span class="comment">-- Call MapAlgebra</span></div><div class="line"><span class="keyword">SELECT</span> ST_MapAlgebra(</div><div class="line">  <span class="built_in">ARRAY</span>[</div><div class="line">    <span class="keyword">ROW</span>(rast, <span class="number">1</span>),</div><div class="line">    <span class="keyword">ROW</span>(rast, <span class="number">2</span>)</div><div class="line">  ]::rastbandarg[],  <span class="comment">-- Notice that this is pretty different from last time</span></div><div class="line">  <span class="string">'totally_random_callback(double precision[][][], integer[][], text[])'</span>::regprocedure)</div><div class="line"><span class="keyword">FROM</span> public.sim_250;</div></pre></td></tr></table></figure>
+<p>Let’s use QGIS and the DBManager plugin to check our results.</p>
+
+<p>Looks pretty good!</p>
 
 
                 
@@ -258,8 +254,8 @@
     <div id="disqus_thread"></div>
     <script type="text/javascript">
         var disqus_config = function () {
-        this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/"/>
-        this.page.identifier = https:/nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/
+        this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis-pt2/"/>
+        this.page.identifier = https:/nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis-pt2/
         };
 
         (function(){

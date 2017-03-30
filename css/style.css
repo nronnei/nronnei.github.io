@@ -269,6 +269,14 @@ hr.small {
   color: #0085a1;
   text-decoration: underline;
 }
+.post-preview > .post-excerpt {
+  color: #404040;
+  font-size: 18px;
+  margin-top: -30px;
+}
+.post-preview > .post-excerpt.archive {
+  font-size: 16px;
+}
 @media only screen and (min-width: 768px) {
   .post-preview > a > .post-title {
     font-size: 36px;
