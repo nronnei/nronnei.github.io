@@ -20,7 +20,7 @@
 
     <!--Open Graph Title-->
     
-        <meta property="og:title" content="Installing PL/V8 in PostgreSQL 9.6"/>
+        <meta property="og:title" content="Installing PL/V8 in PostgreSQL 9.5"/>
     
 
     <!--Open Graph Description-->
@@ -46,7 +46,7 @@
 
     <!-- Title -->
     
-    <title>Installing PL/V8 in PostgreSQL 9.6 - Nick&#39;s GeoJournal</title>
+    <title>Installing PL/V8 in PostgreSQL 9.5 - Nick&#39;s GeoJournal</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
@@ -175,7 +175,7 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
-                    <h1>Installing PL/V8 in PostgreSQL 9.6</h1>
+                    <h1>Installing PL/V8 in PostgreSQL 9.5</h1>
                     
                     
                       <span class="meta">
@@ -202,7 +202,7 @@
                         
 
 
-<a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/postgresql/">#postgresql</a> <a href="/blog/tags/pl-v8/">#pl/v8</a>
+<a href="/blog/tags/postgresql/">#postgresql</a> <a href="/blog/tags/pl-v8/">#pl/v8</a>
 
 
                     
@@ -222,16 +222,15 @@
 
             <!-- Post Main Content -->
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal:"></a>Goal:</h2><p>This is a very straightforward entry. Our only goal in this post is to make sure we have installed PostgreSQL’s <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a>.</p>
+                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal"></a>Goal</h2><p>This is a very straightforward entry. Our only goal in this post is to make sure we have installed PostgreSQL’s <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a>.</p>
 <p><strong>Full Disclosure:</strong> Most of this is straight off the <a href="https://github.com/plv8/plv8" target="_blank" rel="external">GitHub page</a>.</p>
 <img src="/blog/2016/10/install-postgres-9-5-plv8/v8.png" alt="V8 - Google's lightning fast JavaScript engine." title="V8 - Google's lightning fast JavaScript engine.">
-<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose:"></a>Purpose:</h2><p>Install <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a> so that we can use JavaScript to write functions for Postgres and PostGIS. This entry assumes you have a working PostgreSQL v9.2+ installation. If you don’t, check out <a href="http://tecadmin.net/install-postgresql-server-on-ubuntu/#" target="_blank" rel="external">this tutorial</a>.</p>
-<h2 id="Solution"><a href="#Solution" class="headerlink" title="Solution:"></a>Solution:</h2><h4 id="System-Info"><a href="#System-Info" class="headerlink" title="System Info"></a>System Info</h4><p>I’m using…</p>
+<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose"></a>Purpose</h2><p>Install <a href="https://github.com/plv8/plv8" target="_blank" rel="external">PL/V8</a> so that we can use JavaScript to write functions for Postgres and PostGIS. This entry assumes you have a working PostgreSQL v9.2+ installation. If you don’t, check out <a href="http://tecadmin.net/install-postgresql-server-on-ubuntu/#" target="_blank" rel="external">this tutorial</a>.</p>
+<h2 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h2><h4 id="System-Info"><a href="#System-Info" class="headerlink" title="System Info"></a>System Info</h4><p>I’m using…</p>
 <ul>
 <li>OS: Ubuntu 16.04</li>
 <li>PostgreSQL Server 9.5</li>
-<li>PSQL Client 9.6</li>
-<li>PostGIS 2.1 (Not relevant for this process, as long as your version supports PL/v8)</li>
+<li>PostGIS 2.2 (Not relevant for this process, as long as your version supports PL/v8)</li>
 </ul>
 <h4 id="Process"><a href="#Process" class="headerlink" title="Process"></a>Process</h4><p>Thanks to <code>apt</code> this installation is very easy! Just run:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install postgresql-9.5-plv8</div></pre></td></tr></table></figure></p>
 <p><a href="https://github.com/plv8/plv8#requirement" target="_blank" rel="external">Check GitHub</a> to see if your PostgreSQL version works with PL/V8. I was able to successfully install PL/V8 for PostgreSQL 9.6 by simply tweaking the version number:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install postgresql-9.6-plv8</div></pre></td></tr></table></figure></p>
@@ -243,7 +242,7 @@
 <p><strong>First</strong> we define a test function:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">CREATE OR REPLACE FUNCTION plv8_test(keys text[], vals text[])</div><div class="line">RETURNS text AS $$</div><div class="line">  var o = &#123;&#125;;</div><div class="line">  for(var i=0; i&lt;keys.length; i++)&#123;</div><div class="line">    o[keys[i]] = vals[i];</div><div class="line">  &#125;</div><div class="line">  return JSON.stringify(o);</div><div class="line">$$ LANGUAGE plv8 IMMUTABLE STRICT;</div></pre></td></tr></table></figure></p>
 <p><strong>Second</strong> we pass it some dummy data:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> plv8_test(<span class="built_in">ARRAY</span>[<span class="string">'name'</span>, <span class="string">'age'</span>], <span class="built_in">ARRAY</span>[<span class="string">'Tom'</span>, <span class="string">'29'</span>]);</div></pre></td></tr></table></figure></p>
 <p><strong>If successful,</strong> you should see this response:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">         plv8_test</div><div class="line">---------------------------</div><div class="line"> &#123;"name":"Tom","age":"29"&#125;</div><div class="line">(1 row)</div></pre></td></tr></table></figure></p>
-<h2 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions:"></a>Conclusions:</h2><p>According to <a href="http://www.postgresonline.com/journal/archives/326-Writing-PostGIS-raster-Map-Algebra-Callback-Functions-in-PLV8.html" target="_blank" rel="external">this post from Regina Obe</a>, PL/V8 is great for Map Algebra. Unfortunately, as with most posts I’ve found about the PostGIS Raster Module, fails to use a geographically relevant example of raster analysis. I attempt to remedy that with <a href="/geojournal/tags/raster-math-series/">this series of posts on writing ST_MapAlgebra callback functions with PL/V8.</a></p>
+<h2 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions"></a>Conclusions</h2><p>According to <a href="http://www.postgresonline.com/journal/archives/326-Writing-PostGIS-raster-Map-Algebra-Callback-Functions-in-PLV8.html" target="_blank" rel="external">this post from Regina Obe</a>, PL/V8 is great for Map Algebra. Unfortunately, as with most posts I’ve found about the PostGIS Raster Module, fails to use a geographically relevant example of raster analysis. I attempt to remedy that with <a href="/blog/tags/raster-math-series/">this series of posts</a> on writing ST_MapAlgebra callback functions, but I’m yet to try any with PL/V8 yet.</p>
 
 
                 
@@ -253,26 +252,6 @@
             
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                     
-    <hr />
-    <h3>Comments:</h3>
-    <div id="disqus_thread"></div>
-    <script type="text/javascript">
-        var disqus_config = function () {
-        this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/"/>
-        this.page.identifier = https:/nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/
-        };
-
-        (function(){
-            var dsq = document.createElement('script');
-            dsq.type = 'text/javascript';
-            dsq.async = true;
-            dsq.src = '//' + theme.comments.disqus_shortname + '.disqus.com/embed.js';
-            dsq.setAttribute('data-timestamp', new Date());
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        }());
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-
 
 
 

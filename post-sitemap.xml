@@ -7,8 +7,8 @@
     </url>
 
     <url>
-        <loc>https://nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis/</loc>
-        <lastmod>2017-03-30T17:22:35.622Z</lastmod>
+        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt3/</loc>
+        <lastmod>2017-03-31T17:58:48.134Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 
@@ -16,39 +16,7 @@
 
     <url>
         <loc>https://nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis-pt2/</loc>
-        <lastmod>2017-03-30T17:22:21.666Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.6</priority>
-
-    </url>
-
-    <url>
-        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt3/</loc>
-        <lastmod>2017-03-30T17:22:05.921Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.6</priority>
-
-    </url>
-
-    <url>
-        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis/</loc>
-        <lastmod>2017-03-29T01:51:21.800Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.6</priority>
-
-    </url>
-
-    <url>
-        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt2/</loc>
-        <lastmod>2017-03-29T01:51:20.324Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.6</priority>
-
-    </url>
-
-    <url>
-        <loc>https://nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/</loc>
-        <lastmod>2017-03-28T00:26:42.179Z</lastmod>
+        <lastmod>2017-03-31T17:41:14.590Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 
@@ -56,7 +24,39 @@
 
     <url>
         <loc>https://nronnei.github.io/blog/2017/03/what-happened-to-uncertweb/</loc>
-        <lastmod>2017-03-12T15:53:22.327Z</lastmod>
+        <lastmod>2017-03-31T17:37:02.607Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://nronnei.github.io/blog/2016/10/install-postgres-9-5-plv8/</loc>
+        <lastmod>2017-03-31T17:36:47.783Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt2/</loc>
+        <lastmod>2017-03-31T17:36:35.603Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis/</loc>
+        <lastmod>2017-03-31T17:36:17.415Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis/</loc>
+        <lastmod>2017-03-31T17:29:52.803Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 

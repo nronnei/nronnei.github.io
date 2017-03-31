@@ -10,7 +10,7 @@
 
     <!--Description-->
     
-        <meta name="description" content="In this post, we&#39;ll learn how to create a single-band raster from scratch using PostGIS 2.1.">
+        <meta name="description" content="In this post, we&#39;ll learn how to create a single-band raster from scratch using PostGIS.">
     
 
     <!--Author-->
@@ -202,7 +202,7 @@
                         
 
 
-<a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a>
+<a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/raster/">#raster</a>
 
 
                     
@@ -222,7 +222,7 @@
 
             <!-- Post Main Content -->
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal"></a>Goal</h2><p>In this post, we’ll learn how to create a single-band raster from scratch using PostGIS 2.1. This ability will be particularly useful as we begin exploring the relatively uncharted waters of the PostGIS Raster Module.</p>
+                <h2 id="Goal"><a href="#Goal" class="headerlink" title="Goal"></a>Goal</h2><p>In this post, we’ll learn how to create a single-band raster from scratch using PostGIS. This ability will be particularly useful as we begin exploring the relatively uncharted waters of the PostGIS Raster Module.</p>
 <h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose"></a>Purpose</h2><p>Using <a href="http://postgis.net/docs/manual-2.1/RT_ST_AddBand.html" target="_blank" rel="external"><code>ST_AddBand</code></a> and <a href="http://postgis.net/docs/manual-2.1/RT_ST_MakeEmptyRaster.html" target="_blank" rel="external"><code>ST_MakeEmptyRaster</code></a>, we’ll create a single band, 8 bit unsigned integer raster. While it’s nothing fancy, it will help us better understand the mechanics of the Raster Module and it will also prove useful as a source of training data for the posts in the Raster Math Series.</p>
 <p>Here, I’ll create a 250m resolution raster with a constant value. This method can easily create any other size and at whatever starting value the user may like. See the “All Together Now” section for some other common resolutions translated to decimal degrees.</p>
 <h2 id="Getting-Started"><a href="#Getting-Started" class="headerlink" title="Getting Started"></a>Getting Started</h2><p>First, lets create a table to hold the results of our operations.</p>
@@ -248,26 +248,6 @@
             
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                     
-    <hr />
-    <h3>Comments:</h3>
-    <div id="disqus_thread"></div>
-    <script type="text/javascript">
-        var disqus_config = function () {
-        this.page.url = <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis/"/>
-        this.page.identifier = https:/nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis/
-        };
-
-        (function(){
-            var dsq = document.createElement('script');
-            dsq.type = 'text/javascript';
-            dsq.async = true;
-            dsq.src = '//' + theme.comments.disqus_shortname + '.disqus.com/embed.js';
-            dsq.setAttribute('data-timestamp', new Date());
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        }());
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-
 
 
 
