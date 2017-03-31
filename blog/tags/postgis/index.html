@@ -71,6 +71,17 @@
 
     <!-- Google Analytics -->
     
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-96575226-1', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+
 
 
     <!-- favicon -->
@@ -357,6 +368,7 @@
 
     <!-- After footer scripts -->
     
+
 <!-- jQuery -->
 <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 
@@ -365,6 +377,23 @@
 
 <!-- Gallery -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+
+
+<!-- Disqus Comments -->
+<script type="text/javascript">
+    var disqus_config = function () {
+        this.page.url = 'undefined';
+        this.page.identifier = 'd5d4cd07616a542891b7ec2d0257b3a24b69856e';
+    };
+    (function() {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://geojournal.disqus.com/count.js';
+      s.setAttribute('data-timestamp', +new Date());
+      s.setAttribute('type', 'text/javascript');
+      (d.getElementsByTagName('head')[0] || d.getElementsByTagName('body')[0]).appendChild(s);
+    })();
+</script>
+
 
 
 </body>

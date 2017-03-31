@@ -23,36 +23,43 @@
     </url>
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/raster-math-series/</loc>
-        <lastmod>2017-03-31T17:41:14.590Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.2</priority>
-    </url>
-
-    <url>
-        <loc>https:/nronnei.github.io/blog/tags/pl-pgsql/</loc>
-        <lastmod>2017-03-31T17:41:14.590Z</lastmod>
+        <loc>https:/nronnei.github.io/blog/tags/sql/</loc>
+        <lastmod>2017-03-31T19:12:05.902Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
         <loc>https:/nronnei.github.io/blog/tags/postgis/</loc>
-        <lastmod>2017-03-31T17:58:48.134Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.2</priority>
-    </url>
-
-    <url>
-        <loc>https:/nronnei.github.io/blog/tags/sql/</loc>
-        <lastmod>2017-03-31T17:58:48.134Z</lastmod>
+        <lastmod>2017-03-31T19:12:40.271Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
         <loc>https:/nronnei.github.io/blog/tags/raster/</loc>
-        <lastmod>2017-03-31T17:58:48.134Z</lastmod>
+        <lastmod>2017-03-31T19:12:40.271Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>https:/nronnei.github.io/blog/tags/raster-math-series/</loc>
+        <lastmod>2017-03-31T19:12:40.271Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>https:/nronnei.github.io/blog/tags/pl-pgsql/</loc>
+        <lastmod>2017-03-31T19:12:40.271Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>https:/nronnei.github.io/blog/tags/intro-to-postgis/</loc>
+        <lastmod>2017-03-31T19:12:40.271Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>

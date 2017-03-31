@@ -71,6 +71,17 @@
 
     <!-- Google Analytics -->
     
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-96575226-1', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+
 
 
     <!-- favicon -->
@@ -202,7 +213,7 @@
                         
 
 
-<a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/raster/">#raster</a>
+<a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/intro-to-postgis/">#intro to postgis</a>
 
 
                     
@@ -246,12 +257,16 @@
             <!-- Comments -->
             
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    
-
-
-
+                    <hr />
+                    <h3>Comments:</h3>
+                    <div id="disqus_thread">
+                        <noscript>
+                          Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+                        </noscript>
+                    </div>
                 </div>
             
+
         </div>
     </div>
 </article>
@@ -316,6 +331,7 @@
 
     <!-- After footer scripts -->
     
+
 <!-- jQuery -->
 <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
 
@@ -324,6 +340,23 @@
 
 <!-- Gallery -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+
+
+<!-- Disqus Comments -->
+<script type="text/javascript">
+    var disqus_config = function () {
+        this.page.url = 'https:/nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt3/';
+        this.page.identifier = '465acd74883d15e8befb66f14c3ffd47e16c7930';
+    };
+    (function() {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://geojournal.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      s.setAttribute('type', 'text/javascript');
+      (d.getElementsByTagName('head')[0] || d.getElementsByTagName('body')[0]).appendChild(s);
+    })();
+</script>
+
 
 
 </body>
