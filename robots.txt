@@ -6,7 +6,7 @@ Allow: / tags /
 Allow: / about /
 Allow: / apps /
 Allow: / blog /
-Disallow: / projects /
+Allow: / projects /
 Disallow: / vendors /
 Disallow: / css /
 Disallow: / img /

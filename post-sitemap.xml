@@ -7,6 +7,14 @@
     </url>
 
     <url>
+        <loc>https://nronnei.github.io/blog/2017/03/passing-arguments-to-map-algebra-callbacks/</loc>
+        <lastmod>2017-04-01T21:22:42.401Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
         <loc>https://nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis/</loc>
         <lastmod>2017-03-31T19:12:40.271Z</lastmod>
         <changefreq>weekly</changefreq>
