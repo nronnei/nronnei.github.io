@@ -98,9 +98,11 @@ hr.small {
   .navbar-custom .navbar-brand:focus {
     color: rgba(255,255,255,0.8);
   }
+  .navbar-custom .nav li {
+    padding: 20px;
+  }
   .navbar-custom .nav li a {
     color: #fff;
-    padding: 20px;
   }
   .navbar-custom .nav li a:hover,
   .navbar-custom .nav li a:focus {
