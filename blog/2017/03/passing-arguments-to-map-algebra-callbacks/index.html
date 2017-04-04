@@ -4,10 +4,11 @@
 <!-- Head tag -->
 <head>
 
+    <!-- Time Critical -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    
     <!--Description-->
     
         <meta name="description" content="The docs say that we can pass additional arguments to ST_MapAlgebra callbacks, but how do we actually do that?">
@@ -29,7 +30,7 @@
     
 
     <!--Open Graph Site Name-->
-    <meta property="og:site_name" content="Nick&#39;s GeoJournal"/>
+    <meta property="og:site_name" content="Nick Ronnei"/>
 
     <!--Type page-->
     
@@ -46,7 +47,7 @@
 
     <!-- Title -->
     
-    <title>Passing Arguments to Map Algebra Callbacks - Nick&#39;s GeoJournal</title>
+    <title>Passing Arguments to Map Algebra Callbacks - Nick Ronnei</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
@@ -107,7 +108,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/">GeoJournal</a>
+            <a class="navbar-brand" href="/">Nick Ronnei</a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
@@ -181,7 +182,7 @@
     <!-- Page Header -->
 <!-- Set your background image for this header in your post front-matter: cover -->
 
-<header class="intro-header" style="background-image: url('/img/home-bg.jpg')">
+<header class="intro-header" style="background-image: url('/img/cover-bg-pch-cars.png')">
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
@@ -213,7 +214,7 @@
                         
 
 
-<a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/raster-math-series/">#raster math series</a> <a href="/blog/tags/pl-pgsql/">#pl/pgsql</a>
+<a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/pl-pgsql/">#pl/pgsql</a> <a href="/blog/tags/raster-math-series/">#raster math series</a>
 
 
                     
@@ -243,7 +244,8 @@
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span></div><div class="line">  ST_AddBand(b1.rast,  <span class="comment">-- torast</span></div><div class="line">    ST_MapAlgebra(b1.rast,</div><div class="line">      <span class="number">1</span>,</div><div class="line">      <span class="string">'generate_random_int_raster(double precision[][][], integer[][], text[])'</span>::regprocedure,</div><div class="line">      <span class="string">'8BUI'</span>::<span class="built_in">text</span>,  <span class="comment">--pixeltype</span></div><div class="line">      <span class="literal">null</span>,          <span class="comment">-- extenttype</span></div><div class="line">      <span class="literal">null</span>,          <span class="comment">-- customextent</span></div><div class="line">      <span class="literal">null</span>,          <span class="comment">-- distancex</span></div><div class="line">      <span class="literal">null</span>,          <span class="comment">-- distancey</span></div><div class="line">      <span class="string">'3'</span>::<span class="built_in">text</span>,     <span class="comment">-- firstextraargument</span></div><div class="line">      <span class="string">'1'</span>::<span class="built_in">text</span>,     <span class="comment">-- secondextraargument</span></div><div class="line">      <span class="string">'TRUE'</span>::<span class="built_in">text</span>   <span class="comment">-- third extra argument</span></div><div class="line">    ),  <span class="comment">-- fromrast</span></div><div class="line">    <span class="number">1</span>,  <span class="comment">-- Target FROM band (band one of fromrast)</span></div><div class="line">    <span class="number">2</span>   <span class="comment">-- Target TO band (band two of torast)</span></div><div class="line">  )</div><div class="line"><span class="keyword">AS</span> rast</div><div class="line"><span class="keyword">FROM</span> starter <span class="keyword">AS</span> b1;</div></pre></td></tr></table></figure>
 <p>Now, you might be thinking, “That’s exactly how the <a href="https://www.postgresql.org/docs/9.5/static/xfunc-sql.html" target="_blank" rel="external">docs</a> (jump to ‘35.4.5. SQL Functions with Variable Numbers of Arguments’) say you pass <code>VARIADIC</code> arguments, Nick!” And I read those too!</p>
 <p>I don’t know why it didn’t work the first time I tried it, but as I explained on SE, I have a very strong suspicion it had something to do with my inexperience with PostGIS in general and how it works with double/single quotes in particular. I hope this helps you avoid the same problem.</p>
-<p>If you’re interested in learning more about how you can use ST_MapAlgebra, check out my <a href="/blog/tags/raster-math-series">Raster Math Series</a>. If you’d like to see more about writing ST_MapAlgebra callbacks that accept userags, you can dig through <a href="https://github.com/pedrogit/postgisaddons/blob/master/postgis_addons.sql" target="_blank" rel="external">these examples</a> suggested by Pierre Racine, or this <a href="http://www.bostongis.com/blog/index.php?/archives/234-PostGIS-Day-Game-of-Life-celebration.html" target="_blank" rel="external">totally crazy but really cool one</a> from <a href="https://twitter.com/reginaobe" target="_blank" rel="external">Regina Obe</a> on setting up the famous <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life" target="_blank" rel="external">Game of Life</a> in PostGIS.</p>
+<p>If you’re interested in learning more about how you can use <code>ST_MapAlgebra</code>, check out my <a href="/blog/tags/raster-math-series">Raster Math Series</a>.</p>
+<p>If you’d like to see more about writing <code>ST_MapAlgebra</code> callbacks that accept userags, you can dig through <a href="https://github.com/pedrogit/postgisaddons/blob/master/postgis_addons.sql" target="_blank" rel="external">these examples</a> suggested by Pierre Racine, or this <a href="http://www.bostongis.com/blog/index.php?/archives/234-PostGIS-Day-Game-of-Life-celebration.html" target="_blank" rel="external">totally crazy but really cool one</a> from <a href="https://twitter.com/reginaobe" target="_blank" rel="external">Regina Obe</a> on setting up the famous <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life" target="_blank" rel="external">Game of Life</a> in PostGIS.</p>
 
 
                 
@@ -325,32 +327,16 @@
 
 
     <!-- After footer scripts -->
-    
-
-<!-- jQuery -->
-<script src="https//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <!-- jQuery -->
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 
 <!-- Bootstrap -->
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
 <!-- Gallery -->
-<script src="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
 
 
-<!-- Disqus Comments -->
-<script type="text/javascript">
-    var disqus_config = function () {
-        this.page.url = 'https:/nronnei.github.io/blog/2017/03/passing-arguments-to-map-algebra-callbacks/';
-        this.page.identifier = 'ac09c28c384c6949135a350571d7d3abf50fbeb3';
-    };
-    (function() {
-      var d = document, s = d.createElement('script');
-      s.src = '//geojournal.disqus.com/embed.js';
-      s.setAttribute('data-timestamp', +new Date());
-      s.setAttribute('type', 'text/javascript');
-      (d.getElementsByTagName('head')[0] || d.getElementsByTagName('body')[0]).appendChild(s);
-    })();
-</script>
 
 
 

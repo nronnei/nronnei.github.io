@@ -8,15 +8,7 @@
 
     <url>
         <loc>https://nronnei.github.io/blog/2017/03/passing-arguments-to-map-algebra-callbacks/</loc>
-        <lastmod>2017-04-04T02:55:48.777Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.6</priority>
-
-    </url>
-
-    <url>
-        <loc>https://nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis/</loc>
-        <lastmod>2017-03-31T19:12:40.271Z</lastmod>
+        <lastmod>2017-04-04T13:55:59.120Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 
@@ -24,15 +16,15 @@
 
     <url>
         <loc>https://nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis-pt2/</loc>
-        <lastmod>2017-03-31T19:12:29.602Z</lastmod>
+        <lastmod>2017-04-04T13:51:37.083Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 
     </url>
 
     <url>
-        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt2/</loc>
-        <lastmod>2017-03-31T19:12:05.902Z</lastmod>
+        <loc>https://nronnei.github.io/blog/2017/03/random-map-algebra-callback-in-postgis/</loc>
+        <lastmod>2017-04-04T13:51:32.575Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 
@@ -40,7 +32,7 @@
 
     <url>
         <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt3/</loc>
-        <lastmod>2017-03-31T19:11:51.050Z</lastmod>
+        <lastmod>2017-04-04T13:50:18.043Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 
@@ -48,7 +40,15 @@
 
     <url>
         <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis/</loc>
-        <lastmod>2017-03-31T19:11:41.838Z</lastmod>
+        <lastmod>2017-04-04T13:34:14.311Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://nronnei.github.io/blog/2017/03/creating-rasters-from-scratch-in-postgis-pt2/</loc>
+        <lastmod>2017-04-04T13:34:01.235Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
 
