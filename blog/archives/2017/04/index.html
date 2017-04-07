@@ -11,7 +11,7 @@
     
     <!--Description-->
     
-        <meta name="description" content="A small mystery I&#39;ve stumbled upon during my thesis research.">
+        <meta name="description" content="Thoughts, experiments, and advice for FOSS GIScience">
     
 
     <!--Author-->
@@ -21,7 +21,7 @@
 
     <!--Open Graph Title-->
     
-        <meta property="og:title" content="What Happened to the UncertWeb?"/>
+        <meta property="og:title" content="Nick Ronnei"/>
     
 
     <!--Open Graph Description-->
@@ -34,7 +34,7 @@
 
     <!--Type page-->
     
-        <meta property="og:type" content="article" />
+        <meta property="og:type" content="website" />
     
 
     <!--Page Cover-->
@@ -47,7 +47,7 @@
 
     <!-- Title -->
     
-    <title>What Happened to the UncertWeb? - Nick Ronnei</title>
+    <title>Archives: 2017/4 - Nick Ronnei</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
@@ -89,7 +89,7 @@
     
 
     <!-- canonical link -->
-    <link rel="canonical" href="https:/nronnei.github.io/blog/2017/03/what-happened-to-uncertweb/"/>
+    <link rel="canonical" href="https:/nronnei.github.io/blog/archives/2017/04/"/>
 
 </head>
 
@@ -179,89 +179,55 @@
 </nav>
 
     <!-- Main Content -->
-    <!-- Page Header -->
-<!-- Set your background image for this header in your post front-matter: cover -->
+    
 
-<header class="intro-header" style="background-image: url('uncertweb-cover.jpg')">
+<!-- Page Header -->
+<!-- Set your background image for this header in the theme's configuration: index_cover -->
+<header class="intro-header" style="background-image: url('/img/cover-bg-train-tracks.png')">
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <div class="post-heading">
-                    <h1>What Happened to the UncertWeb?</h1>
-                    
-                    
-                      <span class="meta">
-                          <!-- Date and Author -->
-                          
-                          2017-03-11
-                      </span>
-                    
+                <div class="site-heading">
+                    <h1>2017/4</h1>
                 </div>
             </div>
         </div>
     </div>
 </header>
 
-<!-- Post Content -->
-<article>
-    <div class="container">
-        <div class="row">
-
-            <!-- Tags and categories -->
-           
-                <div class="col-lg-4 col-lg-offset-2 col-md-5 col-md-offset-1 post-tags">
-                    
-                        
-
-
-<a href="/blog/tags/geostats/">#geostats</a>
-
-
-                    
-                </div>
-                <div class="col-lg-4 col-md-5 post-categories">
-                    
-                        
-
-<a href="/blog/categories/cruft/">cruft</a>/ <a href="/blog/categories/cruft/thesis/">thesis</a>
-
-                    
-                </div>
+<!-- Main Content -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
             
+                <div class="post-preview">
+    <a href="/blog/2017/04/calculating-slope-on-tiled-data/">
+        <h1 class="post-title archive">
+            Calculating Slope on a Tiled Dataset, Part 1
+        </h1>
+    </a>
+    <p class="post-meta archive">
+        <!-- Date and Author -->
+        
+        2017-04-07
+    </p>
+    
+      <p class="post-excerpt">
+        Today we'll examine the implications of calculating slope on a tiled DEM.
+      </p>
+    
 
-            <!-- Gallery -->
+</div>
+
             
-
-            <!-- Post Main Content -->
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <h2 id="A-Modern-Mystery"><a href="#A-Modern-Mystery" class="headerlink" title="A Modern Mystery"></a>A Modern Mystery</h2><p>In the course of my thesis research on developing a geodata portalt to distribute the results some error modeling work Dr. Ashton Shortridge performed, I discovered a cool framework for doing something similar to what I proposed called the <a href="https://research.aston.ac.uk/portal/files/368591/EMS_Special_Issue_Integrated_Modelling_accepted_draft.pdf" target="_blank" rel="external">UncertWeb</a>. An uncertainty enabled counterpart to the <a href="http://www.eurogeoss.eu/Documents/publications%20-%20papers/Environmental%20model%20access%20and%20interoperability-%20The%20GEO%20Model%20Web%20initiative_WP2%20%20jan2013.pdf" target="_blank" rel="external">GEO Model Web</a>, the UncertWeb aims to provide a library of models, model engines, and model services which consider uncertainty (for more detail, <a href="https://research.aston.ac.uk/portal/files/368591/EMS_Special_Issue_Integrated_Modelling_accepted_draft.pdf" target="_blank" rel="external">read the paper</a>).</p>
-<p>The idea is more or less the same as mine:</p>
-<ol>
-<li>Geostatistical modeling is hard to do for the average user</li>
-<li>There are geostats experts who build error-aware models</li>
-<li>If people could use those models without being experts, then they could improve their own research</li>
-<li>The web helps us realize number 3 by providing Model-as-a-Service (MaaS), Service Oriented Architecture</li>
-</ol>
-<p>In other words, the web lets experts do the hard stuff and users access the final product. A fairly sound idea à la “work smarter not harder” philosophy!</p>
-<p>However, something happened…</p>
-<p><a href="http://www.uncertweb.org" target="_blank" rel="external">The website</a> for UncertWeb returns no response at all, despite the fact that it’s <a href="https://who.is/whois/uncertweb.org" target="_blank" rel="external">still registered</a> to one of the main developers.</p>
-<p>On the <a href="https://wiki.aston.ac.uk/foswiki/bin/view/UncertWeb/UncertWebSoftware" target="_blank" rel="external">official project page</a>, things seem to be going well. However, a look at the University of Muenster’s <a href="https://www.uni-muenster.de/Geoinformatics/en/research/projects/UncertWeb.html" target="_blank" rel="external">page for the project</a> says it finished in 2013. A look at the <a href="https://github.com/uncertweb/" target="_blank" rel="external">official GitHub Organization account</a> and included repos suggests that development died off in 2013, with a few exceptions. To make matters more confusing, a look at the <a href="https://github.com/52North/UncertWeb" target="_blank" rel="external">52North version</a> of the UncertWeb repo shows fairly heavy development in 2016.</p>
-<p>It seems wrong that such a good, useful idea should fade away so quickly. Sure, it’s very complicated to pull it all together, but there was so much ambition in 2013! So many papers published relating to the topic, too.</p>
-<p>So, I ask plaintively, <strong>What happened to the UncertWeb?</strong></p>
-<hr>
-<h2 id="Update-03-30-17"><a href="#Update-03-30-17" class="headerlink" title="Update  -  03/30/17"></a>Update  -  03/30/17</h2><p>I emailed Dr. Pebesema one of the prcinipal investigators on this project (and autor of R’s <code>gstat</code> package) to ask what happened to the project.</p>
-<p>He informed me that the project was funded from 2009 to 2012, and he hasn’t been involved with it since. He also suggested that I contact the developer at 52North who has been working on it. I’ll post another update if and when I do.</p>
-
-
-                
-            </div>
-
-            <!-- Comments -->
-            
-
+            <div class="archive-before-pagination"></div>
+            <ul class="pager">
+    
+    
+</ul>
         </div>
     </div>
-</article>
+</div>
 
 
     <!-- Footer -->

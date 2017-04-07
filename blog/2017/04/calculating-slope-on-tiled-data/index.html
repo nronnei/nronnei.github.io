@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+
+    <!-- Time Critical -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!--Description-->
+    
+        <meta name="description" content="Today we&#39;ll examine the implications of calculating slope on a tiled DEM.">
+    
+
+    <!--Author-->
+    
+        <meta name="author" content="Nick Ronnei">
+    
+
+    <!--Open Graph Title-->
+    
+        <meta property="og:title" content="Calculating Slope on a Tiled Dataset, Part 1"/>
+    
+
+    <!--Open Graph Description-->
+    
+        <meta property="og:description" content="Thoughts, experiments, and advice for FOSS GIScience" />
+    
+
+    <!--Open Graph Site Name-->
+    <meta property="og:site_name" content="Nick Ronnei"/>
+
+    <!--Type page-->
+    
+        <meta property="og:type" content="article" />
+    
+
+    <!--Page Cover-->
+    
+
+        <meta name="twitter:card" content="summary" />
+    
+        <meta name="twitter:site" content="nronnei>" />
+    
+
+    <!-- Title -->
+    
+    <title>Calculating Slope on a Tiled Dataset, Part 1 - Nick Ronnei</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+
+    <!-- Custom Fonts -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="//oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Gallery -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.css" type="text/css" rel="stylesheet" />
+
+    <!-- Google Analytics -->
+    
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-96575226-1', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+
+
+
+    <!-- favicon -->
+    
+
+    <!-- canonical link -->
+    <link rel="canonical" href="https:/nronnei.github.io/blog/2017/04/calculating-slope-on-tiled-data/"/>
+
+</head>
+
+
+<body>
+
+    <!-- Menu -->
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Nick Ronnei</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                
+                    <li>
+                        <a href="/">
+                            
+                                Home
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/about">
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/apps">
+                            
+                                Apps
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog">
+                            
+                                Blog
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="/blog/archives">
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://github.com/nronnei/">
+                            
+                                <i class="fa fa-github fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+                    <li>
+                        <a href="https://twitter.com/nronnei/">
+                            
+                                <i class="fa fa-twitter fa-stack-2x"></i>
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+    <!-- Main Content -->
+    <!-- Page Header -->
+<!-- Set your background image for this header in your post front-matter: cover -->
+
+<header class="intro-header" style="background-image: url('/img/cover-bg-pch-cars.png')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Calculating Slope on a Tiled Dataset, Part 1</h1>
+                    
+                    
+                      <span class="meta">
+                          <!-- Date and Author -->
+                          
+                          2017-04-07
+                      </span>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Tags and categories -->
+           
+                <div class="col-lg-4 col-lg-offset-2 col-md-5 col-md-offset-1 post-tags">
+                    
+                        
+
+
+<a href="/blog/tags/raster/">#raster</a> <a href="/blog/tags/postgis/">#postgis</a> <a href="/blog/tags/sql/">#sql</a> <a href="/blog/tags/raster-math-series/">#raster math series</a>
+
+
+                    
+                </div>
+                <div class="col-lg-4 col-md-5 post-categories">
+                    
+                        
+
+<a href="/blog/categories/database/">database</a>
+
+                    
+                </div>
+            
+
+            <!-- Gallery -->
+            
+
+            <!-- Post Main Content -->
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <h2 id="The-Problem"><a href="#The-Problem" class="headerlink" title="The Problem"></a>The Problem</h2><p>PostGIS supplies us with a nice function, <code>ST_Slope</code>, that quickly calculated slope from a DEM. However, we can’t calculate slope at the edge of a raster, because we need neighboring pixels on all sides of our targeted pixel to calculate its slope. With tiled rasters, I think we can expect to encounter this problem frequently.</p>
+<p>This post is all about testing how PostGIS responds to that problem.</p>
+<h2 id="Hypothesis"><a href="#Hypothesis" class="headerlink" title="Hypothesis"></a>Hypothesis</h2><p>This post is just an initial examination of what happens when we calculate slope on a tiled DEM.</p>
+<p><strong>My hypothesis: we’ll see edge effects at every tile boundary unless we use <code>ST_Union</code>.</strong></p>
+<p>If this is the case, then we have to turn our minds to solving the problem. One way that jumps to mind initially would be to tile the DEM at a resolution that would work for the output</p>
+<p>Let’s see what really happens!</p>
+<h2 id="Getting-Started"><a href="#Getting-Started" class="headerlink" title="Getting Started"></a>Getting Started</h2><h4 id="The-Data"><a href="#The-Data" class="headerlink" title="The Data"></a>The Data</h4><p>I’ll be using ASTER GDEM v2* for this test. If you’d like to follow along you will need an actual DEM since we’re calculating slope, rather than the simulation approach I’ve encouraged in some of my <a href="/blog/tags/intro-to-postgis">other posts</a>. You can use the same data I’m using by downloading it from <a href="http://gdex.cr.usgs.gov/gdex/" target="_blank" rel="external">LDAAC GDEx</a> or <a href="http://reverb.echo.nasa.gov/reverb/" target="_blank" rel="external">NASA Reverb</a> after creating a free account. J-spacesystems used to distribute it as well, though <a href="http://www.jspacesystems.or.jp/en_/archives/116" target="_blank" rel="external">they ceased doing so</a> in 2016. I highly recommend Reverb, and there’s a good guide on how to download it <a href="http://gis.stackexchange.com/a/17999/37341" target="_blank" rel="external">here.</a></p>
+<p>If you’re not familiar with ASTER GDEM, it’s supposed to be the higher-resolution successor to SRTM. However, there are many issues with the data. I’ve written about some of them if you’d like to learn more.</p>
+<h4 id="Pick-an-Area"><a href="#Pick-an-Area" class="headerlink" title="Pick an Area"></a>Pick an Area</h4><p>I’ve got GDEM v2 for most of the globe, so I’m going to select a subset of the data. It doesn’t really matter where, but I want something with some interesting topography. I tiled GDEM at 100x100 when I pulled it in, so we won’t need to do that.</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"><span class="comment">-- New table for new data</span></div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> public.dem_foco_100 (</div><div class="line">  rid <span class="built_in">SERIAL</span> primary <span class="keyword">key</span>, rast raster</div><div class="line">);</div><div class="line"></div><div class="line"><span class="comment">-- Select an area within 30km of downtown Fort Collins</span></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> dem_foco_100(rast)</div><div class="line"><span class="keyword">SELECT</span> rast</div><div class="line"><span class="keyword">FROM</span> gdem_100</div><div class="line"><span class="keyword">WHERE</span> ST_Intersects(</div><div class="line">  ST_Envelope(rast)  <span class="comment">-- Raster tile bounding box</span></div><div class="line">, ST_Envelope(       <span class="comment">-- Get a bouding box</span></div><div class="line">    ST_Buffer(       <span class="comment">-- Of a buffer</span></div><div class="line">      ST_SetSRID(    <span class="comment">-- Of a point in downtown FOCO</span></div><div class="line">        ST_MakePoint(<span class="number">-105.085670</span>, <span class="number">40.572171</span>)</div><div class="line">        , <span class="number">4326</span>)::geography  <span class="comment">-- Note the use of the geography type</span></div><div class="line">      , <span class="number">30000</span>)::geometry)   <span class="comment">-- The buffer radius is 10,000m. We</span></div><div class="line">                            <span class="comment">-- convert back to geom to get BB.</span></div><div class="line">);</div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">-- Constrain and index rasters to improve query speed</span></div><div class="line"><span class="keyword">SELECT</span> AddRasterConstraints(</div><div class="line">  <span class="string">'foco_dem_100'</span>::<span class="keyword">name</span>,  <span class="comment">-- table</span></div><div class="line">  <span class="string">'rast'</span>::<span class="keyword">name</span>  <span class="comment">-- raster geometry column</span></div><div class="line">);</div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">INDEX</span> foco_dem_100_gist_idx</div><div class="line"><span class="keyword">ON</span> foco_dem_100</div><div class="line"><span class="keyword">USING</span> GIST(ST_ConvexHull(rast));</div></pre></td></tr></table></figure>
+<p>This query selects a the area around Fort Collins, Colorado, USA. Specifically, I’ve selected all raster tiles that intersect the bounding box of a 30km buffer around Colorado State University.</p>
+<img src="/blog/2017/04/calculating-slope-on-tiled-data/data-overview.png" alt="Our initial data." title="Our initial data.">
+<p><a href="./data-overview.png" target="_blank">View full size</a></p>
+<p>Notice that I used the <code>geography</code> type in the query above. I did this so I could specify my buffer length in meters, rather than degrees. Using the <code>geography</code> variant of <code>ST_Buffer</code> (<a href="http://www.postgis.org/docs/ST_Buffer.html" target="_blank" rel="external">the final variant listed here</a>) of the function, as the docs explain, can cause some problem with geometries that cover large areas, but I think it’s worth the convenience in this case.</p>
+<h2 id="Hit-the-Slopes"><a href="#Hit-the-Slopes" class="headerlink" title="Hit the Slopes"></a>Hit the Slopes</h2><h4 id="First-Attempt"><a href="#First-Attempt" class="headerlink" title="First Attempt"></a>First Attempt</h4><p>Alright, with our subset selected, let’s try out the operation and see what we get. Here, we’ll get the slope for a 10km area around CSU.</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> public.slope_foco_100 (</div><div class="line">  rid <span class="built_in">SERIAL</span> primary <span class="keyword">key</span>, rast raster</div><div class="line">);</div><div class="line"></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> slope_foco_100(rast)</div><div class="line"><span class="keyword">SELECT</span> ST_Slope(</div><div class="line">  rast,</div><div class="line">  <span class="number">1</span>,              <span class="comment">-- Band</span></div><div class="line">  <span class="string">'32BF'</span>,         <span class="comment">-- Pixel Type</span></div><div class="line">  <span class="string">'DEGRESS'</span>,      <span class="comment">-- Slope units</span></div><div class="line">  <span class="number">111120</span>,         <span class="comment">-- Scale (convert Lon/Lat to Meters)</span></div><div class="line">  <span class="literal">FALSE</span>::<span class="built_in">boolean</span>  <span class="comment">-- Interpolate nodata?</span></div><div class="line">)</div><div class="line"><span class="keyword">FROM</span> dem_foco_100</div><div class="line"><span class="keyword">WHERE</span> ST_Intersects(</div><div class="line">  ST_Envelope(rast)</div><div class="line">, ST_Envelope(</div><div class="line">    ST_Buffer(ST_SetSRID(ST_MakePoint(<span class="number">-105.085670</span>, <span class="number">40.572171</span>), <span class="number">4326</span>)::geography</div><div class="line">      , <span class="number">10000</span>)::geometry)</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>Okay, time to pop over to QGIS and see what we’ve got!</p>
+<img src="/blog/2017/04/calculating-slope-on-tiled-data/with-edge-effects.png" alt="Calculating slope on a tiled DEM leaves edge effects." title="Calculating slope on a tiled DEM leaves edge effects.">
+<p><a href="./with-edge-effects.png" target="_blank">View full size</a></p>
+<p>Well, shoot. See the weird grid that shows up in the slope area? Looks like we have edge effects.</p>
+<p>I’d expected that, but you can always hope you’re wrong about these kind of things! Let’s figure out what we can do about it.</p>
+<h4 id="Second-Attempt"><a href="#Second-Attempt" class="headerlink" title="Second Attempt"></a>Second Attempt</h4><p>Since we’re having trouble with the edge effects, one thing we can do is get rid of the edges.</p>
+<p>Using <code>ST_Union</code>, we can combine all the tiles into a single raster befoe we calculate slope on it. This way, we will only have problems at the very edge of our study area where they’re not as impactful.</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> public.slope_good_100 (</div><div class="line">  rid <span class="built_in">SERIAL</span> primary <span class="keyword">key</span>, rast raster</div><div class="line">);</div><div class="line"></div><div class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> slope_good_100(rast)</div><div class="line"><span class="keyword">SELECT</span> ST_Slope(ST_Union(rast), <span class="number">1</span>, <span class="string">'32BF'</span>, <span class="string">'DEGRESS'</span>, <span class="number">111120</span>, <span class="literal">FALSE</span>)</div><div class="line"><span class="keyword">FROM</span> dem_foco_100</div><div class="line"><span class="keyword">WHERE</span> ST_Intersects(</div><div class="line">  ST_Envelope(rast)</div><div class="line">, ST_Envelope(</div><div class="line">    ST_Buffer(ST_SetSRID(ST_MakePoint(<span class="number">-105.085670</span>, <span class="number">40.572171</span>), <span class="number">4326</span>)::geography</div><div class="line">      , <span class="number">10000</span>)::geometry)</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>Back in QGIS, we can see that the this time around, we don’t have the weird grid! Hooray!</p>
+<img src="/blog/2017/04/calculating-slope-on-tiled-data/without-edge-effects.png" alt="Using ST_Union on a tiled DEM before calculating slope reduces edge effects." title="Using ST_Union on a tiled DEM before calculating slope reduces edge effects.">
+<p><a href="./without-edge-effects.png" target="_blank">View full size</a></p>
+<h2 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions"></a>Conclusions</h2><p>We can easily avoid the problems created when calculating slope on a tiled DEM with the powers of ST_Union. Great news! Proceed with your analysis. In fact, <a href="./calculating-slope-on-tiled-data.sql">download the code</a> from this post as a guide to help you!</p>
+<p>But what if you need to get the slope for an extremely large area, like, say, the whole world? You can’t just <code>SELECT ST_Union(rast)</code> the entire globe, it’s too much data! We’d need a way to work through it bit by bit, calculating slope one tile at a time.</p>
+<p>I face that exact problem in my thesis research. I’m working on a blog post about it now. Stay tuned for more! I’ll update this post with a link when I finish it.</p>
+<p>*ASTER GDEM is a product of METI and NASA.</p>
+
+
+                
+            </div>
+
+            <!-- Comments -->
+            
+
+        </div>
+    </div>
+</article>
+
+
+    <!-- Footer -->
+    <hr />
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                        <li>
+                            <a href="https://twitter.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="https://github.com/nronnei/" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+
+                    
+                        <li>
+                            <a href="mailto:nronnei@gmail.com" target="_blank">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-envelope-o fa-stack-1x fa-inverse"></i>
+                                </span>
+                            </a>
+                        </li>
+                    
+
+                    
+                </ul>
+                <p class="copyright text-muted">&copy; 2017 Nick Ronnei<br></p>
+                <p class="copyright text-muted">Original Theme <a target="_blank" href="http://startbootstrap.com/template-overviews/clean-blog/">Clean Blog</a> from <a href="http://startbootstrap.com/" target="_blank">Start Bootstrap</a></p>
+                <p class="copyright text-muted">Adapted for <a target="_blank" href="https://hexo.io/">Hexo</a> by <a href="http://www.codeblocq.com/" target="_blank">Jonathan Klughertz</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+    <!-- After footer scripts -->
+    <!-- jQuery -->
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<!-- Bootstrap -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+<!-- Gallery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.3.5/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+
+
+
+
+
+</body>
+
+</html>
