@@ -2,63 +2,63 @@
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/postgresql/</loc>
+        <loc>https://nronnei.github.io/blog/tags/postgresql/</loc>
         <lastmod>2017-03-31T17:36:47.783Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/pl-v8/</loc>
+        <loc>https://nronnei.github.io/blog/tags/pl-v8/</loc>
         <lastmod>2017-03-31T17:36:47.783Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/geostats/</loc>
+        <loc>https://nronnei.github.io/blog/tags/geostats/</loc>
         <lastmod>2017-03-31T17:37:02.607Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/pl-pgsql/</loc>
+        <loc>https://nronnei.github.io/blog/tags/pl-pgsql/</loc>
         <lastmod>2017-04-04T13:55:59.120Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/intro-to-postgis/</loc>
+        <loc>https://nronnei.github.io/blog/tags/intro-to-postgis/</loc>
         <lastmod>2017-04-05T23:04:04.189Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/raster/</loc>
+        <loc>https://nronnei.github.io/blog/tags/raster/</loc>
         <lastmod>2017-04-07T23:28:34.394Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/postgis/</loc>
+        <loc>https://nronnei.github.io/blog/tags/postgis/</loc>
         <lastmod>2017-04-07T23:28:34.394Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/sql/</loc>
+        <loc>https://nronnei.github.io/blog/tags/sql/</loc>
         <lastmod>2017-04-07T23:28:34.394Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>https:/nronnei.github.io/blog/tags/raster-math-series/</loc>
+        <loc>https://nronnei.github.io/blog/tags/raster-math-series/</loc>
         <lastmod>2017-04-07T23:28:34.394Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
