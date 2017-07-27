@@ -3,7 +3,7 @@
 var map = L.mapbox.map('map', 'nronnei.781eb50d', {
   zoomControl: false,
   zoom: 11,
-  center: [42.72248848125474, -84.52657699584962]
+  center: [42.790613895161556, -84.50340270996094]
 });
 
 new L.control.zoom({position: 'bottomright'}).addTo(map);
