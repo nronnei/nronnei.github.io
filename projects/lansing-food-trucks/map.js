@@ -48,8 +48,8 @@ map.on('ready', function() {
       if (feature.properties.featured.toLowerCase() != 'false') {
 
         markerStyle = L.icon({
-          iconUrl: '_img/ft-featured-icon.png',
-        	iconRetinaUrl: '_img/ft-featured-icon@2x.png',
+          iconUrl: 'ft-featured-icon.png',
+        	iconRetinaUrl: 'ft-featured-icon@2x.png',
         	iconSize: [48, 47],
         	iconAnchor: [22, 23],
           popupAnchor: [0, -28]
@@ -58,8 +58,8 @@ map.on('ready', function() {
       } else {
 
         markerStyle = L.icon({
-          iconUrl: '_img/ft-icon.png',
-        	iconRetinaUrl: '_img/ft-icon@2x.png',
+          iconUrl: 'ft-icon.png',
+        	iconRetinaUrl: 'ft-icon@2x.png',
         	iconSize: [48, 48],
         	iconAnchor: [24, 24],
         	popupAnchor: [0, -28]
