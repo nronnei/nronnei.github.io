@@ -7,6 +7,13 @@
     </url>
     
     <url>
+        <loc>https://nronnei.github.io/apps/</loc>
+        <lastmod>2017-07-27T14:26:49.644Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <url>
         <loc>https://nronnei.github.io/about/</loc>
         <lastmod>2017-04-04T13:45:30.234Z</lastmod>
         <changefreq>weekly</changefreq>
@@ -16,13 +23,6 @@
     <url>
         <loc>https://nronnei.github.io/blog/</loc>
         <lastmod>2017-04-04T13:21:51.348Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-    
-    <url>
-        <loc>https://nronnei.github.io/apps/</loc>
-        <lastmod>2017-04-04T13:14:27.115Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
