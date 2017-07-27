@@ -1,24 +1,114 @@
-<!doctype html>
-<html class="no-js" lang="">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <title>My Map</title>
-        <meta name="description" content="A minimal, good looking map.">
-        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-        <link href='https://api.mapbox.com/mapbox.js/v3.1.1/mapbox.css' rel='stylesheet' />
-        <link rel="stylesheet" href="https://unpkg.com/tachyons@4.7.0/css/tachyons.min.css"/>
-        <link rel="stylesheet" href="_css/style.css">
-    </head>
-    <body>
-        <!--[if lte IE 9]>
-            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
-        <![endif]-->
-
-        <div id="map" class="absolute ma0 pa0 vh-100 w-100"></div>
-
-        <!-- Scripts -->
-        <script src='https://api.mapbox.com/mapbox.js/v3.1.1/mapbox.js'></script>
-        <script src="_js/map.js" type="application/javascript"></script>
-    </body>
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8">
+    <title>TtGS</title>
+    <link type="text/css" rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="sidebar.min.css"/>
+</head>
+<body>
+<div id="sidebar" class="sidebar collapsed">
+    <ul class="sidebar-tabs" role="tablist">
+        <li><a href="#directions" role="tab"><i class="fa fa-bus"></i></a></li>
+        <li><a href="#settings" role="tab"><i class="fa fa-gear"></i></a></li>
+        <li><a href="#help" role="tab"><i class="fa fa-question"></i></a></li>
+        <li><a href="#about" role="tab"><i class="fa fa-info"></i></a></li>
+    </ul>
+    <div class="sidebar-content active">
+        <div class="sidebar-pane" id="directions">
+            <h1 id="dirHead">Get Directions</h1>
+            <div class="dirContainer">
+                <div id="dsResults">
+                    <div class="row">
+                        <div class="col-lg-12 panel-btn">
+                            <button type="button" style="font-size: 14pt" class="btn btn-block btn-danger" id="resetBtn"><i class="fa fa-refresh"></i>&nbsp;&nbsp;Reset</button>
+                        </div>
+                    </div>
+                    <div id="dirList">
+                    </div>
+                </div>
+                <div id="dsInputs">
+                    <div class="row">
+                        <div class="col-lg-12 panel-btn">
+                            <button type="button" style="font-size: 14pt" class="btn btn-block btn-info" id="useGPSBtn"><i class="fa fa-crosshairs"></i>&nbsp;&nbsp;Use My Location</button>
+                        </div>
+                        <div class="col-lg-12">
+                            <input type="text" id="origin" class=" form-control directionsInput" placeholder="Cross Streets  OR  Address" autocomplete="off"/>
+                        </div>
+                    </div>
+                    <p id="msg">
+                        <br> <br>
+                        Start by pressing "Use My Location" or entering your starting position in the text box.
+                        Next, pick a park entrance and click "Get Directions"
+                        <br> <br>
+                        Your Directions will appear here.
+                        <br> <br>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-pane" id="settings">
+            <h1>Settings</h1>
+            <div class="settingsContainer">
+                <div class="row">
+                    <div id="trafficControl" class="settingsControl col-lg-12">
+                        Toggle Traffic Layer <i class="fa fa-toggle-off pull-right settingsToggle" id="trafficToggle"></i>
+                    </div>
+                    <div id="remControl" class="settingsControl col-lg-12">
+                        Remember Location on Reset <i class="fa fa-toggle-on pull-right settingsToggle" id="remToggle"></i>
+                    </div>
+                </div>
+                <div id="ROAD" class="map-type selected col-lg-12">
+                    <div class="row"><img src="road_opt.png"/></div>
+                </div>
+                <div id="HYBRID" class="map-type col-lg-12">
+                    <div class="row"><img src="hybrid_opt.png"/></div>
+                </div>
+                <div id="SAT" class="map-type col-lg-12">
+                    <div class="row"><img src="sat_opt.png"/></div>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-pane" id="help">
+            <h1>Help</h1>
+            <div class="helpContainer">
+                <p>
+                    The purpose of this map is to help you get to parks via public transit.  Nothing more, nothing less.  There is no particular way you must use this map, and we encourage you to play for a while to decide what works best for you.
+                    By clicking on Park Information Marker, you can glean some basic information about the park.  You will also be zoomed in to the park, revealing small red Park Entrance Markers.
+                </p><br>
+                <p>Clicking a Park Entrance Marker gives you two options for getting directions to the park: via this map (“Get Directions”) or via Google Maps (“Get Directions via Google Maps”).  To use either button, you must input a location.</p>
+                <br>
+                <p>To input your location, tap on the transit button (topmost symbol on the sidebar).  You can either enter it manually by typing it in the box, or click “Use My Location”.  Once you have entered your location, you can get directions to any of the parks visited by the NSSC!</p>
+                <br>
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Legend</div>
+                    <ul class="list-group">
+                        <li class="list-group-item"><img src="http://maps.google.com/mapfiles/kml/pal2/icon4.png"> &nbsp; Park Information</li>
+                        <li class="list-group-item"><img src="http://maps.google.com/mapfiles/kml/paddle/ylw-stars.png"> &nbsp; Your Location</li>
+                        <li class="list-group-item"><img src="http://www.clipartbest.com/cliparts/9cz/EGG/9czEGGdRi.png"> &nbsp; Park Entrances</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-pane" id="about">
+            <h1>About</h1>
+            <div id="aboutContainer">
+                <br>
+                <p style="text-align: center">Looking for tips on how to use the map? Click on the <i class="fa fa-question"></i> tab to learn more.</p>
+                <p>After a couple years of working with a lovely paper map of the same title, the North Start Sierra Club (Minnesota's chapter of the famous organization) decided they wanted to take their project to the web.  Through a partnership with the University of St. Thomas (St. Paul, MN) they began work on a map.  The first run produced no usable product.</p>
+                <p>Having improved his web development skills significantly, recent graduate Nick Ronnei built a better version of the map.  This new version is fully responsive thanks to <a href="https://github.com/Turbo87" target="_blank">Tobias Bieniek's</a> wonderful jQuery sidebar!.  Nick drew inspiration from <a href="http://www.davidtodd.info" target="_blank">David Todd's</a> map <a href="http://dmofot.github.io/batop250/" target="_blank">Beer Advocate's Top 250</a> and his custom <a href="https://github.com/dmofot/batop250" target="_blank">BeerLeaf</a> template which he forked from Bryan McBride's BootLeaf.  Nick received help on the code from colleague Hung Le.  He also had help with user training from Rani Mohanty and Nate Bettin.  Finally, Nick Smith (nicksmith2404@hotmail.com) helped with some image optimization and generation. A BIG thanks to all of them for their hard work!</p>
+                <br>
+                <p>The map's source code is open source, GNU GPL licensed, and available on <a href="https://github.com/ronn4031/ttgs" target="_blank">GitHub</a>. Its creator, Nick Ronnei (nronnei@gmail.com), would love to hear about it if you want to adapt it for your own use.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="mapCanvas" class="sidebar-map"></div>
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyByxM5ZHu1Tytu7rIrbnC8Bdf7dfBYUuJ0&libraries=places"></script>
+<script src="infobox-mini.js" type="text/javascript"></script>
+<script src="ttgs_1.8.5s.min.js" type="text/javascript"></script>
+</body>
 </html>
