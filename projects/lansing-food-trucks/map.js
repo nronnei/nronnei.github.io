@@ -1,11 +1,11 @@
  L.mapbox.accessToken = "pk.eyJ1IjoibnJvbm5laSIsImEiOiJ2emt3WUY4In0.cRYAp7rDFZvRUBkExD5kqQ";
 
 var map = L.mapbox.map('map', 'nronnei.781eb50d', {
-  zoomControl: false,
-  zoom: 12,
+  zoomControl: {position: "bottomright"},
+  zoom: 13,
   minZoom: 12,
-  center: [42.749407283805354, -84.53052520751953],
-  maxBounds: L.latLngBounds([[42.556620915873744, -85.02490997314455], [42.941595891012796, -84.03614044189455]])
+  center: [42.72248848125474, -84.52657699584962],
+  maxBounds: L.latLngBounds([[42.5, -84.8], [42.9, -84.2]])
 });
 
 map.on('ready', function() {
@@ -48,8 +48,8 @@ map.on('ready', function() {
       if (feature.properties.featured.toLowerCase() != 'false') {
 
         markerStyle = L.icon({
-          iconUrl: 'ft-featured-icon.png',
-        	iconRetinaUrl: 'ft-featured-icon@2x.png',
+          iconUrl: '_img/ft-featured-icon.png',
+        	iconRetinaUrl: '_img/ft-featured-icon@2x.png',
         	iconSize: [48, 47],
         	iconAnchor: [22, 23],
           popupAnchor: [0, -28]
@@ -58,8 +58,8 @@ map.on('ready', function() {
       } else {
 
         markerStyle = L.icon({
-          iconUrl: 'ft-icon.png',
-        	iconRetinaUrl: 'ft-icon@2x.png',
+          iconUrl: '_img/ft-icon.png',
+        	iconRetinaUrl: '_img/ft-icon@2x.png',
         	iconSize: [48, 48],
         	iconAnchor: [24, 24],
         	popupAnchor: [0, -28]
@@ -86,6 +86,12 @@ map.on('ready', function() {
   });
 
   foodTrucks.addTo(map);
+
+  map.on("dragend", function() {
+    console.log(map.getCenter());
+    console.log(map.getBounds());
+    console.log(map.getZoom());
+  })
 });
 
 
