@@ -1,9 +1,9 @@
- L.mapbox.accessToken = "pk.eyJ1IjoibnJvbm5laSIsImEiOiJ2emt3WUY4In0.cRYAp7rDFZvRUBkExD5kqQ";
+L.mapbox.accessToken = "pk.eyJ1IjoibnJvbm5laSIsImEiOiJ2emt3WUY4In0.cRYAp7rDFZvRUBkExD5kqQ";
 
 var map = L.mapbox.map('map', 'nronnei.781eb50d', {
-  zoomControl: false,
-  zoom: 11,
-  center: [42.790613895161556, -84.50340270996094]
+ zoomControl: false,
+ zoom: 11,
+ center: [42.790613895161556, -84.50340270996094]
 });
 
 new L.control.zoom({position: 'bottomright'}).addTo(map);
@@ -13,83 +13,83 @@ map.on('ready', function() {
 
 
 
-  function genContent(feature) {
-    let txt = "<div class='custom-content tc'>";
-    txt += "<h2>" + feature.properties.name + "</h2>";
-    txt += "<h3 class='location'>" + feature.properties.location + "</h3>";
-    let hours = feature.properties.hours.split(";");
-    txt += "<h3 class='subheading'>Hours</h3>";
-    for (var i = 0; i < hours.length; i++) {
-      txt += "<p>" + hours[i] + "</p>"
-    }
-    if (feature.properties.alt_loc != "") {
-      let alt_loc = feature.properties.alt_loc.split(";");
-      txt += "<h3 class='subheading'>Other Locations</h3>";
-      for (var i = 0; i < alt_loc.length; i++) {
-        txt += "<p>" + alt_loc[i] + "</p>";
-      }
-    }
-    if (feature.properties.featured.toLowerCase() != 'false') {
-      txt += "<h3 class='subheading'>About MEAT</h3>";
-      let featured = feature.properties.featured.split(";");
-      for (var i = 0; i < featured.length; i++) {
-        txt += "<p>" + featured[i] + "</p>";
-      }
-    }
-    // txt += "<a class='lh-copy fw4' href='" + feature.properties.website + "'>View Website</a>"
-    txt += "</div>"
-    return txt;
-  }
+ function genContent(feature) {
+   let txt = "<div class='custom-content tc'>";
+   txt += "<h2>" + feature.properties.name + "</h2>";
+   txt += "<h3 class='location'>" + feature.properties.location + "</h3>";
+   let hours = feature.properties.hours.split(";");
+   txt += "<h3 class='subheading'>Hours</h3>";
+   for (var i = 0; i < hours.length; i++) {
+     txt += "<p>" + hours[i] + "</p>"
+   }
+   if (feature.properties.alt_loc != "") {
+     let alt_loc = feature.properties.alt_loc.split(";");
+     txt += "<h3 class='subheading'>Other Locations</h3>";
+     for (var i = 0; i < alt_loc.length; i++) {
+       txt += "<p>" + alt_loc[i] + "</p>";
+     }
+   }
+   if (feature.properties.featured.toLowerCase() != 'false') {
+     txt += "<h3 class='subheading'>About MEAT</h3>";
+     let featured = feature.properties.featured.split(";");
+     for (var i = 0; i < featured.length; i++) {
+       txt += "<p>" + featured[i] + "</p>";
+     }
+   }
+   // txt += "<a class='lh-copy fw4' href='" + feature.properties.website + "'>View Website</a>"
+   txt += "</div>"
+   return txt;
+ }
 
-  var foodTrucks = L.geoJson(ftData, {
+ var foodTrucks = L.geoJson(ftData, {
 
-    pointToLayer: function(feature, latlng) {
+   pointToLayer: function(feature, latlng) {
 
-      var markerStyle;
+     var markerStyle;
 
-      // Choose icon based on feature.properties.featured
-      if (feature.properties.featured.toLowerCase() != 'false') {
+     // Choose icon based on feature.properties.featured
+     if (feature.properties.featured.toLowerCase() != 'false') {
 
-        markerStyle = L.icon({
-          iconUrl: 'ft-featured-icon.png',
-        	iconRetinaUrl: 'ft-featured-icon@2x.png',
-        	iconSize: [48, 47],
-        	iconAnchor: [22, 23],
-          popupAnchor: [0, -28]
-        });
+       markerStyle = L.icon({
+         iconUrl: 'ft-featured-icon.png',
+         iconRetinaUrl: 'ft-featured-icon@2x.png',
+         iconSize: [48, 47],
+         iconAnchor: [22, 23],
+         popupAnchor: [0, -28]
+       });
 
-      } else {
+     } else {
 
-        markerStyle = L.icon({
-          iconUrl: 'ft-icon.png',
-        	iconRetinaUrl: 'ft-icon@2x.png',
-        	iconSize: [48, 48],
-        	iconAnchor: [24, 24],
-        	popupAnchor: [0, -28]
-        });
+       markerStyle = L.icon({
+         iconUrl: 'ft-icon.png',
+         iconRetinaUrl: 'ft-icon@2x.png',
+         iconSize: [48, 48],
+         iconAnchor: [24, 24],
+         popupAnchor: [0, -28]
+       });
 
-      }
+     }
 
-      return L.marker(latlng, {icon: markerStyle});
+     return L.marker(latlng, {icon: markerStyle});
 
-    },
-    onEachFeature: function(feature, layer) {
+   },
+   onEachFeature: function(feature, layer) {
 
-      layer.bindPopup(
-        genContent(feature),
-        {
-        closeOnClick: true,
-        className: 'custom',
-        maxWidth: 400,
-        minWidth: 175
-      });
+     layer.bindPopup(
+       genContent(feature),
+       {
+       closeOnClick: true,
+       className: 'custom',
+       maxWidth: 400,
+       minWidth: 175
+     });
 
-    }
+   }
 
-  });
+ });
 
-  foodTrucks.addTo(map);
-  map.fitBounds(foodTrucks.getBounds());
+ foodTrucks.addTo(map);
+ map.fitBounds(foodTrucks.getBounds());
 });
 
 map
