@@ -89,6 +89,7 @@ map.on('ready', function() {
   });
 
   foodTrucks.addTo(map);
+  map.fitBounds(foodTrucks.getBounds());
 });
 
 map
