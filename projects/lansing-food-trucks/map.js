@@ -1,7 +1,7 @@
 L.mapbox.accessToken = "pk.eyJ1IjoibnJvbm5laSIsImEiOiJ2emt3WUY4In0.cRYAp7rDFZvRUBkExD5kqQ";
 
 var map = L.mapbox.map('map', 'nronnei.781eb50d', {
- zoom: 11
+ zoomControl: false
 });
 
 new L.control.zoom({position: 'bottomright'}).addTo(map);
