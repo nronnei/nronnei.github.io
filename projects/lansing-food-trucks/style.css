@@ -1,11 +1,9 @@
-.custom .leaflet-popup-tip,
 .custom .leaflet-popup-content-wrapper
 h2 {
   font-size: 2rem;
-  line-height: 1.5rem;
+  line-height: 2.5rem;
   font-weight: 600;
 }
-.custom .leaflet-popup-tip,
 .custom .leaflet-popup-content-wrapper
 .location {
   margin-top: 1.5rem;
@@ -20,11 +18,16 @@ h2 {
   font-size: 1.1rem;
   line-height: 1.5rem;
 }
-.custom .leaflet-popup-tip,
 .custom .leaflet-popup-content-wrapper
 a {
   margin-top: 0.75rem;
-  font-size: 1rem;
+  /*font-size: 1rem;*/
   line-height: 1.5rem;
   text-decoration: underline;
+}
+.blessed {
+  z-index: 9001;
+}
+.average {
+  z-index: 9000;
 }
