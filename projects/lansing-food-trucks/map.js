@@ -1,4 +1,4 @@
-L.mapbox.accessToken = "pk.eyJ1IjoibnJvbm5laSIsImEiOiJ2emt3WUY4In0.cRYAp7rDFZvRUBkExD5kqQ";
+L.mapbox.accessToken = "pk.eyJ1IjoibnJvbm5laSIsImEiOiJjajdod3JsdDYxbWN3MndvMnYxMjZtcWcxIn0.1L7H2sycCV3FwNH2hXP52A";
 var INIT_BOUNDS = [[40.9840449469,-87.802734375], [47.036438503,-80.947265625]];
 
 function FeatureCollection(data) {
