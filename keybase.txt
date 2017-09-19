@@ -1,0 +1,76 @@
+==================================================================
+https://keybase.io/nronnei
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://nronnei.github.io
+  * I am nronnei (https://keybase.io/nronnei) on keybase.
+  * I have a public key with fingerprint 8372 62E8 4E78 F83C A5C8  04F7 D905 7BD4 3E1B A66F
+
+To do so, I am signing this object:
+
+{
+  "body": {
+    "key": {
+      "eldest_kid": "012094a420786c3692442331739227631362058d1e9ad1bd1be19cdcdcd2082aa4670a",
+      "fingerprint": "837262e84e78f83ca5c804f7d9057bd43e1ba66f",
+      "host": "keybase.io",
+      "key_id": "d9057bd43e1ba66f",
+      "kid": "0101111c982deead85e74a7f277fb95ec45ee425770ce1953629c45d705c6d47759c0a",
+      "uid": "c389f93a5ecc4c99e42f5f0defcad019",
+      "username": "nronnei"
+    },
+    "service": {
+      "hostname": "nronnei.github.io",
+      "protocol": "https:"
+    },
+    "type": "web_service_binding",
+    "version": 1
+  },
+  "ctime": 1505835324,
+  "expire_in": 157680000,
+  "prev": "c6cb17549cc4af83a0889bcfe595ae95da464dc09006c54074df37e48e886c95",
+  "seqno": 10,
+  "tag": "signature"
+}
+
+which yields the signature:
+
+-----BEGIN PGP MESSAGE-----
+Version: Keybase OpenPGP v2.0.73
+Comment: https://keybase.io/crypto
+
+yMNpAnicbVJ9UBRlHL5DcRID6RshqFl0lICb/X53bziyphkcoiOPkmTIYz/evduA
+2+tuj4+IP0BxKBVKGkwgIlEyTzEZSzCJISkjjJBJkoQJy1EgtEYpSUbtXco/mul9
+d2bn/e3zPPs87+/XF77IFGYeDS37PjWmTTMP9DYFTBt7+ZQyTNTkUsxahuXDhRcs
+kKFfd+arMmbFcILEeVqgSRxwrESxPEnTJEURgOJJErAUQbEkznAyAXlBJkT0QIKX
+ZGOTOEcKAs0CXMCSMEX1uKDP61M9OpLlKECyJORoCDiFoySBkTicVoDM4wwQZZqC
+hCiwrIKIbs1vMJA5UfBDi6qhGjo4F+z9D/6ub5xAS+I5UoZQkDkGAloACgmAIvIM
+lGgGQppkAMAl5JhBMXhUkwHOSKxMA8Dw0oLvwIKcRHG8wlMCIkq0xPOIqjAKLkNF
+EmSc4A2gH/o8QiFEaI9P83igipUnYahYpErQuFcjyH8BFpequwPiP5m8Pk3XJK0A
+fXbrutdvNeh6qdfAF0PR+a+SU1Q9MrpLxCiCPr+qeTArgZCSrhrSBIO6QTEUSSdh
+sMSr+qBTNRAMYDkcLeM/sMhIxEoiARiaR4EE1AIB5zhelBTI8IwAeUZGnaNlCedx
+nJUYGge0rFAA0hzk0CDwDGZke9WjIW0kqgsupOlXXR5BD/ggVv5Fb+5ikznMtCQ0
+xBgyU9jSyLujN/NtpKl+9NrQYHfi2bzKZ46q60/2gQzbzgn8y/rXgkKM+d2uopvL
+ay3uc2G2aCFqOn55S9aaEZCRXZK6OWWm7eG6Urv5/uuz0qMRCVf3bf/9oe/6+wrP
+O2bSx4+ETLwXZTaV39l2wzE/WaA1Jw9kKp1FwpL0n1tmW9//7Mcz69bd0lY0TFnW
+10Sv9d0T32S3jR8/aqrN+uA22b/KVnwvucIyvgyPi+0N9kceWvzxvBKMf6o1zfz6
+dNyavItbRkHGXxObP3nlzbT0ybEznRdWTtdfS9f2Nzx94qdhS253fktO2jdtpNW0
+S9+2HR8rAz0jB51qbWOZytgi6oIDoW27KhzO/VdAmBrfQZZkTr6zLzkk9Ifdey8v
+GpH2PItn57rzOp54/vCN1bfrL+04XVeaUxMLz64O2q9vEI7c5yjMdTXnZb3cmF59
+U32xaXJwZfJUIM40C1OGUsUdG9kXNh08H+pKoLZc8D1n//CrKcKZ+MtVoSU/wjIx
+eSyx7HRvyfENlx60PwDMB4Lzjzj2JORk+7a3DQ9UP1k+2P6pZmvy5P3qOFZy7tBb
++ljXcFxxXcgBtf1K1xvdlWvdj709F9irnvojatmduop2ncsarpmba3hcFipsMVWN
+sZ//Ob218vKm8IpMOXKnPfrrqVOrTr70m7enquPWYdtQX8JIZ2v47p6LVRXV/Uut
+Zv/Wj040/w37jcCr
+=MFvu
+-----END PGP MESSAGE-----
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/nronnei
+
+==================================================================
+
